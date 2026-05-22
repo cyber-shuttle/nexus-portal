@@ -24,10 +24,16 @@ describe("personaForAnalytics", () => {
     ).toBe("pi");
   });
 
-  it("resolves co_pi with PI memberships to pi persona", () => {
+  it("keeps co_pi member-only as researcher per spec §5.4", () => {
     expect(
       personaForAnalytics(makeSession({ role: "co_pi", myPiAllocations: ["alloc-2"] })),
-    ).toBe("pi");
+    ).toBe("researcher");
+  });
+
+  it("keeps user role as researcher even with stale PI seed memberships", () => {
+    expect(
+      personaForAnalytics(makeSession({ role: "user", myPiAllocations: ["alloc-stale"] })),
+    ).toBe("researcher");
   });
 
   it("defaults to researcher when no PI memberships exist", () => {
