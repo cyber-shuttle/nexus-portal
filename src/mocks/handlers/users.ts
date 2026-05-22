@@ -3,6 +3,20 @@ import { seed } from "../seed";
 import { path } from "./_utils";
 
 export const userHandlers = [
+  // Phase 3 portal-only autocomplete; documented in docs/backend-contracts/users.md.
+  // Must come before /users/:id so the "search" route doesn't get captured by :id.
+  http.get(path("/users"), ({ request }) => {
+    const url = new URL(request.url);
+    const q = (url.searchParams.get("q") ?? "").trim().toLowerCase();
+    const limit = Number(url.searchParams.get("limit") ?? "20");
+    if (!q) return HttpResponse.json([]);
+    const rows = seed.users.filter((u) => {
+      const haystack = `${u.first_name} ${u.last_name} ${u.email}`.toLowerCase();
+      return haystack.includes(q);
+    });
+    return HttpResponse.json(rows.slice(0, limit));
+  }),
+
   http.get(path("/users/:id"), ({ params }) => {
     const user = seed.users.find((u) => u.id === params.id);
     if (!user) return HttpResponse.json({ error: "not_found" }, { status: 404 });

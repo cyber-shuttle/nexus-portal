@@ -52,8 +52,14 @@ export const adminHandlers = [
     });
   }),
 
-  http.get(path("/admin/change-requests"), () => {
-    const pending = seed.changeRequests.filter((cr) => cr.change_status === "PENDING");
-    return HttpResponse.json(pending.slice(0, 50));
+  http.get(path("/admin/change-requests"), ({ request }) => {
+    const url = new URL(request.url);
+    const status = (url.searchParams.get("status") ?? "PENDING")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const limit = Number(url.searchParams.get("limit") ?? "50");
+    const rows = seed.changeRequests.filter((cr) => status.includes(cr.change_status));
+    return HttpResponse.json(rows.slice(0, limit));
   }),
 ];
