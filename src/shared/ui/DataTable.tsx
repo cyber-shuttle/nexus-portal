@@ -1,7 +1,7 @@
 "use client";
 
-import * as React from "react";
 import { cn } from "@/lib/utils";
+import * as React from "react";
 
 export type DataTableColumn<T> = {
   key: string;
@@ -66,9 +66,7 @@ export function DataTable<T>({
             {rows.length === 0 ? (
               <tr>
                 <td colSpan={columns.length} className="px-4 py-12 text-center">
-                  {empty ?? (
-                    <span className="text-sm text-muted-foreground">No data.</span>
-                  )}
+                  {empty ?? <span className="text-sm text-muted-foreground">No data.</span>}
                 </td>
               </tr>
             ) : (

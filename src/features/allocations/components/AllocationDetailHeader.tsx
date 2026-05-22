@@ -1,10 +1,10 @@
 "use client";
 
-import { useAllocation } from "../queries";
+import { ErrorState } from "@/shared/ui/ErrorState";
+import { CardSkeleton } from "@/shared/ui/Loading";
 import { StatusBadge, statusBadgeVariantFromAllocationStatus } from "@/shared/ui/StatusBadge";
 import { UsageBar } from "@/shared/ui/UsageBar";
-import { CardSkeleton } from "@/shared/ui/Loading";
-import { ErrorState } from "@/shared/ui/ErrorState";
+import { useAllocation } from "../queries";
 
 function formatDate(iso: string): string {
   try {
@@ -66,7 +66,8 @@ export function AllocationDetailHeader({ allocationId, used }: AllocationDetailH
           <div className="text-sm text-muted-foreground">
             Project <span className="font-medium text-foreground">{allocation.project_id}</span>
             <span className="mx-2">·</span>
-            Cluster <span className="font-medium text-foreground">{allocation.compute_cluster_id}</span>
+            Cluster{" "}
+            <span className="font-medium text-foreground">{allocation.compute_cluster_id}</span>
           </div>
           <div className="text-sm text-muted-foreground">
             {formatDate(allocation.start_time)} → {formatDate(allocation.end_time)}

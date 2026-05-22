@@ -46,7 +46,11 @@ export async function apiFetch<T = unknown>(path: string, init: ApiFetchInit = {
   let body: BodyInit | undefined;
 
   if (init.body !== undefined && init.body !== null) {
-    if (typeof init.body === "string" || init.body instanceof FormData || init.body instanceof Blob) {
+    if (
+      typeof init.body === "string" ||
+      init.body instanceof FormData ||
+      init.body instanceof Blob
+    ) {
       body = init.body as BodyInit;
     } else {
       if (!headers.has("content-type")) headers.set("content-type", "application/json");

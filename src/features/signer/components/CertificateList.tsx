@@ -1,13 +1,13 @@
 "use client";
 
-import * as React from "react";
 import { DataTable, type DataTableColumn } from "@/shared/ui/DataTable";
+import { EmptyState } from "@/shared/ui/EmptyState";
+import { ErrorState } from "@/shared/ui/ErrorState";
+import { TableSkeleton } from "@/shared/ui/Loading";
+import { StatusBadge, type StatusBadgeVariant } from "@/shared/ui/StatusBadge";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
-import { StatusBadge, type StatusBadgeVariant } from "@/shared/ui/StatusBadge";
-import { TableSkeleton } from "@/shared/ui/Loading";
-import { ErrorState } from "@/shared/ui/ErrorState";
-import { EmptyState } from "@/shared/ui/EmptyState";
+import * as React from "react";
 import {
   CERTIFICATE_STATUSES,
   type Certificate,
@@ -86,9 +86,7 @@ export function CertificateList({
     {
       key: "serial",
       header: "Serial",
-      cell: (row) => (
-        <span className="font-mono text-xs text-foreground">{row.serial_number}</span>
-      ),
+      cell: (row) => <span className="font-mono text-xs text-foreground">{row.serial_number}</span>,
     },
     {
       key: "username",
@@ -223,10 +221,7 @@ export function CertificateList({
       </div>
 
       {error ? (
-        <ErrorState
-          message={error.message ?? "Failed to load certificates"}
-          onRetry={onRetry}
-        />
+        <ErrorState message={error.message ?? "Failed to load certificates"} onRetry={onRetry} />
       ) : isLoading ? (
         <TableSkeleton rows={6} columns={6} />
       ) : rows.length === 0 ? (

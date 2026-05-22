@@ -1,16 +1,16 @@
 "use client";
 
-import * as React from "react";
-import { useForm, useFieldArray, type UseFormReturn } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import type { z } from "zod";
-import { toast } from "sonner";
-import { useRouter } from "next/navigation";
-import { ApiError } from "@shared/api/client";
 import { Button } from "@/shared/ui/button";
+import { Card } from "@/shared/ui/card";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
-import { Card } from "@/shared/ui/card";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { ApiError } from "@shared/api/client";
+import { useRouter } from "next/navigation";
+import * as React from "react";
+import { type UseFormReturn, useFieldArray, useForm } from "react-hook-form";
+import { toast } from "sonner";
+import type { z } from "zod";
 import { useCreateProposal } from "../queries";
 import { createProposalPayloadSchema } from "../schemas";
 import type { CreateProposalPayload } from "../schemas";
@@ -157,11 +157,7 @@ export function ProposalWizard({
     };
     try {
       const created = await createMutation.mutateAsync(payload);
-      toast.success(
-        status === "DRAFT"
-          ? "Draft saved"
-          : `Proposal submitted (#${created.id})`,
-      );
+      toast.success(status === "DRAFT" ? "Draft saved" : `Proposal submitted (#${created.id})`);
       router.push(`/proposals/${created.id}`);
     } catch (err) {
       const msg =
@@ -182,16 +178,10 @@ export function ProposalWizard({
       </aside>
 
       <Card className="p-6">
-        {stepIndex === 0 ? (
-          <BasicInfoStep form={form} projectOptions={projectOptions} />
-        ) : null}
-        {stepIndex === 1 ? (
-          <ResourcesStep form={form} resourceOptions={resourceOptions} />
-        ) : null}
+        {stepIndex === 0 ? <BasicInfoStep form={form} projectOptions={projectOptions} /> : null}
+        {stepIndex === 1 ? <ResourcesStep form={form} resourceOptions={resourceOptions} /> : null}
         {stepIndex === 2 ? <JustificationStep form={form} /> : null}
-        {stepIndex === 3 ? (
-          <CascadeStep form={form} selectedProject={selectedProject} />
-        ) : null}
+        {stepIndex === 3 ? <CascadeStep form={form} selectedProject={selectedProject} /> : null}
         {stepIndex === 4 ? <ReviewStep form={form} /> : null}
 
         <div className="mt-8 flex items-center justify-between gap-3 border-t pt-4">
@@ -258,7 +248,9 @@ function BasicInfoStep({
           id="proposal-project"
           className="w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
           value={projectId}
-          onChange={(e) => form.setValue("project_id", e.currentTarget.value, { shouldValidate: true })}
+          onChange={(e) =>
+            form.setValue("project_id", e.currentTarget.value, { shouldValidate: true })
+          }
         >
           <option value="">Select a project…</option>
           {projectOptions.map((p) => (
@@ -279,9 +271,7 @@ function BasicInfoStep({
           placeholder="e.g. BayesPrism integration scale-up — Phase 2"
           {...form.register("title")}
         />
-        {errors.title ? (
-          <p className="text-xs text-destructive">{errors.title.message}</p>
-        ) : null}
+        {errors.title ? <p className="text-xs text-destructive">{errors.title.message}</p> : null}
       </div>
 
       <div className="space-y-2">
@@ -366,7 +356,10 @@ function ResourcesStep({
         ) : (
           <ol className="space-y-3">
             {fields.map((field, index) => (
-              <li key={field.id} className="grid gap-3 rounded-md border bg-card p-3 md:grid-cols-[1fr_140px_auto]">
+              <li
+                key={field.id}
+                className="grid gap-3 rounded-md border bg-card p-3 md:grid-cols-[1fr_140px_auto]"
+              >
                 <div className="space-y-1.5">
                   <Label htmlFor={`res-${index}`}>Resource</Label>
                   <select
@@ -400,12 +393,7 @@ function ResourcesStep({
                   />
                 </div>
                 <div className="flex items-end">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => remove(index)}
-                  >
+                  <Button type="button" variant="ghost" size="sm" onClick={() => remove(index)}>
                     Remove
                   </Button>
                 </div>
@@ -477,8 +465,8 @@ function CascadeStep({
       <header>
         <h2 className="font-heading text-lg font-semibold">Cascade to sub-projects</h2>
         <p className="text-sm text-muted-foreground">
-          Apply this allocation as parent and split SUs to child projects. Inspired by
-          sam-queries' hierarchical cascade pattern.
+          Apply this allocation as parent and split SUs to child projects. Inspired by sam-queries'
+          hierarchical cascade pattern.
         </p>
       </header>
 
@@ -549,8 +537,8 @@ function ReviewStep({ form }: { form: UseFormReturn<ProposalWizardValues> }) {
       <header>
         <h2 className="font-heading text-lg font-semibold">Review & submit</h2>
         <p className="text-sm text-muted-foreground">
-          Last chance to edit. Submitting flips the proposal to SUBMITTED status; admins receive
-          it in their review queue.
+          Last chance to edit. Submitting flips the proposal to SUBMITTED status; admins receive it
+          in their review queue.
         </p>
       </header>
 

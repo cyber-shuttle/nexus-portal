@@ -1,13 +1,10 @@
 "use client";
 
-import {
-  useMembershipOverrides,
-  useUserIdentities,
-} from "../queries";
-import type { AllocationMemberRow } from "../queries";
-import { SideDrawer } from "@/shared/ui/SideDrawer";
-import { CenteredSpinner } from "@/shared/ui/Loading";
 import { EmptyState } from "@/shared/ui/EmptyState";
+import { CenteredSpinner } from "@/shared/ui/Loading";
+import { SideDrawer } from "@/shared/ui/SideDrawer";
+import { useMembershipOverrides, useUserIdentities } from "../queries";
+import type { AllocationMemberRow } from "../queries";
 
 export type MemberDetailDrawerProps = {
   open: boolean;

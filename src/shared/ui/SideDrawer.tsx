@@ -1,8 +1,8 @@
 "use client";
 
-import * as React from "react";
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { XIcon } from "lucide-react";
+import * as React from "react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/shared/ui/button";
@@ -35,9 +35,7 @@ export function SideDrawer({
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Backdrop
-          className="fixed inset-0 z-50 bg-black/30 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0"
-        />
+        <DialogPrimitive.Backdrop className="fixed inset-0 z-50 bg-black/30 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0" />
         <DialogPrimitive.Popup
           className={cn(
             "fixed inset-y-0 right-0 z-50 flex w-full flex-col bg-popover text-popover-foreground shadow-xl outline-none",

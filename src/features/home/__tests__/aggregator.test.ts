@@ -1,3 +1,8 @@
+import type {
+  ComputeAllocation,
+  ComputeAllocationChangeRequest,
+  ComputeAllocationDiff,
+} from "@shared/api/domain";
 import { describe, expect, it } from "vitest";
 import {
   aggregateHomeSummary,
@@ -6,11 +11,6 @@ import {
   computeUsage30d,
   pendingChangeRequests,
 } from "../aggregator";
-import type {
-  ComputeAllocation,
-  ComputeAllocationChangeRequest,
-  ComputeAllocationDiff,
-} from "@shared/api/domain";
 
 const NOW = Date.parse("2026-05-01T00:00:00Z");
 const day = 24 * 60 * 60 * 1000;

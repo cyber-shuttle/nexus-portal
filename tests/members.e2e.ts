@@ -30,12 +30,18 @@ test.describe("members", () => {
     const newRow = page.getByRole("row").filter({ hasText: newMemberEmail });
     await expect(newRow.first()).toBeVisible({ timeout: 10_000 });
 
-    await newRow.first().getByRole("button", { name: /^Deactivate$/i }).click();
+    await newRow
+      .first()
+      .getByRole("button", { name: /^Deactivate$/i })
+      .click();
     await page.getByTestId("confirm-action").click();
     await expect(page.getByText(/deactivated/i)).toBeVisible({ timeout: 10_000 });
     await expect(newRow.first().getByText(/INACTIVE/)).toBeVisible({ timeout: 10_000 });
 
-    await newRow.first().getByRole("button", { name: /^Remove$/i }).click();
+    await newRow
+      .first()
+      .getByRole("button", { name: /^Remove$/i })
+      .click();
     await page.getByTestId("confirm-action").click();
     await expect(page.getByText(/removed/i)).toBeVisible({ timeout: 10_000 });
     await expect.poll(() => page.locator("tbody tr").count()).toBe(rowsBefore);

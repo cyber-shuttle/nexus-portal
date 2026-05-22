@@ -1,11 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import {
-  type AdminChangeRequestsParams,
-  getAdminChangeRequests,
-  getAdminStats,
-} from "./api";
+import { type AdminChangeRequestsParams, getAdminChangeRequests, getAdminStats } from "./api";
 
 export const adminKeys = {
   all: ["admin"] as const,

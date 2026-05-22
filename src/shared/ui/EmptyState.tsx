@@ -1,5 +1,5 @@
-import * as React from "react";
 import { cn } from "@/lib/utils";
+import * as React from "react";
 
 export type EmptyStateProps = {
   icon?: React.ReactNode;
@@ -23,9 +23,7 @@ export function EmptyState({ icon, heading, description, cta, className }: Empty
         </div>
       ) : null}
       <h3 className="font-heading text-base font-medium text-foreground">{heading}</h3>
-      {description ? (
-        <p className="max-w-md text-sm text-muted-foreground">{description}</p>
-      ) : null}
+      {description ? <p className="max-w-md text-sm text-muted-foreground">{description}</p> : null}
       {cta ? <div className="mt-2">{cta}</div> : null}
     </div>
   );

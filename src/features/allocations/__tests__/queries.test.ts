@@ -1,10 +1,6 @@
-import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { ApiError } from "@shared/api/client";
-import {
-  getAllocation,
-  getAllocationResources,
-  getResourceRatesEffective,
-} from "../api";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { getAllocation, getAllocationResources, getResourceRatesEffective } from "../api";
 
 const allocationFixture = {
   id: "alloc-test",
@@ -72,16 +68,12 @@ describe("allocations fetchers", () => {
   });
 
   it("throws ApiError on 500", async () => {
-    globalThis.fetch = vi.fn(async () =>
-      jsonResponse({ error: "boom" }, 500),
-    ) as never;
+    globalThis.fetch = vi.fn(async () => jsonResponse({ error: "boom" }, 500)) as never;
     await expect(getAllocation("alloc-test")).rejects.toBeInstanceOf(ApiError);
   });
 
   it("handles 404 as ApiError, not a parse error", async () => {
-    globalThis.fetch = vi.fn(async () =>
-      jsonResponse({ error: "not_found" }, 404),
-    ) as never;
+    globalThis.fetch = vi.fn(async () => jsonResponse({ error: "not_found" }, 404)) as never;
     await expect(getAllocation("missing")).rejects.toBeInstanceOf(ApiError);
   });
 });

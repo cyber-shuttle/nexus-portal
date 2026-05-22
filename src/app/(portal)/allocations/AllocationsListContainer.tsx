@@ -1,17 +1,17 @@
 "use client";
 
-import * as React from "react";
-import { useQueries } from "@tanstack/react-query";
-import { allocationKeys, useAllocations } from "@features/allocations/queries";
 import { getAllocationResources } from "@features/allocations/api";
-import { useMembershipsForUser, memberKeys } from "@features/members/queries";
+import {
+  type AllocationRow,
+  AllocationsList,
+} from "@features/allocations/components/AllocationsList";
+import { allocationKeys, useAllocations } from "@features/allocations/queries";
 import { getMembershipsForAllocation } from "@features/members/api";
+import { memberKeys, useMembershipsForUser } from "@features/members/queries";
 import { getAllocationUsageTotal } from "@features/usage/api";
 import { usageKeys } from "@features/usage/queries";
-import {
-  AllocationsList,
-  type AllocationRow,
-} from "@features/allocations/components/AllocationsList";
+import { useQueries } from "@tanstack/react-query";
+import * as React from "react";
 
 export function AllocationsListContainer({ userId }: { userId: string }) {
   const membershipsQuery = useMembershipsForUser(userId);

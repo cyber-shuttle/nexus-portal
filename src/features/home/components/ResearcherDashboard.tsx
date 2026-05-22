@@ -1,14 +1,14 @@
-import Link from "next/link";
-import type { HomeSummary } from "../types";
-import type { ComputeAllocation } from "@shared/api/domain";
+import { formatSU } from "@/lib/format";
+import { externalLinks, internalLinks } from "@/lib/links";
+import { ErrorState } from "@/shared/ui/ErrorState";
+import { CenteredSpinner } from "@/shared/ui/Loading";
 import { StatCard } from "@/shared/ui/StatCard";
 import { Button } from "@/shared/ui/button";
-import { CenteredSpinner } from "@/shared/ui/Loading";
-import { ErrorState } from "@/shared/ui/ErrorState";
-import { externalLinks, internalLinks } from "@/lib/links";
-import { formatSU } from "@/lib/format";
-import { PersonaPill } from "./PersonaPill";
+import type { ComputeAllocation } from "@shared/api/domain";
+import Link from "next/link";
+import type { HomeSummary } from "../types";
 import { HomeAllocationsList } from "./HomeAllocationsList";
+import { PersonaPill } from "./PersonaPill";
 import { RecentActivityFeed } from "./RecentActivityFeed";
 
 export type ResearcherDashboardProps = {
@@ -59,8 +59,8 @@ export function ResearcherDashboard({
               Nexus — Getting Started
             </h1>
             <p className="max-w-2xl text-base text-muted-foreground">
-              Your gateway to seamless scientific computing. Submit a proposal, wait for
-              approval, then start running jobs against your allocation.
+              Your gateway to seamless scientific computing. Submit a proposal, wait for approval,
+              then start running jobs against your allocation.
             </p>
             <div className="mt-3 flex flex-wrap gap-3">
               <Button render={<Link href={internalLinks.proposals}>Submit a proposal</Link>} />
@@ -102,21 +102,9 @@ export function ResearcherDashboard({
       </section>
 
       <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <StatCard
-          title="GPU Hours"
-          value={formatSU(totals.gpu_hours)}
-          sublabel="Last 30 days"
-        />
-        <StatCard
-          title="CPU Hours"
-          value={formatSU(totals.cpu_hours)}
-          sublabel="Last 30 days"
-        />
-        <StatCard
-          title="Storage GB"
-          value={formatSU(totals.storage_gb)}
-          sublabel="Last 30 days"
-        />
+        <StatCard title="GPU Hours" value={formatSU(totals.gpu_hours)} sublabel="Last 30 days" />
+        <StatCard title="CPU Hours" value={formatSU(totals.cpu_hours)} sublabel="Last 30 days" />
+        <StatCard title="Storage GB" value={formatSU(totals.storage_gb)} sublabel="Last 30 days" />
       </section>
 
       <section className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr,1fr]">

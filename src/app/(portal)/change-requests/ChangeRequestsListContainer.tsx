@@ -1,24 +1,6 @@
 "use client";
 
-import * as React from "react";
-import { useSession } from "next-auth/react";
-import { toast } from "sonner";
-import { subject } from "@casl/ability";
-import type { ComputeAllocationChangeRequest } from "@shared/api/domain";
-import { ApiError } from "@shared/api/client";
-import { useAbility } from "@shared/casl/AbilityProvider";
-import {
-  useApproveChangeRequest,
-  useChangeRequestsForUser,
-  useDenyChangeRequest,
-} from "@features/change-requests/queries";
-import { useAdminChangeRequests } from "@features/admin/queries";
-import { useMembershipsForUser } from "@features/members/queries";
-import {
-  ChangeRequestsList,
-  type ChangeRequestRowAction,
-} from "@features/change-requests/components/ChangeRequestsList";
-import { ChangeRequestDetailDrawer } from "@features/change-requests/components/ChangeRequestDetailDrawer";
+import { Button } from "@/shared/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -27,7 +9,25 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/ui/dialog";
-import { Button } from "@/shared/ui/button";
+import { subject } from "@casl/ability";
+import { useAdminChangeRequests } from "@features/admin/queries";
+import { ChangeRequestDetailDrawer } from "@features/change-requests/components/ChangeRequestDetailDrawer";
+import {
+  type ChangeRequestRowAction,
+  ChangeRequestsList,
+} from "@features/change-requests/components/ChangeRequestsList";
+import {
+  useApproveChangeRequest,
+  useChangeRequestsForUser,
+  useDenyChangeRequest,
+} from "@features/change-requests/queries";
+import { useMembershipsForUser } from "@features/members/queries";
+import { ApiError } from "@shared/api/client";
+import type { ComputeAllocationChangeRequest } from "@shared/api/domain";
+import { useAbility } from "@shared/casl/AbilityProvider";
+import { useSession } from "next-auth/react";
+import * as React from "react";
+import { toast } from "sonner";
 
 type Persona = "user" | "pi" | "allocation_manager" | "admin";
 
@@ -77,7 +77,7 @@ export function ChangeRequestsListContainer() {
     if (persona === "pi") {
       const scopedAllocations = new Set([
         ...myPiAllocations,
-        ...((membershipsQuery.data ?? []).map((m) => m.compute_allocation_id)),
+        ...(membershipsQuery.data ?? []).map((m) => m.compute_allocation_id),
       ]);
       const scopedFromAdmin = (adminQuery.data ?? []).filter((r) =>
         scopedAllocations.has(r.compute_allocation_id),
@@ -143,10 +143,7 @@ export function ChangeRequestsListContainer() {
 
   const canActOn = React.useCallback(
     (row: ComputeAllocationChangeRequest) =>
-      ability.can(
-        "approve",
-        subject("ChangeRequest", { allocationId: row.compute_allocation_id }),
-      ),
+      ability.can("approve", subject("ChangeRequest", { allocationId: row.compute_allocation_id })),
     [ability],
   );
 
@@ -155,13 +152,10 @@ export function ChangeRequestsListContainer() {
 
   const [pendingMutationIds, setPendingMutationIds] = React.useState<Set<string>>(new Set());
   const [detailRow, setDetailRow] = React.useState<ComputeAllocationChangeRequest | null>(null);
-  const [confirm, setConfirm] = React.useState<
-    | null
-    | {
-        kind: "approve" | "deny";
-        ids: string[];
-      }
-  >(null);
+  const [confirm, setConfirm] = React.useState<null | {
+    kind: "approve" | "deny";
+    ids: string[];
+  }>(null);
 
   async function runAction(kind: "approve" | "deny", ids: string[]) {
     setPendingMutationIds(new Set([...pendingMutationIds, ...ids]));
@@ -253,8 +247,8 @@ export function ChangeRequestsListContainer() {
               {confirm && confirm.ids.length === 1 ? "" : "s"}?
             </DialogTitle>
             <DialogDescription>
-              This will set the status and append an event to the audit timeline. Action cannot
-              be undone without admin support.
+              This will set the status and append an event to the audit timeline. Action cannot be
+              undone without admin support.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

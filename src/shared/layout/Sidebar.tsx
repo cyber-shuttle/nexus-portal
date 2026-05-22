@@ -1,9 +1,9 @@
 "use client";
 
+import { cn } from "@/lib/utils";
+import { useAbility } from "@/shared/casl/AbilityProvider";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useAbility } from "@/shared/casl/AbilityProvider";
-import { cn } from "@/lib/utils";
 import { portalNav } from "./navConfig";
 
 export function Sidebar() {

@@ -1,9 +1,9 @@
+import { serverEnv } from "@/lib/env";
+import { derivePersonaScopes } from "@/shared/auth/personaScopes";
+import type { Role } from "@/shared/casl/abilities";
 import NextAuth, { type NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { z } from "zod";
-import type { Role } from "@/shared/casl/abilities";
-import { serverEnv } from "@/lib/env";
-import { derivePersonaScopes } from "@/shared/auth/personaScopes";
 
 const devPersonas: Record<string, { name: string; role: Role }> = {
   "researcher@nexus.local": { name: "Riya Researcher", role: "user" },

@@ -1,14 +1,14 @@
 "use client";
 
-import * as React from "react";
 import { DataTable, type DataTableColumn } from "@/shared/ui/DataTable";
+import { EmptyState } from "@/shared/ui/EmptyState";
+import { ErrorState } from "@/shared/ui/ErrorState";
+import { TableSkeleton } from "@/shared/ui/Loading";
+import { StatusBadge, type StatusBadgeVariant } from "@/shared/ui/StatusBadge";
+import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
-import { Button } from "@/shared/ui/button";
-import { StatusBadge, type StatusBadgeVariant } from "@/shared/ui/StatusBadge";
-import { TableSkeleton } from "@/shared/ui/Loading";
-import { ErrorState } from "@/shared/ui/ErrorState";
-import { EmptyState } from "@/shared/ui/EmptyState";
+import * as React from "react";
 import { CLIENT_STATUSES, type Client, type ClientStatus } from "../types";
 
 function statusVariant(status: ClientStatus): StatusBadgeVariant {
@@ -79,7 +79,9 @@ export function ClientList({
       key: "allocation",
       header: "Allocation",
       cell: (row) => (
-        <span className="text-sm text-muted-foreground">{row.allocation_name ?? row.allocation_id}</span>
+        <span className="text-sm text-muted-foreground">
+          {row.allocation_name ?? row.allocation_id}
+        </span>
       ),
     },
     {
@@ -106,7 +108,9 @@ export function ClientList({
     {
       key: "status",
       header: "Status",
-      cell: (row) => <StatusBadge variant={statusVariant(row.status)} label={row.status.toUpperCase()} />,
+      cell: (row) => (
+        <StatusBadge variant={statusVariant(row.status)} label={row.status.toUpperCase()} />
+      ),
     },
   ];
 
@@ -120,9 +124,7 @@ export function ClientList({
             allocations. Rotate or deactivate secrets when a key is suspected to have leaked.
           </p>
         </div>
-        {canCreate ? (
-          <Button onClick={onCreate}>New client</Button>
-        ) : null}
+        {canCreate ? <Button onClick={onCreate}>New client</Button> : null}
       </header>
 
       <div className="grid gap-3 rounded-md border bg-card p-4 md:grid-cols-4">

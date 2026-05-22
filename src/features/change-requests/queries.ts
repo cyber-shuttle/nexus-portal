@@ -14,8 +14,7 @@ import {
 
 export const changeRequestKeys = {
   all: ["change-requests"] as const,
-  forAllocation: (allocId: string) =>
-    [...changeRequestKeys.all, "allocation", allocId] as const,
+  forAllocation: (allocId: string) => [...changeRequestKeys.all, "allocation", allocId] as const,
   forUser: (userId: string) => [...changeRequestKeys.all, "user", userId] as const,
   events: (reqId: string) => [...changeRequestKeys.all, "events", reqId] as const,
 };
@@ -32,9 +31,7 @@ export function useChangeRequestsForAllocation(allocId: string | undefined) {
 
 export function useChangeRequestsForUser(userId: string | undefined) {
   return useQuery({
-    queryKey: userId
-      ? changeRequestKeys.forUser(userId)
-      : ["change-requests", "user", "none"],
+    queryKey: userId ? changeRequestKeys.forUser(userId) : ["change-requests", "user", "none"],
     queryFn: () => getChangeRequestsForUser(userId as string),
     enabled: Boolean(userId),
   });

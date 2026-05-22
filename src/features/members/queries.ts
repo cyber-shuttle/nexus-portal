@@ -53,9 +53,7 @@ export function useMembershipsForUser(userId: string | undefined) {
 
 export function useMembershipOverrides(membershipId: string | undefined) {
   return useQuery({
-    queryKey: membershipId
-      ? memberKeys.overrides(membershipId)
-      : ["members", "overrides", "none"],
+    queryKey: membershipId ? memberKeys.overrides(membershipId) : ["members", "overrides", "none"],
     queryFn: () => getMembershipOverrides(membershipId as string),
     enabled: Boolean(membershipId),
   });
@@ -134,7 +132,8 @@ export function useCreateMembership() {
   const client = useQueryClient();
   return useMutation({
     mutationFn: (payload: CreateMembershipPayload) => createMembership(payload),
-    onSuccess: (created) => invalidateMembership(client, created.compute_allocation_id, created.user_id),
+    onSuccess: (created) =>
+      invalidateMembership(client, created.compute_allocation_id, created.user_id),
   });
 }
 
@@ -143,7 +142,8 @@ export function useUpdateMembership() {
   return useMutation({
     mutationFn: ({ id, patch }: { id: string; patch: UpdateMembershipPayload }) =>
       updateMembership(id, patch),
-    onSuccess: (updated) => invalidateMembership(client, updated.compute_allocation_id, updated.user_id),
+    onSuccess: (updated) =>
+      invalidateMembership(client, updated.compute_allocation_id, updated.user_id),
   });
 }
 
@@ -152,7 +152,8 @@ export function useSetMembershipStatus() {
   return useMutation({
     mutationFn: ({ id, status }: { id: string; status: "ACTIVE" | "INACTIVE" | "DELETED" }) =>
       setMembershipStatus(id, status),
-    onSuccess: (updated) => invalidateMembership(client, updated.compute_allocation_id, updated.user_id),
+    onSuccess: (updated) =>
+      invalidateMembership(client, updated.compute_allocation_id, updated.user_id),
   });
 }
 
@@ -165,10 +166,7 @@ export function useDeleteMembership() {
   });
 }
 
-function invalidateOverrides(
-  client: ReturnType<typeof useQueryClient>,
-  membershipId: string,
-) {
+function invalidateOverrides(client: ReturnType<typeof useQueryClient>, membershipId: string) {
   client.invalidateQueries({ queryKey: memberKeys.overrides(membershipId) });
 }
 
@@ -192,8 +190,7 @@ export function useUpdateMembershipOverride() {
 export function useDeleteMembershipOverride() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: ({ id }: { id: string; membershipId: string }) =>
-      deleteMembershipOverride(id),
+    mutationFn: ({ id }: { id: string; membershipId: string }) => deleteMembershipOverride(id),
     onSuccess: (_, vars) => invalidateOverrides(client, vars.membershipId),
   });
 }

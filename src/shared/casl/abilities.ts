@@ -1,4 +1,4 @@
-import { AbilityBuilder, createMongoAbility, type MongoAbility } from "@casl/ability";
+import { AbilityBuilder, type MongoAbility, createMongoAbility } from "@casl/ability";
 
 export type Role = "guest" | "user" | "pi" | "co_pi" | "allocation_manager" | "admin";
 

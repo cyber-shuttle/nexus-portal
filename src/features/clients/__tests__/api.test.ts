@@ -1,12 +1,12 @@
+import { ApiError } from "@shared/api/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { createClient, deactivateClient, listClients } from "../api";
 import {
   clientSchema,
   createClientPayloadSchema,
   deactivateClientPayloadSchema,
   rotateClientSecretPayloadSchema,
 } from "../schemas";
-import { createClient, deactivateClient, listClients } from "../api";
-import { ApiError } from "@shared/api/client";
 
 const fetchMock = vi.fn();
 vi.stubGlobal("fetch", fetchMock as unknown as typeof fetch);
@@ -118,9 +118,7 @@ describe("createClient", () => {
 
 describe("deactivateClient", () => {
   it("posts the deactivate body", async () => {
-    fetchMock.mockResolvedValueOnce(
-      mockResponse(200, { ...validClient, status: "deactivated" }),
-    );
+    fetchMock.mockResolvedValueOnce(mockResponse(200, { ...validClient, status: "deactivated" }));
     const out = await deactivateClient("client-001", {
       deactivated_by: "admin@nexus.local",
       reason: "Key leaked",

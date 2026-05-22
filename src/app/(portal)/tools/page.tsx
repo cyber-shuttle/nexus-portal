@@ -1,6 +1,6 @@
-import type { Metadata } from "next";
 import { Breadcrumbs } from "@/shared/ui/Breadcrumbs";
 import { ToolsLanding } from "@features/tools/components/ToolsLanding";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Tools · Nexus Portal",

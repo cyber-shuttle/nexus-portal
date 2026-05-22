@@ -1,15 +1,15 @@
 import { apiFetch } from "@shared/api/client";
-import type { Client, ClientListParams, ClientListResponse } from "./types";
 import {
+  type CreateClientPayload,
+  type DeactivateClientPayload,
+  type RotateClientSecretPayload,
   clientListResponseSchema,
   clientSchema,
   createClientPayloadSchema,
   deactivateClientPayloadSchema,
   rotateClientSecretPayloadSchema,
-  type CreateClientPayload,
-  type DeactivateClientPayload,
-  type RotateClientSecretPayload,
 } from "./schemas";
+import type { Client, ClientListParams, ClientListResponse } from "./types";
 
 function toQuery(params: ClientListParams): string {
   const search = new URLSearchParams();
@@ -21,9 +21,7 @@ function toQuery(params: ClientListParams): string {
   return search.toString();
 }
 
-export async function listClients(
-  params: ClientListParams = {},
-): Promise<ClientListResponse> {
+export async function listClients(params: ClientListParams = {}): Promise<ClientListResponse> {
   const q = toQuery(params);
   const raw = await apiFetch(`/clients${q ? `?${q}` : ""}`);
   return clientListResponseSchema.parse(raw);

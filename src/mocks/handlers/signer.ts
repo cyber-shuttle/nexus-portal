@@ -1,8 +1,8 @@
-import { HttpResponse, http } from "msw";
-import { persistSeed, seed } from "../seed";
-import { path } from "./_utils";
 import { revokeCertificatePayloadSchema } from "@features/signer/schemas";
 import { deriveCertificateStatus } from "@features/signer/types";
+import { http, HttpResponse } from "msw";
+import { persistSeed, seed } from "../seed";
+import { path } from "./_utils";
 
 function nowSeconds() {
   return Math.floor(Date.now() / 1000);
@@ -40,8 +40,7 @@ export const signerHandlers = [
       const needle = username.toLowerCase();
       rows = rows.filter(
         (c) =>
-          c.username.toLowerCase().includes(needle) ||
-          c.principal.toLowerCase().includes(needle),
+          c.username.toLowerCase().includes(needle) || c.principal.toLowerCase().includes(needle),
       );
     }
     if (allocationId) {

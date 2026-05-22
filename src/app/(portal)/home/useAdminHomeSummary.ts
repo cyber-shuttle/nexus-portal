@@ -1,9 +1,9 @@
 "use client";
 
-import * as React from "react";
-import { buildAuditTimeline } from "@shared/api/audit-orchestrator";
 import { useAdminChangeRequests, useAdminStats } from "@features/admin/queries";
 import type { AdminHomeSummary } from "@features/home/types";
+import { buildAuditTimeline } from "@shared/api/audit-orchestrator";
+import * as React from "react";
 
 export type AdminHomeResult = {
   data: AdminHomeSummary | undefined;
@@ -18,7 +18,10 @@ export function useAdminHomeSummary(): AdminHomeResult {
   const data = React.useMemo<AdminHomeSummary | undefined>(() => {
     if (!statsQuery.data) return undefined;
     const crs = crQuery.data ?? [];
-    const recent = buildAuditTimeline([], crs.map((r) => ({ request: r, events: [] }))).slice(0, 20);
+    const recent = buildAuditTimeline(
+      [],
+      crs.map((r) => ({ request: r, events: [] })),
+    ).slice(0, 20);
     return {
       total_projects: statsQuery.data.total_projects,
       active_allocations: statsQuery.data.active_allocations,

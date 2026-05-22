@@ -1,22 +1,19 @@
 "use client";
 
-import * as React from "react";
-import Link from "next/link";
-import type { ComputeAllocationChangeRequest } from "@shared/api/domain";
+import { formatDate, formatSU } from "@/lib/format";
 import { DataTable, type DataTableColumn } from "@/shared/ui/DataTable";
+import { EmptyState } from "@/shared/ui/EmptyState";
+import { ErrorState } from "@/shared/ui/ErrorState";
+import { TableSkeleton } from "@/shared/ui/Loading";
 import { StatusBadge, statusBadgeVariantFromChangeRequest } from "@/shared/ui/StatusBadge";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
-import { TableSkeleton } from "@/shared/ui/Loading";
-import { ErrorState } from "@/shared/ui/ErrorState";
-import { EmptyState } from "@/shared/ui/EmptyState";
-import { formatDate, formatSU } from "@/lib/format";
+import type { ComputeAllocationChangeRequest } from "@shared/api/domain";
+import Link from "next/link";
+import * as React from "react";
 
-export type ChangeRequestRowAction =
-  | { kind: "approve" }
-  | { kind: "deny" }
-  | { kind: "view" };
+export type ChangeRequestRowAction = { kind: "approve" } | { kind: "deny" } | { kind: "view" };
 
 export type ChangeRequestsListProps = {
   rows: ComputeAllocationChangeRequest[];
@@ -200,11 +197,7 @@ export function ChangeRequestsList({
         }
         if (!canActOn(row)) {
           return (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onAction(row, { kind: "view" })}
-            >
+            <Button variant="ghost" size="sm" onClick={() => onAction(row, { kind: "view" })}>
               View
             </Button>
           );
@@ -303,9 +296,7 @@ export function ChangeRequestsList({
             type="search"
             placeholder="Search…"
             value={filters.search}
-            onChange={(e) =>
-              setFilters((prev) => ({ ...prev, search: e.target.value }))
-            }
+            onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value }))}
           />
         </div>
       </section>
@@ -317,11 +308,7 @@ export function ChangeRequestsList({
         >
           <span className="text-sm">{selected.size} selected</span>
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onBulkDeny?.(Array.from(selected))}
-            >
+            <Button variant="outline" size="sm" onClick={() => onBulkDeny?.(Array.from(selected))}>
               Bulk deny
             </Button>
             <Button size="sm" onClick={() => onBulkApprove?.(Array.from(selected))}>
@@ -341,11 +328,7 @@ export function ChangeRequestsList({
           description="No requests match your current filters."
         />
       ) : (
-        <DataTable
-          columns={columns}
-          rows={filtered}
-          rowKey={(row) => row.id}
-        />
+        <DataTable columns={columns} rows={filtered} rowKey={(row) => row.id} />
       )}
     </div>
   );

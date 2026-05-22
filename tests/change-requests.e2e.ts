@@ -2,11 +2,8 @@ import { expect, test } from "@playwright/test";
 import { loginAs } from "./fixtures/personas";
 
 test.describe("change requests", () => {
-  test("pi submits an extension request and admin approves it from the queue", async ({
-    page,
-  }) => {
-    const reason =
-      `Need additional SUs for BayesPrism integration milestone push ${Date.now()}`;
+  test("pi submits an extension request and admin approves it from the queue", async ({ page }) => {
+    const reason = `Need additional SUs for BayesPrism integration milestone push ${Date.now()}`;
 
     await loginAs(page, "pi");
     await page.goto("/allocations/alloc-001");
@@ -40,7 +37,10 @@ test.describe("change requests", () => {
       .filter({ hasText: "pi@nexus.local" })
       .filter({ hasText: "PENDING" });
     await expect(pendingRow.first()).toBeVisible({ timeout: 15_000 });
-    await pendingRow.first().getByRole("button", { name: /^Approve/i }).click();
+    await pendingRow
+      .first()
+      .getByRole("button", { name: /^Approve/i })
+      .click();
     await page.getByRole("button", { name: /^Confirm$/i }).click();
     await expect(page.getByText(/Approved 1 request/i)).toBeVisible({ timeout: 10_000 });
   });

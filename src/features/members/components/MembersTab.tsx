@@ -1,18 +1,9 @@
 "use client";
 
-import * as React from "react";
-import { toast } from "sonner";
-import { ApiError } from "@shared/api/client";
-import {
-  useAllocationMembers,
-  useDeleteMembership,
-  useSetMembershipStatus,
-  type AllocationMemberRow,
-} from "../queries";
 import { DataTable, type DataTableColumn } from "@/shared/ui/DataTable";
-import { TableSkeleton } from "@/shared/ui/Loading";
-import { ErrorState } from "@/shared/ui/ErrorState";
 import { EmptyState } from "@/shared/ui/EmptyState";
+import { ErrorState } from "@/shared/ui/ErrorState";
+import { TableSkeleton } from "@/shared/ui/Loading";
 import { StatusBadge, statusBadgeVariantFromAllocationStatus } from "@/shared/ui/StatusBadge";
 import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
 import { Button } from "@/shared/ui/button";
@@ -24,8 +15,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/ui/dialog";
-import { MemberDetailDrawer } from "./MemberDetailDrawer";
+import { ApiError } from "@shared/api/client";
+import * as React from "react";
+import { toast } from "sonner";
+import {
+  type AllocationMemberRow,
+  useAllocationMembers,
+  useDeleteMembership,
+  useSetMembershipStatus,
+} from "../queries";
 import { AddMemberDrawer } from "./AddMemberDrawer";
+import { MemberDetailDrawer } from "./MemberDetailDrawer";
 import { OverridesDrawer, type OverridesDrawerResource } from "./OverridesDrawer";
 
 function initials(row: AllocationMemberRow): string {
@@ -276,11 +276,7 @@ export function MembersTab({
           description="This allocation has no active memberships."
         />
       ) : (
-        <DataTable
-          columns={columns}
-          rows={rows}
-          rowKey={(row) => row.membership.id}
-        />
+        <DataTable columns={columns} rows={rows} rowKey={(row) => row.membership.id} />
       )}
       <MemberDetailDrawer open={drawerOpen} onOpenChange={setDrawerOpen} member={activeMember} />
       <AddMemberDrawer

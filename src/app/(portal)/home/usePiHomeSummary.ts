@@ -1,12 +1,9 @@
 "use client";
 
-import * as React from "react";
-import {
-  useProjectsAsPi,
-  useProjectsComputeAllocations,
-} from "@features/projects/queries";
-import { useHomeSummary, type HomeSummaryResult } from "./useHomeSummary";
 import type { PiHomeSummary } from "@features/home/types";
+import { useProjectsAsPi, useProjectsComputeAllocations } from "@features/projects/queries";
+import * as React from "react";
+import { type HomeSummaryResult, useHomeSummary } from "./useHomeSummary";
 
 export type PiHomeResult = Omit<HomeSummaryResult, "data"> & {
   data: PiHomeSummary | undefined;
@@ -18,9 +15,7 @@ export function usePiHomeSummary(userId: string | undefined): PiHomeResult {
   const projectsQuery = useProjectsAsPi(userId);
   const projects = projectsQuery.data ?? [];
 
-  const projectAllocationsQueries = useProjectsComputeAllocations(
-    projects.map((p) => p.id),
-  );
+  const projectAllocationsQueries = useProjectsComputeAllocations(projects.map((p) => p.id));
 
   const projectRows = React.useMemo(() => {
     return projects.map((project, i) => {
@@ -41,7 +36,12 @@ export function usePiHomeSummary(userId: string | undefined): PiHomeResult {
         pending_cr_count,
       };
     });
-  }, [projects, projectAllocationsQueries, base.usedByAllocation, base.data?.pending_change_requests]);
+  }, [
+    projects,
+    projectAllocationsQueries,
+    base.usedByAllocation,
+    base.data?.pending_change_requests,
+  ]);
 
   const data = React.useMemo<PiHomeSummary | undefined>(() => {
     if (!base.data) return undefined;

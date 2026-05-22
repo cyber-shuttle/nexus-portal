@@ -1,10 +1,10 @@
-import { z } from "zod";
 import {
-  allocationStatusSchema,
-  computeAllocationSchema,
   type AllocationStatus,
   type ComputeAllocation,
+  allocationStatusSchema,
+  computeAllocationSchema,
 } from "@shared/api/domain";
+import { z } from "zod";
 
 export { allocationStatusSchema, computeAllocationSchema };
 export type { AllocationStatus, ComputeAllocation };
@@ -38,6 +38,8 @@ export const computeClusterSchema = z.object({
 });
 
 export type ComputeAllocationResource = z.infer<typeof computeAllocationResourceSchema>;
-export type ComputeAllocationResourceMapping = z.infer<typeof computeAllocationResourceMappingSchema>;
+export type ComputeAllocationResourceMapping = z.infer<
+  typeof computeAllocationResourceMappingSchema
+>;
 export type ComputeAllocationResourceRate = z.infer<typeof computeAllocationResourceRateSchema>;
 export type ComputeCluster = z.infer<typeof computeClusterSchema>;

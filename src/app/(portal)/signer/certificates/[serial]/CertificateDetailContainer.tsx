@@ -1,11 +1,11 @@
 "use client";
 
-import * as React from "react";
-import { useRouter } from "next/navigation";
 import { subject } from "@casl/ability";
-import { useAbility } from "@shared/casl/AbilityProvider";
 import { CertificateDetailDrawer } from "@features/signer/components/CertificateDetailDrawer";
 import { useCertificate } from "@features/signer/queries";
+import { useAbility } from "@shared/casl/AbilityProvider";
+import { useRouter } from "next/navigation";
+import * as React from "react";
 
 export function CertificateDetailContainer({ serial }: { serial: string }) {
   const router = useRouter();

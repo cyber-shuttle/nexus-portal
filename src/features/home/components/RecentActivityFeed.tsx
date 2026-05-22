@@ -1,5 +1,5 @@
-import type { AuditEvent } from "@shared/api/audit-orchestrator";
 import { EmptyState } from "@/shared/ui/EmptyState";
+import type { AuditEvent } from "@shared/api/audit-orchestrator";
 
 function describe(event: AuditEvent): string {
   if (event.kind === "diff") {

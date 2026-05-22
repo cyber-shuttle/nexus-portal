@@ -10,12 +10,12 @@ import {
   updateProposal,
   withdrawProposal,
 } from "./api";
-import type { ProposalListParams } from "./types";
 import type {
   CreateProposalPayload,
   ProposalDecisionPayload,
   UpdateProposalPayload,
 } from "./schemas";
+import type { ProposalListParams } from "./types";
 
 export const proposalKeys = {
   all: ["proposals"] as const,

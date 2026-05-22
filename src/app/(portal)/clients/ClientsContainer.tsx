@@ -1,15 +1,15 @@
 "use client";
 
-import * as React from "react";
-import { useSession } from "next-auth/react";
 import { subject } from "@casl/ability";
-import { useAbility } from "@shared/casl/AbilityProvider";
-import { ClientList } from "@features/clients/components/ClientList";
+import { useAllocations } from "@features/allocations/queries";
 import { ClientDetailDrawer } from "@features/clients/components/ClientDetailDrawer";
+import { ClientList } from "@features/clients/components/ClientList";
 import { CreateClientDialog } from "@features/clients/components/CreateClientDialog";
 import { useClient, useClients } from "@features/clients/queries";
-import { useAllocations } from "@features/allocations/queries";
 import type { ClientStatus } from "@features/clients/types";
+import { useAbility } from "@shared/casl/AbilityProvider";
+import { useSession } from "next-auth/react";
+import * as React from "react";
 
 export function ClientsContainer() {
   const { data: session } = useSession();

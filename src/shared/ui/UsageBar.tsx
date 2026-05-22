@@ -1,5 +1,5 @@
-import * as React from "react";
 import { cn } from "@/lib/utils";
+import * as React from "react";
 
 export type UsageBarProps = {
   value: number;
@@ -16,14 +16,7 @@ function thresholdColor(ratio: number): string {
   return "bg-[color:var(--nexus-blue-500)]";
 }
 
-export function UsageBar({
-  value,
-  max,
-  label,
-  ariaLabel,
-  className,
-  size = "md",
-}: UsageBarProps) {
+export function UsageBar({ value, max, label, ariaLabel, className, size = "md" }: UsageBarProps) {
   const safeMax = max <= 0 ? 1 : max;
   const ratio = Math.min(1, Math.max(0, value / safeMax));
   const pct = Math.round(ratio * 1000) / 10;
@@ -95,10 +88,7 @@ export function SharedUsageBar({
         tabIndex={0}
         className="flex h-2.5 w-full overflow-hidden rounded-full bg-muted"
       >
-        <div
-          className="h-full bg-[color:var(--nexus-blue-500)]"
-          style={{ width: `${minePct}%` }}
-        />
+        <div className="h-full bg-[color:var(--nexus-blue-500)]" style={{ width: `${minePct}%` }} />
         <div
           className="h-full bg-[color:var(--nexus-blue-300)] bg-[image:repeating-linear-gradient(45deg,transparent_0_4px,rgba(255,255,255,0.45)_4px_8px)]"
           style={{ width: `${restPct}%` }}

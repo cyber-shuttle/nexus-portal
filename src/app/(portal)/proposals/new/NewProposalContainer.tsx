@@ -1,14 +1,14 @@
 "use client";
 
-import * as React from "react";
-import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
-import { useAbility } from "@shared/casl/AbilityProvider";
-import { useProjectsAsPi } from "@features/projects/queries";
-import { useAllocations } from "@features/allocations/queries";
-import { ProposalWizard } from "@features/proposals/components/ProposalWizard";
 import { ErrorState } from "@/shared/ui/ErrorState";
 import { CenteredSpinner } from "@/shared/ui/Loading";
+import { useAllocations } from "@features/allocations/queries";
+import { useProjectsAsPi } from "@features/projects/queries";
+import { ProposalWizard } from "@features/proposals/components/ProposalWizard";
+import { useAbility } from "@shared/casl/AbilityProvider";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import * as React from "react";
 
 export function NewProposalContainer() {
   const router = useRouter();
@@ -21,7 +21,7 @@ export function NewProposalContainer() {
   const projects = projectsQuery.data ?? [];
 
   const allocationIds = React.useMemo(
-    () => (session?.user?.myPiAllocations ?? []),
+    () => session?.user?.myPiAllocations ?? [],
     [session?.user?.myPiAllocations],
   );
   const allocationsQuery = useAllocations(allocationIds);
@@ -41,12 +41,7 @@ export function NewProposalContainer() {
   }, [allocationsQuery.data]);
 
   if (!canCreate) {
-    return (
-      <ErrorState
-        heading="Not permitted"
-        message="Only project PIs can create proposals."
-      />
-    );
+    return <ErrorState heading="Not permitted" message="Only project PIs can create proposals." />;
   }
 
   if (projectsQuery.isLoading) return <CenteredSpinner label="Loading projects" />;

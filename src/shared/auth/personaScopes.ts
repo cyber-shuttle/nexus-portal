@@ -17,9 +17,7 @@ export function derivePersonaScopes(userId: string): PersonaScopes {
   const myPiAllocations = Array.from(
     new Set(
       seed.allocations
-        .filter(
-          (a) => piProjectIds.has(a.project_id) || piMembershipAllocationIds.has(a.id),
-        )
+        .filter((a) => piProjectIds.has(a.project_id) || piMembershipAllocationIds.has(a.id))
         .map((a) => a.id),
     ),
   ).sort();
@@ -27,11 +25,7 @@ export function derivePersonaScopes(userId: string): PersonaScopes {
   const assignedAllocations = Array.from(
     new Set(
       seed.memberships
-        .filter(
-          (m) =>
-            m.user_id === userId &&
-            seed.membershipRoles[m.id] === "allocation_manager",
-        )
+        .filter((m) => m.user_id === userId && seed.membershipRoles[m.id] === "allocation_manager")
         .map((m) => m.compute_allocation_id),
     ),
   ).sort();

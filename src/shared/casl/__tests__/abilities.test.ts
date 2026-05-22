@@ -21,12 +21,10 @@ describe("defineAbilityForRole", () => {
 
   it("pi can manage memberships only for their own allocations", () => {
     const ability = defineAbilityForRole("pi", { myPiAllocations: ["alloc-001"] });
-    expect(
-      ability.can("manage", subject("Membership", { allocationId: "alloc-001" })),
-    ).toBe(true);
-    expect(
-      ability.can("manage", subject("Membership", { allocationId: "alloc-other" })),
-    ).toBe(false);
+    expect(ability.can("manage", subject("Membership", { allocationId: "alloc-001" }))).toBe(true);
+    expect(ability.can("manage", subject("Membership", { allocationId: "alloc-other" }))).toBe(
+      false,
+    );
     expect(ability.can("create", "Proposal")).toBe(true);
   });
 
@@ -34,12 +32,12 @@ describe("defineAbilityForRole", () => {
     const ability = defineAbilityForRole("allocation_manager", {
       assignedAllocations: ["alloc-200"],
     });
-    expect(
-      ability.can("approve", subject("ChangeRequest", { allocationId: "alloc-200" })),
-    ).toBe(true);
-    expect(
-      ability.can("approve", subject("ChangeRequest", { allocationId: "alloc-999" })),
-    ).toBe(false);
+    expect(ability.can("approve", subject("ChangeRequest", { allocationId: "alloc-200" }))).toBe(
+      true,
+    );
+    expect(ability.can("approve", subject("ChangeRequest", { allocationId: "alloc-999" }))).toBe(
+      false,
+    );
   });
 
   it("guest has no abilities", () => {

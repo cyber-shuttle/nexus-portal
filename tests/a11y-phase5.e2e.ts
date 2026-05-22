@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type Page } from "@playwright/test";
+import { type Page, expect, test } from "@playwright/test";
 import { loginAs } from "./fixtures/personas";
 
 async function axeSweep(page: Page) {

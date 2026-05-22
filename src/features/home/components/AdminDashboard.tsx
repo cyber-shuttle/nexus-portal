@@ -1,13 +1,13 @@
-import Link from "next/link";
-import type { AdminHomeSummary } from "../types";
+import { formatSU } from "@/lib/format";
+import { internalLinks } from "@/lib/links";
+import { StackedAreaUsage } from "@/shared/charts/StackedAreaUsage";
+import { EmptyState } from "@/shared/ui/EmptyState";
+import { ErrorState } from "@/shared/ui/ErrorState";
+import { CenteredSpinner } from "@/shared/ui/Loading";
 import { StatCard } from "@/shared/ui/StatCard";
 import { StatusBadge } from "@/shared/ui/StatusBadge";
-import { CenteredSpinner } from "@/shared/ui/Loading";
-import { ErrorState } from "@/shared/ui/ErrorState";
-import { EmptyState } from "@/shared/ui/EmptyState";
-import { StackedAreaUsage } from "@/shared/charts/StackedAreaUsage";
-import { internalLinks } from "@/lib/links";
-import { formatSU } from "@/lib/format";
+import Link from "next/link";
+import type { AdminHomeSummary } from "../types";
 import { PersonaPill } from "./PersonaPill";
 import { RecentActivityFeed } from "./RecentActivityFeed";
 
@@ -53,10 +53,7 @@ export function AdminDashboard({ firstName, summary, isLoading, error }: AdminDa
           title="SUs allocated (qtr)"
           value={formatSU(summary.total_su_allocated_quarter)}
         />
-        <StatCard
-          title="SUs charged (qtr)"
-          value={formatSU(summary.total_su_charged_quarter)}
-        />
+        <StatCard title="SUs charged (qtr)" value={formatSU(summary.total_su_charged_quarter)} />
         <StatCard title="Pending proposals" value={summary.pending_proposals} />
       </section>
 

@@ -1,6 +1,8 @@
 "use client";
 
-import Link from "next/link";
+import { cn } from "@/lib/utils";
+import { Badge } from "@/shared/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
 import {
   ActivityIcon,
   ArrowRightIcon,
@@ -10,9 +12,7 @@ import {
   RocketIcon,
   TerminalIcon,
 } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
-import { Badge } from "@/shared/ui/badge";
-import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 type ToolCard = {
   id: string;
@@ -113,7 +113,11 @@ export function ToolsLanding() {
             </CardHeader>
             <CardContent className="pt-0">
               <p className="text-xs text-muted-foreground">
-                {disabled ? "Available after Phase 7 ships." : tool.external ? "Opens in a new tab." : "Open tool"}
+                {disabled
+                  ? "Available after Phase 7 ships."
+                  : tool.external
+                    ? "Opens in a new tab."
+                    : "Open tool"}
               </p>
             </CardContent>
           </Card>
@@ -121,11 +125,7 @@ export function ToolsLanding() {
 
         if (disabled) {
           return (
-            <div
-              key={tool.id}
-              aria-disabled
-              title="Available after Phase 7 ships"
-            >
+            <div key={tool.id} aria-disabled title="Available after Phase 7 ships">
               {inner}
             </div>
           );

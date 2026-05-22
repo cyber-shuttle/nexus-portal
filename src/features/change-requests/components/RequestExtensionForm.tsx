@@ -1,28 +1,20 @@
 "use client";
 
-import * as React from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { toast } from "sonner";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { ApiError } from "@shared/api/client";
+import * as React from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
 import { useCreateChangeRequest } from "../queries";
 
 const REASON_MIN = 20;
 
-const reasonField = z
-  .string()
-  .min(REASON_MIN, `Reason must be at least ${REASON_MIN} characters`);
+const reasonField = z.string().min(REASON_MIN, `Reason must be at least ${REASON_MIN} characters`);
 
 const requestExtensionSchema = z.discriminatedUnion("requested_change_type", [
   z.object({
@@ -138,10 +130,7 @@ export function RequestExtensionForm({
     <form onSubmit={onSubmit} className="space-y-4" aria-label="Request extension form">
       <div className="space-y-2">
         <Label htmlFor="cr-type">Change type</Label>
-        <Select
-          value={changeType}
-          onValueChange={(v) => onChangeTypeChange(v as ChangeType)}
-        >
+        <Select value={changeType} onValueChange={(v) => onChangeTypeChange(v as ChangeType)}>
           <SelectTrigger id="cr-type" aria-label="Change type">
             <SelectValue />
           </SelectTrigger>
@@ -163,9 +152,7 @@ export function RequestExtensionForm({
             placeholder="e.g. 10000"
             {...form.register("requested_amount", { valueAsNumber: true })}
           />
-          {amountError ? (
-            <p className="text-xs text-destructive">{amountError}</p>
-          ) : null}
+          {amountError ? <p className="text-xs text-destructive">{amountError}</p> : null}
         </div>
       ) : null}
 
@@ -173,9 +160,7 @@ export function RequestExtensionForm({
         <div className="space-y-2">
           <Label htmlFor="cr-end">Requested new end date</Label>
           <Input id="cr-end" type="date" {...form.register("requested_end_date")} />
-          {endDateError ? (
-            <p className="text-xs text-destructive">{endDateError}</p>
-          ) : null}
+          {endDateError ? <p className="text-xs text-destructive">{endDateError}</p> : null}
         </div>
       ) : null}
 

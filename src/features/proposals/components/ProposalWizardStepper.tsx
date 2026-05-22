@@ -1,8 +1,8 @@
 "use client";
 
-import * as React from "react";
-import { CheckIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CheckIcon } from "lucide-react";
+import * as React from "react";
 
 export type ProposalWizardStep = {
   id: string;
@@ -39,9 +39,7 @@ export function ProposalWizardStepper({
                 aria-current={isCurrent ? "step" : undefined}
                 className={cn(
                   "group flex w-full items-start gap-3 rounded-md border border-transparent px-3 py-2 text-left text-sm transition-colors",
-                  isCurrent
-                    ? "border-border bg-muted/40"
-                    : "hover:bg-muted/20",
+                  isCurrent ? "border-border bg-muted/40" : "hover:bg-muted/20",
                   !canSelect && "cursor-not-allowed opacity-60",
                 )}
               >
@@ -61,9 +59,7 @@ export function ProposalWizardStepper({
                 <span className="space-y-0.5">
                   <span className="block font-medium leading-tight">{step.label}</span>
                   {step.description ? (
-                    <span className="block text-xs text-muted-foreground">
-                      {step.description}
-                    </span>
+                    <span className="block text-xs text-muted-foreground">{step.description}</span>
                   ) : null}
                 </span>
               </button>

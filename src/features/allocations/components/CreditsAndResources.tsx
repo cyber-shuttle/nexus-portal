@@ -1,19 +1,15 @@
 "use client";
 
-import * as React from "react";
-import { useQueries } from "@tanstack/react-query";
-import {
-  useAllocation,
-  useAllocationResources,
-  allocationKeys,
-} from "../queries";
-import { getResourceRatesEffective } from "../api";
+import { formatDate, formatRate, formatSU } from "@/lib/format";
+import { EmptyState } from "@/shared/ui/EmptyState";
+import { ErrorState } from "@/shared/ui/ErrorState";
+import { CardSkeleton } from "@/shared/ui/Loading";
 import { UsageBar } from "@/shared/ui/UsageBar";
 import { Button } from "@/shared/ui/button";
-import { CardSkeleton } from "@/shared/ui/Loading";
-import { ErrorState } from "@/shared/ui/ErrorState";
-import { EmptyState } from "@/shared/ui/EmptyState";
-import { formatDate, formatRate, formatSU } from "@/lib/format";
+import { useQueries } from "@tanstack/react-query";
+import * as React from "react";
+import { getResourceRatesEffective } from "../api";
+import { allocationKeys, useAllocation, useAllocationResources } from "../queries";
 
 export type CreditsAndResourcesProps = {
   allocationId: string;
@@ -65,11 +61,7 @@ export function CreditsAndResources({
             Per-resource allocation, usage, and effective rate.
           </p>
         </div>
-        <Button
-          variant="outline"
-          aria-label="Request extension"
-          onClick={onRequestExtension}
-        >
+        <Button variant="outline" aria-label="Request extension" onClick={onRequestExtension}>
           Request extension
         </Button>
       </div>
@@ -120,7 +112,6 @@ export function CreditsAndResources({
           })}
         </div>
       )}
-
     </div>
   );
 }

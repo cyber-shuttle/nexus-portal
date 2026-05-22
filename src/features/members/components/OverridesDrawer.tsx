@@ -1,12 +1,12 @@
 "use client";
 
-import * as React from "react";
-import { toast } from "sonner";
-import { ApiError } from "@shared/api/client";
+import { SideDrawer } from "@/shared/ui/SideDrawer";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
-import { SideDrawer } from "@/shared/ui/SideDrawer";
+import { ApiError } from "@shared/api/client";
+import * as React from "react";
+import { toast } from "sonner";
 import {
   useCreateMembershipOverride,
   useDeleteMembershipOverride,
@@ -67,8 +67,7 @@ export function OverridesDrawer({
       toast.success("Override added");
       setDraft({ resourceId: resources[0]?.id ?? "", amount: "", time: "" });
     } catch (err) {
-      const msg =
-        err instanceof ApiError ? `Failed (${err.status}): ${err.message}` : "Failed";
+      const msg = err instanceof ApiError ? `Failed (${err.status}): ${err.message}` : "Failed";
       toast.error(msg);
     }
   }
@@ -84,8 +83,7 @@ export function OverridesDrawer({
       });
       toast.success("Override updated");
     } catch (err) {
-      const msg =
-        err instanceof ApiError ? `Failed (${err.status}): ${err.message}` : "Failed";
+      const msg = err instanceof ApiError ? `Failed (${err.status}): ${err.message}` : "Failed";
       toast.error(msg);
     }
   }
@@ -95,8 +93,7 @@ export function OverridesDrawer({
       await deleteMutation.mutateAsync({ id, membershipId });
       toast.success("Override removed");
     } catch (err) {
-      const msg =
-        err instanceof ApiError ? `Failed (${err.status}): ${err.message}` : "Failed";
+      const msg = err instanceof ApiError ? `Failed (${err.status}): ${err.message}` : "Failed";
       toast.error(msg);
     }
   }
@@ -146,9 +143,7 @@ export function OverridesDrawer({
                         id={`amount-${o.id}`}
                         type="number"
                         defaultValue={o.override_resource_amount}
-                        onBlur={(e) =>
-                          onUpdate(o.id, { amount: Number(e.currentTarget.value) })
-                        }
+                        onBlur={(e) => onUpdate(o.id, { amount: Number(e.currentTarget.value) })}
                       />
                     </div>
                     <div className="space-y-1">
@@ -159,9 +154,7 @@ export function OverridesDrawer({
                         id={`time-${o.id}`}
                         type="number"
                         defaultValue={o.override_resource_time}
-                        onBlur={(e) =>
-                          onUpdate(o.id, { time: Number(e.currentTarget.value) })
-                        }
+                        onBlur={(e) => onUpdate(o.id, { time: Number(e.currentTarget.value) })}
                       />
                     </div>
                   </div>

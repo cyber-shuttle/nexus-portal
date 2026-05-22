@@ -1,17 +1,17 @@
 "use client";
 
-import * as React from "react";
-import { useQueries } from "@tanstack/react-query";
-import { useMembershipsForUser } from "@features/members/queries";
-import { allocationKeys } from "@features/allocations/queries";
 import { getAllocation } from "@features/allocations/api";
-import { usageKeys } from "@features/usage/queries";
-import { getAllocationUsages } from "@features/usage/api";
-import { useChangeRequestsForUser } from "@features/change-requests/queries";
-import { auditKeys } from "@features/audit/queries";
+import { allocationKeys } from "@features/allocations/queries";
 import { getAllocationDiffs } from "@features/audit/api";
+import { auditKeys } from "@features/audit/queries";
+import { useChangeRequestsForUser } from "@features/change-requests/queries";
 import { aggregateHomeSummary } from "@features/home/aggregator";
 import type { HomeSummary } from "@features/home/types";
+import { useMembershipsForUser } from "@features/members/queries";
+import { getAllocationUsages } from "@features/usage/api";
+import { usageKeys } from "@features/usage/queries";
+import { useQueries } from "@tanstack/react-query";
+import * as React from "react";
 
 const HOME_USAGE_LIMIT = 1000;
 
@@ -71,12 +71,15 @@ export function useHomeSummary(userId: string | undefined): HomeSummaryResult {
 
   const data = React.useMemo<HomeSummary | undefined>(() => {
     if (allocationIds.length > 0 && allocations.length === 0) return undefined;
-    const usagesByAllocation = new Map<string, Array<{
-      compute_allocation_id: string;
-      compute_allocation_resource_id: string;
-      used_su_amount: number;
-      last_updated: string;
-    }>>();
+    const usagesByAllocation = new Map<
+      string,
+      Array<{
+        compute_allocation_id: string;
+        compute_allocation_resource_id: string;
+        used_su_amount: number;
+        last_updated: string;
+      }>
+    >();
     allocationIds.forEach((id, i) => {
       usagesByAllocation.set(id, usagesQueries[i]?.data ?? []);
     });

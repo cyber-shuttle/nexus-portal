@@ -1,23 +1,10 @@
 "use client";
 
-import * as React from "react";
-import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
-import { toast } from "sonner";
-import { ApiError } from "@shared/api/client";
-import { useAbility } from "@shared/casl/AbilityProvider";
-import {
-  useApproveProposal,
-  useDenyProposal,
-  useProposal,
-  useWithdrawProposal,
-} from "@features/proposals/queries";
-import type { ProposalStatus } from "@features/proposals/types";
 import { ErrorState } from "@/shared/ui/ErrorState";
 import { CenteredSpinner } from "@/shared/ui/Loading";
-import { Card } from "@/shared/ui/card";
-import { Button } from "@/shared/ui/button";
 import { StatusBadge, type StatusBadgeVariant } from "@/shared/ui/StatusBadge";
+import { Button } from "@/shared/ui/button";
+import { Card } from "@/shared/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -26,6 +13,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/ui/dialog";
+import {
+  useApproveProposal,
+  useDenyProposal,
+  useProposal,
+  useWithdrawProposal,
+} from "@features/proposals/queries";
+import type { ProposalStatus } from "@features/proposals/types";
+import { ApiError } from "@shared/api/client";
+import { useAbility } from "@shared/casl/AbilityProvider";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import * as React from "react";
+import { toast } from "sonner";
 
 function statusVariant(status: ProposalStatus): StatusBadgeVariant {
   if (status === "APPROVED") return "approved";
@@ -65,8 +65,7 @@ export function ProposalDetailContainer({ proposalId }: { proposalId: string }) 
   const isOwner = proposal.requester_id === userId;
   const canDecide =
     isAdmin && (proposal.status === "SUBMITTED" || proposal.status === "UNDER_REVIEW");
-  const canWithdraw =
-    isOwner && (proposal.status === "DRAFT" || proposal.status === "SUBMITTED");
+  const canWithdraw = isOwner && (proposal.status === "DRAFT" || proposal.status === "SUBMITTED");
 
   async function runDecision() {
     if (!decision) return;
@@ -107,18 +106,15 @@ export function ProposalDetailContainer({ proposalId }: { proposalId: string }) 
         <div>
           <h1 className="font-heading text-2xl font-semibold">{proposal.title}</h1>
           <p className="text-sm text-muted-foreground">
-            {proposal.project_title} · submitted{" "}
-            {new Date(proposal.created_at).toLocaleString()} by {proposal.requester_id}
+            {proposal.project_title} · submitted {new Date(proposal.created_at).toLocaleString()} by{" "}
+            {proposal.requester_id}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <StatusBadge variant={statusVariant(proposal.status)} label={proposal.status} />
           {canDecide ? (
             <>
-              <Button
-                size="sm"
-                onClick={() => setDecision({ kind: "approve", note: "" })}
-              >
+              <Button size="sm" onClick={() => setDecision({ kind: "approve", note: "" })}>
                 Approve
               </Button>
               <Button
@@ -131,7 +127,12 @@ export function ProposalDetailContainer({ proposalId }: { proposalId: string }) 
             </>
           ) : null}
           {canWithdraw ? (
-            <Button size="sm" variant="ghost" onClick={runWithdraw} disabled={withdrawMutation.isPending}>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={runWithdraw}
+              disabled={withdrawMutation.isPending}
+            >
               Withdraw
             </Button>
           ) : null}
@@ -231,9 +232,7 @@ export function ProposalDetailContainer({ proposalId }: { proposalId: string }) 
           <textarea
             rows={4}
             value={decision?.note ?? ""}
-            onChange={(e) =>
-              setDecision((d) => (d ? { ...d, note: e.currentTarget.value } : d))
-            }
+            onChange={(e) => setDecision((d) => (d ? { ...d, note: e.currentTarget.value } : d))}
             className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
             aria-label="Decision note"
           />
@@ -241,7 +240,10 @@ export function ProposalDetailContainer({ proposalId }: { proposalId: string }) 
             <Button variant="ghost" onClick={() => setDecision(null)}>
               Cancel
             </Button>
-            <Button onClick={runDecision} disabled={approveMutation.isPending || denyMutation.isPending}>
+            <Button
+              onClick={runDecision}
+              disabled={approveMutation.isPending || denyMutation.isPending}
+            >
               Confirm
             </Button>
           </DialogFooter>

@@ -1,5 +1,5 @@
-import { HttpResponse, http } from "msw";
-import { seed, getAllocationUsageTotalRow, getAllocationUserUsageTotalRow } from "../seed";
+import { http, HttpResponse } from "msw";
+import { getAllocationUsageTotalRow, getAllocationUserUsageTotalRow, seed } from "../seed";
 import { path, paginate } from "./_utils";
 
 export const allocationHandlers = [

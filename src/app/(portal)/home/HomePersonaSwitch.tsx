@@ -1,11 +1,11 @@
 "use client";
 
+import { AdminDashboard } from "@features/home/components/AdminDashboard";
+import { PiDashboard } from "@features/home/components/PiDashboard";
+import { ResearcherDashboard } from "@features/home/components/ResearcherDashboard";
+import { useAdminHomeSummary } from "./useAdminHomeSummary";
 import { useHomeSummary } from "./useHomeSummary";
 import { usePiHomeSummary } from "./usePiHomeSummary";
-import { useAdminHomeSummary } from "./useAdminHomeSummary";
-import { ResearcherDashboard } from "@features/home/components/ResearcherDashboard";
-import { PiDashboard } from "@features/home/components/PiDashboard";
-import { AdminDashboard } from "@features/home/components/AdminDashboard";
 
 export type HomePersona = "researcher" | "pi" | "admin";
 

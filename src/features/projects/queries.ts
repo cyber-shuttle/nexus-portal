@@ -7,8 +7,7 @@ export const projectKeys = {
   all: ["projects"] as const,
   detail: (id: string) => [...projectKeys.all, "detail", id] as const,
   asPi: (userId: string) => [...projectKeys.all, "as-pi", userId] as const,
-  allocations: (projectId: string) =>
-    [...projectKeys.all, "allocations", projectId] as const,
+  allocations: (projectId: string) => [...projectKeys.all, "allocations", projectId] as const,
 };
 
 export function useProject(projectId: string | undefined) {
@@ -29,9 +28,7 @@ export function useProjectsAsPi(userId: string | undefined) {
 
 export function useProjectComputeAllocations(projectId: string | undefined) {
   return useQuery({
-    queryKey: projectId
-      ? projectKeys.allocations(projectId)
-      : ["projects", "allocations", "none"],
+    queryKey: projectId ? projectKeys.allocations(projectId) : ["projects", "allocations", "none"],
     queryFn: () => getProjectComputeAllocations(projectId as string),
     enabled: Boolean(projectId),
   });

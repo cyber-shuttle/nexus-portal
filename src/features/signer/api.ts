@@ -1,11 +1,11 @@
 import { apiFetch } from "@shared/api/client";
-import type { Certificate, CertificateListParams, CertificateListResponse } from "./types";
 import {
+  type RevokeCertificatePayload,
   certificateListResponseSchema,
   certificateSchema,
   revokeCertificatePayloadSchema,
-  type RevokeCertificatePayload,
 } from "./schemas";
+import type { Certificate, CertificateListParams, CertificateListResponse } from "./types";
 
 function toQuery(params: CertificateListParams): string {
   const search = new URLSearchParams();

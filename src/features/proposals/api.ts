@@ -1,6 +1,5 @@
-import { z } from "zod";
 import { apiFetch } from "@shared/api/client";
-import type { Proposal, ProposalListParams } from "./types";
+import { z } from "zod";
 import {
   type CreateProposalPayload,
   type ProposalDecisionPayload,
@@ -10,6 +9,7 @@ import {
   proposalSchema,
   updateProposalPayloadSchema,
 } from "./schemas";
+import type { Proposal, ProposalListParams } from "./types";
 
 function toQuery(params: ProposalListParams): string {
   const search = new URLSearchParams();
@@ -42,10 +42,7 @@ export async function createProposal(payload: CreateProposalPayload): Promise<Pr
   return proposalSchema.parse(raw);
 }
 
-export async function updateProposal(
-  id: string,
-  patch: UpdateProposalPayload,
-): Promise<Proposal> {
+export async function updateProposal(id: string, patch: UpdateProposalPayload): Promise<Proposal> {
   const parsed = updateProposalPayloadSchema.parse(patch);
   const raw = await apiFetch(`/proposals/${id}`, { method: "PUT", body: parsed });
   return proposalSchema.parse(raw);

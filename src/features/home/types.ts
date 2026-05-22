@@ -1,9 +1,9 @@
+import type { AuditEvent } from "@shared/api/audit-orchestrator";
 import type {
   ComputeAllocation,
   ComputeAllocationChangeRequest,
   Project,
 } from "@shared/api/domain";
-import type { AuditEvent } from "@shared/api/audit-orchestrator";
 
 export type ResourceBreakdown = {
   resource_id: string;

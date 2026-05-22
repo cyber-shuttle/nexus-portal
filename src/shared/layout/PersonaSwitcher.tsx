@@ -1,7 +1,6 @@
 "use client";
 
-import { signIn, signOut, useSession } from "next-auth/react";
-import { UserCog } from "lucide-react";
+import { Button } from "@/shared/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,7 +10,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
-import { Button } from "@/shared/ui/button";
+import { UserCog } from "lucide-react";
+import { signIn, signOut, useSession } from "next-auth/react";
 
 const personas = [
   { id: "researcher", email: "researcher@nexus.local", label: "Researcher" },

@@ -1,7 +1,5 @@
 "use client";
 
-import * as React from "react";
-import { toast } from "sonner";
 import { Button } from "@/shared/ui/button";
 import {
   Dialog,
@@ -16,6 +14,8 @@ import {
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { ApiError } from "@shared/api/client";
+import * as React from "react";
+import { toast } from "sonner";
 import { useCreateClient } from "../queries";
 
 export type CreateClientDialogProps = {
@@ -68,8 +68,8 @@ export function CreateClientDialog({
           <DialogHeader>
             <DialogTitle>New client</DialogTitle>
             <DialogDescription>
-              Mint a client_id / client_secret pair tied to an allocation. The secret is shown
-              once on creation in a real deployment; here only the last-4 is surfaced.
+              Mint a client_id / client_secret pair tied to an allocation. The secret is shown once
+              on creation in a real deployment; here only the last-4 is surfaced.
             </DialogDescription>
           </DialogHeader>
 
@@ -109,7 +109,13 @@ export function CreateClientDialog({
           </div>
 
           <DialogFooter>
-            <DialogClose render={<Button variant="outline" type="button">Cancel</Button>} />
+            <DialogClose
+              render={
+                <Button variant="outline" type="button">
+                  Cancel
+                </Button>
+              }
+            />
             <Button type="submit" disabled={!valid || mutation.isPending}>
               {mutation.isPending ? "Creating…" : "Create client"}
             </Button>

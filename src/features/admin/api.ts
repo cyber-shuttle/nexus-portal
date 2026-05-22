@@ -1,9 +1,9 @@
-import { z } from "zod";
 import { apiFetch } from "@shared/api/client";
 import {
   type ComputeAllocationChangeRequest,
   computeAllocationChangeRequestSchema,
 } from "@shared/api/domain";
+import { z } from "zod";
 import { type AdminStats, adminStatsSchema } from "./schemas";
 
 export async function getAdminStats(): Promise<AdminStats> {

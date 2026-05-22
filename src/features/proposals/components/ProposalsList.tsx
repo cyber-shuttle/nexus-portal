@@ -1,15 +1,15 @@
 "use client";
 
-import * as React from "react";
-import Link from "next/link";
 import { DataTable, type DataTableColumn } from "@/shared/ui/DataTable";
-import { TableSkeleton } from "@/shared/ui/Loading";
-import { ErrorState } from "@/shared/ui/ErrorState";
 import { EmptyState } from "@/shared/ui/EmptyState";
+import { ErrorState } from "@/shared/ui/ErrorState";
+import { TableSkeleton } from "@/shared/ui/Loading";
 import { StatusBadge, type StatusBadgeVariant } from "@/shared/ui/StatusBadge";
+import { buttonVariants } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
-import { buttonVariants } from "@/shared/ui/button";
+import Link from "next/link";
+import * as React from "react";
 import { PROPOSAL_STATUSES, type Proposal, type ProposalStatus } from "../types";
 
 function statusVariant(status: ProposalStatus): StatusBadgeVariant {
@@ -184,12 +184,7 @@ export function ProposalsList({ rows, isLoading, error, canCreate, onRetry }: Pr
           }
         />
       ) : (
-        <DataTable
-          columns={columns}
-          rows={filtered}
-          rowKey={(row) => row.id}
-          caption="Proposals"
-        />
+        <DataTable columns={columns} rows={filtered} rowKey={(row) => row.id} caption="Proposals" />
       )}
     </section>
   );

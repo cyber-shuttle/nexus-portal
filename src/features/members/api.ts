@@ -1,5 +1,6 @@
 import { apiFetch } from "@shared/api/client";
 import { z } from "zod";
+import { MEMBERSHIP_ROLES } from "./roles";
 import {
   type ComputeAllocationMembership,
   type ComputeAllocationMembershipResourceOverride,
@@ -10,7 +11,6 @@ import {
   userIdentitySchema,
   userSchema,
 } from "./schemas";
-import { MEMBERSHIP_ROLES } from "./roles";
 
 export async function getMembershipsForAllocation(
   allocId: string,
@@ -29,9 +29,7 @@ export async function getMembershipsForUser(
 export async function getMembershipOverrides(
   membershipId: string,
 ): Promise<ComputeAllocationMembershipResourceOverride[]> {
-  const raw = await apiFetch(
-    `/compute-allocation-memberships/${membershipId}/resource-overrides`,
-  );
+  const raw = await apiFetch(`/compute-allocation-memberships/${membershipId}/resource-overrides`);
   return z.array(computeAllocationMembershipResourceOverrideSchema).parse(raw ?? []);
 }
 

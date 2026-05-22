@@ -1,7 +1,7 @@
-import * as React from "react";
-import { AlertCircleIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/shared/ui/button";
+import { AlertCircleIcon } from "lucide-react";
+import * as React from "react";
 
 export type ErrorStateProps = {
   heading?: string;
@@ -28,9 +28,7 @@ export function ErrorState({
     >
       <AlertCircleIcon className="size-8 text-[color:var(--nexus-red-600)]" aria-hidden="true" />
       <h3 className="font-heading text-base font-medium text-foreground">{heading}</h3>
-      {message ? (
-        <p className="max-w-md text-sm text-muted-foreground">{message}</p>
-      ) : null}
+      {message ? <p className="max-w-md text-sm text-muted-foreground">{message}</p> : null}
       {onRetry ? (
         <Button variant="outline" onClick={onRetry}>
           {retryLabel}

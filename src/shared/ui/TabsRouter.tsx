@@ -1,9 +1,9 @@
 "use client";
 
-import * as React from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Tabs as TabsPrimitive } from "@base-ui/react/tabs";
 import { cn } from "@/lib/utils";
+import { Tabs as TabsPrimitive } from "@base-ui/react/tabs";
+import { useRouter, useSearchParams } from "next/navigation";
+import * as React from "react";
 
 export type TabsRouterTab = {
   value: string;

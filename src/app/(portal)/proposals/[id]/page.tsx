@@ -1,5 +1,5 @@
-import type { Metadata } from "next";
 import { Breadcrumbs } from "@/shared/ui/Breadcrumbs";
+import type { Metadata } from "next";
 import { ProposalDetailContainer } from "./ProposalDetailContainer";
 
 export const metadata: Metadata = {
@@ -14,12 +14,7 @@ export default async function ProposalDetailPage({
   const { id } = await params;
   return (
     <div className="space-y-6">
-      <Breadcrumbs
-        items={[
-          { label: "Proposals", href: "/proposals" },
-          { label: id },
-        ]}
-      />
+      <Breadcrumbs items={[{ label: "Proposals", href: "/proposals" }, { label: id }]} />
       <ProposalDetailContainer proposalId={id} />
     </div>
   );

@@ -1,14 +1,14 @@
 "use client";
 
-import * as React from "react";
-import { toast } from "sonner";
-import { CheckCircle2Icon } from "lucide-react";
-import { ApiError } from "@shared/api/client";
-import { Card } from "@/shared/ui/card";
+import { StatusBadge } from "@/shared/ui/StatusBadge";
 import { Button } from "@/shared/ui/button";
+import { Card } from "@/shared/ui/card";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
-import { StatusBadge } from "@/shared/ui/StatusBadge";
+import { ApiError } from "@shared/api/client";
+import { CheckCircle2Icon } from "lucide-react";
+import * as React from "react";
+import { toast } from "sonner";
 import { useTransferCredits } from "../queries";
 import type { CreditTransferResult } from "../types";
 
@@ -140,9 +140,7 @@ export function CreditTransferWizard({
       });
       setResult(res);
       setStep("result");
-      toast.success(
-        `Transferred ${res.su_amount.toLocaleString()} SU — ${res.transfer_id}`,
-      );
+      toast.success(`Transferred ${res.su_amount.toLocaleString()} SU — ${res.transfer_id}`);
     } catch (err) {
       const msg =
         err instanceof ApiError
@@ -194,8 +192,7 @@ export function CreditTransferWizard({
                       <span className="flex-1">
                         <span className="block font-medium">{a.name}</span>
                         <span className="block text-xs text-muted-foreground">
-                          {a.id} · ACTIVE · remaining{" "}
-                          {a.remaining_su.toLocaleString()} of{" "}
+                          {a.id} · ACTIVE · remaining {a.remaining_su.toLocaleString()} of{" "}
                           {(a.remaining_su + a.used_su).toLocaleString()} SU
                         </span>
                       </span>
@@ -271,8 +268,7 @@ export function CreditTransferWizard({
                     <span className="flex-1">
                       <span className="block font-medium">{a.name}</span>
                       <span className="block text-xs text-muted-foreground">
-                        {a.id} · ACTIVE · current{" "}
-                        {a.remaining_su.toLocaleString()} SU
+                        {a.id} · ACTIVE · current {a.remaining_su.toLocaleString()} SU
                       </span>
                     </span>
                   </label>
@@ -286,9 +282,7 @@ export function CreditTransferWizard({
           <div className="space-y-4">
             <header>
               <h2 className="font-heading text-lg font-semibold">Review transfer</h2>
-              <p className="text-sm text-muted-foreground">
-                Confirm the math before we commit.
-              </p>
+              <p className="text-sm text-muted-foreground">Confirm the math before we commit.</p>
             </header>
             <div className="grid gap-3 md:grid-cols-2">
               <Card className="p-4">
@@ -302,9 +296,7 @@ export function CreditTransferWizard({
                   </div>
                   <div className="flex justify-between">
                     <dt className="text-muted-foreground">After</dt>
-                    <dd>
-                      {Math.max(0, source.remaining_su - amount).toLocaleString()} SU
-                    </dd>
+                    <dd>{Math.max(0, source.remaining_su - amount).toLocaleString()} SU</dd>
                   </div>
                 </dl>
               </Card>
@@ -319,9 +311,7 @@ export function CreditTransferWizard({
                   </div>
                   <div className="flex justify-between">
                     <dt className="text-muted-foreground">After</dt>
-                    <dd>
-                      {(destination.remaining_su + amount).toLocaleString()} SU
-                    </dd>
+                    <dd>{(destination.remaining_su + amount).toLocaleString()} SU</dd>
                   </div>
                 </dl>
               </Card>
@@ -376,7 +366,11 @@ export function CreditTransferWizard({
         ) : null}
 
         <div className="mt-6 flex items-center justify-between border-t pt-4">
-          <Button variant="ghost" onClick={goBack} disabled={step === "source" || step === "result"}>
+          <Button
+            variant="ghost"
+            onClick={goBack}
+            disabled={step === "source" || step === "result"}
+          >
             Back
           </Button>
           {step === "source" ? (

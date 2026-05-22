@@ -1,3 +1,4 @@
+import { ApiError } from "@shared/api/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   createChangeRequest,
@@ -6,7 +7,6 @@ import {
   updateChangeRequest,
   updateChangeRequestPayloadSchema,
 } from "../api";
-import { ApiError } from "@shared/api/client";
 
 const fetchMock = vi.fn();
 vi.stubGlobal("fetch", fetchMock as unknown as typeof fetch);

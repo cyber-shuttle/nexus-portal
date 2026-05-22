@@ -1,5 +1,5 @@
-import * as React from "react";
 import { cn } from "@/lib/utils";
+import * as React from "react";
 
 export function Spinner({ className }: { className?: string }) {
   return (
@@ -45,12 +45,7 @@ export function TableSkeleton({ rows = 6, columns = 5 }: { rows?: number; column
 
 export function CardSkeleton({ className }: { className?: string }) {
   return (
-    <div
-      className={cn(
-        "animate-pulse space-y-3 rounded-md border bg-card p-5",
-        className,
-      )}
-    >
+    <div className={cn("animate-pulse space-y-3 rounded-md border bg-card p-5", className)}>
       <div className="h-4 w-32 rounded bg-muted" />
       <div className="h-8 w-24 rounded bg-muted" />
       <div className="h-3 w-48 rounded bg-muted" />

@@ -1,9 +1,9 @@
+import { buildAuditTimeline } from "@shared/api/audit-orchestrator";
 import type {
   ComputeAllocation,
   ComputeAllocationChangeRequest,
   ComputeAllocationDiff,
 } from "@shared/api/domain";
-import { buildAuditTimeline } from "@shared/api/audit-orchestrator";
 import type { HomeAllocations, HomeSummary, HomeUsage, ResourceBreakdown } from "./types";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -39,7 +39,11 @@ export function classifyAllocations(
 }
 
 export function computeUsage30d(
-  usages: Array<{ compute_allocation_resource_id: string; used_su_amount: number; last_updated: string }>,
+  usages: Array<{
+    compute_allocation_resource_id: string;
+    used_su_amount: number;
+    last_updated: string;
+  }>,
   now: number = Date.now(),
 ): HomeUsage {
   const cutoff = now - 30 * DAY_MS;
@@ -79,12 +83,15 @@ export function buildRecentActivity(input: RecentActivityInput, limit = 20) {
 
 export type AggregateHomeInput = {
   allocations: ComputeAllocation[];
-  usagesByAllocation: Map<string, Array<{
-    compute_allocation_id: string;
-    compute_allocation_resource_id: string;
-    used_su_amount: number;
-    last_updated: string;
-  }>>;
+  usagesByAllocation: Map<
+    string,
+    Array<{
+      compute_allocation_id: string;
+      compute_allocation_resource_id: string;
+      used_su_amount: number;
+      last_updated: string;
+    }>
+  >;
   diffs: ComputeAllocationDiff[];
   changeRequests: ComputeAllocationChangeRequest[];
 };

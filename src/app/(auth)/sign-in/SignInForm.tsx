@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { signIn } from "next-auth/react";
-import { useSearchParams } from "next/navigation";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
+import { signIn } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
+import { useState } from "react";
 
 const personas = [
   { id: "researcher", email: "researcher@nexus.local", label: "Researcher" },

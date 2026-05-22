@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
-import type { ComputeAllocationChangeRequest } from "@shared/api/domain";
+import { formatDate, formatSU } from "@/lib/format";
 import { SideDrawer } from "@/shared/ui/SideDrawer";
 import { StatusBadge, statusBadgeVariantFromChangeRequest } from "@/shared/ui/StatusBadge";
-import { formatDate, formatSU } from "@/lib/format";
+import type { ComputeAllocationChangeRequest } from "@shared/api/domain";
+import Link from "next/link";
 import { useChangeRequestEvents } from "../queries";
 
 export type ChangeRequestDetailDrawerProps = {
@@ -45,15 +45,11 @@ export function ChangeRequestDetailDrawer({
             </div>
             <dl className="grid grid-cols-2 gap-3 text-sm">
               <div>
-                <dt className="text-xs uppercase tracking-wide text-muted-foreground">
-                  Requester
-                </dt>
+                <dt className="text-xs uppercase tracking-wide text-muted-foreground">Requester</dt>
                 <dd>{request.requester_id}</dd>
               </div>
               <div>
-                <dt className="text-xs uppercase tracking-wide text-muted-foreground">
-                  Submitted
-                </dt>
+                <dt className="text-xs uppercase tracking-wide text-muted-foreground">Submitted</dt>
                 <dd>{formatDate(request.timestamp)}</dd>
               </div>
               <div>

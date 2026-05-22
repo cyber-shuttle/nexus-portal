@@ -1,7 +1,7 @@
-import { HttpResponse, http } from "msw";
+import { creditTransferPayloadSchema } from "@features/tools/schemas";
+import { http, HttpResponse } from "msw";
 import { persistSeed, seed } from "../seed";
 import { path } from "./_utils";
-import { creditTransferPayloadSchema } from "@features/tools/schemas";
 
 function newId(prefix: string): string {
   const rand = globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2);
@@ -28,10 +28,7 @@ export const toolsHandlers = [
     }
     const body = parsed.data;
     if (body.source_allocation_id === body.destination_allocation_id) {
-      return HttpResponse.json(
-        { error: "source_and_destination_must_differ" },
-        { status: 400 },
-      );
+      return HttpResponse.json({ error: "source_and_destination_must_differ" }, { status: 400 });
     }
     const source = seed.allocations.find((a) => a.id === body.source_allocation_id);
     const destination = seed.allocations.find((a) => a.id === body.destination_allocation_id);
@@ -39,10 +36,7 @@ export const toolsHandlers = [
       return HttpResponse.json({ error: "allocation_not_found" }, { status: 404 });
     }
     if (source.status !== "ACTIVE" || destination.status !== "ACTIVE") {
-      return HttpResponse.json(
-        { error: "allocations_must_be_active" },
-        { status: 409 },
-      );
+      return HttpResponse.json({ error: "allocations_must_be_active" }, { status: 409 });
     }
     const remaining = balanceFor(source.id);
     if (body.su_amount > remaining) {

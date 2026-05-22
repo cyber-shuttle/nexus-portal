@@ -1,9 +1,9 @@
-import Link from "next/link";
-import type { ComputeAllocation } from "@shared/api/domain";
-import { UsageBar } from "@/shared/ui/UsageBar";
-import { StatusBadge, statusBadgeVariantFromAllocationStatus } from "@/shared/ui/StatusBadge";
-import { EmptyState } from "@/shared/ui/EmptyState";
 import { formatSU } from "@/lib/format";
+import { EmptyState } from "@/shared/ui/EmptyState";
+import { StatusBadge, statusBadgeVariantFromAllocationStatus } from "@/shared/ui/StatusBadge";
+import { UsageBar } from "@/shared/ui/UsageBar";
+import type { ComputeAllocation } from "@shared/api/domain";
+import Link from "next/link";
 
 export type HomeAllocationsListProps = {
   allocations: ComputeAllocation[];
@@ -18,7 +18,10 @@ export function HomeAllocationsList({ allocations, usedByAllocation }: HomeAlloc
       </header>
       {allocations.length === 0 ? (
         <div className="p-5">
-          <EmptyState heading="No active allocations" description="Submit a proposal to get started." />
+          <EmptyState
+            heading="No active allocations"
+            description="Submit a proposal to get started."
+          />
         </div>
       ) : (
         <ol className="divide-y">
@@ -44,7 +47,12 @@ export function HomeAllocationsList({ allocations, usedByAllocation }: HomeAlloc
                   </span>
                   <span>Ends {new Date(allocation.end_time).toLocaleDateString()}</span>
                 </div>
-                <UsageBar value={used} max={allocation.initial_su_amount} size="sm" className="mt-1" />
+                <UsageBar
+                  value={used}
+                  max={allocation.initial_su_amount}
+                  size="sm"
+                  className="mt-1"
+                />
               </li>
             );
           })}

@@ -1,19 +1,16 @@
 "use client";
 
-import * as React from "react";
-import { toast } from "sonner";
+import { ErrorState } from "@/shared/ui/ErrorState";
+import { CenteredSpinner } from "@/shared/ui/Loading";
 import { SideDrawer } from "@/shared/ui/SideDrawer";
+import { StatusBadge, type StatusBadgeVariant } from "@/shared/ui/StatusBadge";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
-import { StatusBadge, type StatusBadgeVariant } from "@/shared/ui/StatusBadge";
-import { CenteredSpinner } from "@/shared/ui/Loading";
-import { ErrorState } from "@/shared/ui/ErrorState";
 import { ApiError } from "@shared/api/client";
-import {
-  useDeactivateClient,
-  useRotateClientSecret,
-} from "../queries";
+import * as React from "react";
+import { toast } from "sonner";
+import { useDeactivateClient, useRotateClientSecret } from "../queries";
 import type { Client, ClientStatus } from "../types";
 
 function statusVariant(status: ClientStatus): StatusBadgeVariant {
@@ -110,7 +107,10 @@ function ClientDetailBody({
         <div>
           <p className="text-xs uppercase tracking-wide text-muted-foreground">Status</p>
           <div className="mt-1">
-            <StatusBadge variant={statusVariant(client.status)} label={client.status.toUpperCase()} />
+            <StatusBadge
+              variant={statusVariant(client.status)}
+              label={client.status.toUpperCase()}
+            />
           </div>
         </div>
       </div>
@@ -123,7 +123,9 @@ function ClientDetailBody({
         <Row label="Issued at" value={new Date(client.issued_at).toLocaleString()} />
         <Row
           label="Last rotated"
-          value={client.last_rotated_at ? new Date(client.last_rotated_at).toLocaleString() : "Never"}
+          value={
+            client.last_rotated_at ? new Date(client.last_rotated_at).toLocaleString() : "Never"
+          }
         />
       </dl>
 

@@ -22,7 +22,7 @@ test.describe("credit transfer audit", () => {
     const sourceLabel = (await firstSource.innerText()).trim();
     const sourceIdMatch = sourceLabel.match(/\balloc-\d{3,}\b/);
     expect(sourceIdMatch, "expected source label to expose an alloc-id").not.toBeNull();
-    const sourceId = sourceIdMatch![0];
+    const sourceId = (sourceIdMatch ?? [""])[0] as string;
     await firstSource.locator("input").check();
     await page.getByRole("button", { name: /^Next$/ }).click();
 
@@ -38,7 +38,7 @@ test.describe("credit transfer audit", () => {
     const destLabel = (await firstDest.innerText()).trim();
     const destIdMatch = destLabel.match(/\balloc-\d{3,}\b/);
     expect(destIdMatch, "expected destination label to expose an alloc-id").not.toBeNull();
-    const destId = destIdMatch![0];
+    const destId = (destIdMatch ?? [""])[0] as string;
     await firstDest.locator("input").check();
     await page.getByRole("button", { name: /^Next$/ }).click();
 

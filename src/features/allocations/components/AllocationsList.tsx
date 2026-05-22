@@ -1,8 +1,5 @@
 "use client";
 
-import * as React from "react";
-import Link from "next/link";
-import type { AllocationStatus, ComputeAllocation } from "../schemas";
 import { DataTable, type DataTableColumn } from "@/shared/ui/DataTable";
 import { EmptyState } from "@/shared/ui/EmptyState";
 import { ErrorState } from "@/shared/ui/ErrorState";
@@ -12,6 +9,9 @@ import { UsageBar } from "@/shared/ui/UsageBar";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/ui/tooltip";
+import Link from "next/link";
+import * as React from "react";
+import type { AllocationStatus, ComputeAllocation } from "../schemas";
 import { AllocationStatusFilter } from "./AllocationStatusFilter";
 
 export type AllocationRow = {
@@ -123,9 +123,7 @@ export function AllocationsList({ rows, isLoading, error, onRetry }: Allocations
       key: "endDate",
       header: "End date",
       cell: (row) => (
-        <span className="text-sm text-muted-foreground">
-          {formatDate(row.allocation.end_time)}
-        </span>
+        <span className="text-sm text-muted-foreground">{formatDate(row.allocation.end_time)}</span>
       ),
     },
     {
@@ -183,10 +181,7 @@ export function AllocationsList({ rows, isLoading, error, onRetry }: Allocations
       ) : error ? (
         <ErrorState message={error.message} onRetry={onRetry} />
       ) : filtered.length === 0 ? (
-        <EmptyState
-          heading="No allocations yet"
-          description="Submit a proposal to get started."
-        />
+        <EmptyState heading="No allocations yet" description="Submit a proposal to get started." />
       ) : (
         <DataTable
           columns={columns}

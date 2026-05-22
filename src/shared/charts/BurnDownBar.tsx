@@ -10,13 +10,7 @@ export type BurnDownBarProps = {
 
 // Visualizes the sam-queries pace pattern: solid past-burn segment and a hatched
 // projected-future segment so the viewer can compare against capacity at a glance.
-export function BurnDownBar({
-  used,
-  projected,
-  capacity,
-  className,
-  ariaLabel,
-}: BurnDownBarProps) {
+export function BurnDownBar({ used, projected, capacity, className, ariaLabel }: BurnDownBarProps) {
   const safeCapacity = capacity <= 0 ? 1 : capacity;
   const usedPct = Math.min(100, Math.max(0, (used / safeCapacity) * 100));
   const projectedPct = Math.min(
@@ -30,10 +24,7 @@ export function BurnDownBar({
       aria-label={ariaLabel ?? `Burn-down: ${used} used of ${capacity}, projected ${projected}`}
     >
       <div className="flex h-3 w-full overflow-hidden rounded-full bg-muted">
-        <div
-          className="bg-[color:var(--nexus-blue-500)]"
-          style={{ width: `${usedPct}%` }}
-        />
+        <div className="bg-[color:var(--nexus-blue-500)]" style={{ width: `${usedPct}%` }} />
         <div
           className="bg-[color:var(--nexus-blue-300)] bg-[image:repeating-linear-gradient(45deg,transparent_0_4px,rgba(255,255,255,0.45)_4px_8px)]"
           style={{ width: `${projectedPct}%` }}

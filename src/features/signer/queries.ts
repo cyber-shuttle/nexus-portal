@@ -2,14 +2,13 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCertificate, listCertificates, revokeCertificate } from "./api";
-import type { CertificateListParams } from "./types";
 import type { RevokeCertificatePayload } from "./schemas";
+import type { CertificateListParams } from "./types";
 
 export const signerKeys = {
   all: ["signer"] as const,
   certificates: () => [...signerKeys.all, "certificates"] as const,
-  list: (params: CertificateListParams) =>
-    [...signerKeys.certificates(), "list", params] as const,
+  list: (params: CertificateListParams) => [...signerKeys.certificates(), "list", params] as const,
   detail: (serial: number | string) =>
     [...signerKeys.certificates(), "detail", String(serial)] as const,
 };

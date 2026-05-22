@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
 import { auth } from "@/shared/auth/auth";
+import { redirect } from "next/navigation";
 import { AllocationsListContainer } from "./AllocationsListContainer";
 
 export default async function AllocationsListPage() {

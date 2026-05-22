@@ -1,13 +1,13 @@
-import { HttpResponse, http } from "msw";
-import { z } from "zod";
-import { persistSeed, seed } from "../seed";
-import { path, paginate } from "./_utils";
-import type { Proposal } from "@features/proposals/types";
 import {
   createProposalPayloadSchema,
   proposalDecisionPayloadSchema,
   updateProposalPayloadSchema,
 } from "@features/proposals/schemas";
+import type { Proposal } from "@features/proposals/types";
+import { http, HttpResponse } from "msw";
+import { z } from "zod";
+import { persistSeed, seed } from "../seed";
+import { path, paginate } from "./_utils";
 
 function newId(): string {
   const rand = globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2);
@@ -16,7 +16,10 @@ function newId(): string {
 
 function matchStatus(proposal: Proposal, statusParam: string | null): boolean {
   if (!statusParam) return true;
-  const wanted = statusParam.split(",").map((s) => s.trim()).filter(Boolean);
+  const wanted = statusParam
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
   return wanted.length === 0 || wanted.includes(proposal.status);
 }
 
@@ -29,9 +32,7 @@ export const proposalHandlers = [
     const projectId = url.searchParams.get("project_id");
     const requesterId = url.searchParams.get("requester_id");
     const q = url.searchParams.get("q");
-    let rows = seed.proposals.slice().sort((a, b) =>
-      b.created_at.localeCompare(a.created_at),
-    );
+    let rows = seed.proposals.slice().sort((a, b) => b.created_at.localeCompare(a.created_at));
     rows = rows.filter((p) => matchStatus(p, status));
     if (projectId) rows = rows.filter((p) => p.project_id === projectId);
     if (requesterId) rows = rows.filter((p) => p.requester_id === requesterId);
@@ -39,8 +40,7 @@ export const proposalHandlers = [
       const needle = q.toLowerCase();
       rows = rows.filter(
         (p) =>
-          p.title.toLowerCase().includes(needle) ||
-          p.project_title.toLowerCase().includes(needle),
+          p.title.toLowerCase().includes(needle) || p.project_title.toLowerCase().includes(needle),
       );
     }
     return HttpResponse.json(paginate(rows, url));

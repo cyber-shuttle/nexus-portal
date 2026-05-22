@@ -1,15 +1,15 @@
+import { ApiError } from "@shared/api/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   createMembership,
-  createMembershipPayloadSchema,
   createMembershipOverride,
+  createMembershipPayloadSchema,
   deleteMembership,
   overridePayloadSchema,
   setMembershipStatus,
   updateMembership,
   updateMembershipPayloadSchema,
 } from "../api";
-import { ApiError } from "@shared/api/client";
 
 const fetchMock = vi.fn();
 vi.stubGlobal("fetch", fetchMock as unknown as typeof fetch);
@@ -98,9 +98,9 @@ describe("member mutation fetchers", () => {
 
   it("updateMembership throws ApiError on 400", async () => {
     fetchMock.mockResolvedValueOnce(mockResponse(400, { error: "bad" }));
-    await expect(
-      updateMembership("m-1", { membership_status: "INACTIVE" }),
-    ).rejects.toBeInstanceOf(ApiError);
+    await expect(updateMembership("m-1", { membership_status: "INACTIVE" })).rejects.toBeInstanceOf(
+      ApiError,
+    );
   });
 
   it("setMembershipStatus targets the /status sub-route", async () => {

@@ -1,4 +1,5 @@
 import { apiFetch } from "@shared/api/client";
+import { z } from "zod";
 import {
   type ComputeAllocation,
   type ComputeAllocationResource,
@@ -7,7 +8,6 @@ import {
   computeAllocationResourceSchema,
   computeAllocationSchema,
 } from "./schemas";
-import { z } from "zod";
 
 export async function getAllocation(id: string): Promise<ComputeAllocation> {
   const raw = await apiFetch(`/compute-allocations/${id}`);
@@ -19,7 +19,9 @@ export async function getAllocations(ids: string[]): Promise<ComputeAllocation[]
   return Promise.all(uniqueIds.map((id) => getAllocation(id)));
 }
 
-export async function getAllocationResources(allocId: string): Promise<ComputeAllocationResource[]> {
+export async function getAllocationResources(
+  allocId: string,
+): Promise<ComputeAllocationResource[]> {
   const raw = await apiFetch(`/compute-allocations/${allocId}/resources`);
   return z.array(computeAllocationResourceSchema).parse(raw ?? []);
 }
@@ -30,4 +32,3 @@ export async function getResourceRatesEffective(
   const raw = await apiFetch(`/compute-allocation-resources/${resourceId}/rates/effective`);
   return computeAllocationResourceRateSchema.parse(raw);
 }
-

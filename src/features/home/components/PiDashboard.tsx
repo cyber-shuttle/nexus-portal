@@ -1,12 +1,12 @@
-import Link from "next/link";
-import type { PiHomeSummary } from "../types";
+import { formatSU } from "@/lib/format";
+import { internalLinks } from "@/lib/links";
+import { EmptyState } from "@/shared/ui/EmptyState";
+import { ErrorState } from "@/shared/ui/ErrorState";
+import { CenteredSpinner } from "@/shared/ui/Loading";
 import { StatCard } from "@/shared/ui/StatCard";
 import { StatusBadge, statusBadgeVariantFromAllocationStatus } from "@/shared/ui/StatusBadge";
-import { CenteredSpinner } from "@/shared/ui/Loading";
-import { ErrorState } from "@/shared/ui/ErrorState";
-import { EmptyState } from "@/shared/ui/EmptyState";
-import { internalLinks } from "@/lib/links";
-import { formatSU } from "@/lib/format";
+import Link from "next/link";
+import type { PiHomeSummary } from "../types";
 import { PersonaPill } from "./PersonaPill";
 import { RecentActivityFeed } from "./RecentActivityFeed";
 
@@ -52,7 +52,10 @@ export function PiDashboard({ firstName, summary, isLoading, error }: PiDashboar
         </header>
         {summary.projects.length === 0 ? (
           <div className="p-5">
-            <EmptyState heading="No projects yet" description="You are not the PI on any project." />
+            <EmptyState
+              heading="No projects yet"
+              description="You are not the PI on any project."
+            />
           </div>
         ) : (
           <table className="w-full text-sm">

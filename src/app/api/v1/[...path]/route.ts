@@ -1,6 +1,6 @@
-import { NextResponse, type NextRequest } from "next/server";
-import { auth } from "@/shared/auth/auth";
 import { serverEnv } from "@/lib/env";
+import { auth } from "@/shared/auth/auth";
+import { type NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 

@@ -1,7 +1,5 @@
 "use client";
 
-import * as React from "react";
-import { toast } from "sonner";
 import { Button } from "@/shared/ui/button";
 import {
   Dialog,
@@ -16,6 +14,8 @@ import {
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { ApiError } from "@shared/api/client";
+import * as React from "react";
+import { toast } from "sonner";
 import { useRevokeCertificate } from "../queries";
 import type { Certificate } from "../types";
 
@@ -41,8 +41,7 @@ export function RevokeDialog({ cert, trigger }: RevokeDialogProps) {
       toast.success(`Certificate ${cert.serial_number} revoked`);
       setOpen(false);
     } catch (err) {
-      const message =
-        err instanceof ApiError ? `Revoke failed (${err.status})` : "Revoke failed";
+      const message = err instanceof ApiError ? `Revoke failed (${err.status})` : "Revoke failed";
       toast.error(message);
     }
   }
@@ -54,8 +53,8 @@ export function RevokeDialog({ cert, trigger }: RevokeDialogProps) {
         <DialogHeader>
           <DialogTitle>Revoke certificate?</DialogTitle>
           <DialogDescription>
-            Serial {cert.serial_number} for {cert.username || cert.principal} will be marked
-            revoked immediately. This is irreversible.
+            Serial {cert.serial_number} for {cert.username || cert.principal} will be marked revoked
+            immediately. This is irreversible.
           </DialogDescription>
         </DialogHeader>
 

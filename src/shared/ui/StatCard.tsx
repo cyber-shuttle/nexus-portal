@@ -1,5 +1,5 @@
-import * as React from "react";
 import { cn } from "@/lib/utils";
+import * as React from "react";
 
 export type StatCardProps = {
   title: string;
@@ -21,8 +21,10 @@ export function StatCard({ title, value, sublabel, trend, className }: StatCardP
         <div
           className={cn(
             "mt-3 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
-            trend.direction === "up" && "bg-[color:var(--nexus-green-50)] text-[color:var(--nexus-green-700)]",
-            trend.direction === "down" && "bg-[color:var(--nexus-red-50)] text-[color:var(--nexus-red-700)]",
+            trend.direction === "up" &&
+              "bg-[color:var(--nexus-green-50)] text-[color:var(--nexus-green-700)]",
+            trend.direction === "down" &&
+              "bg-[color:var(--nexus-red-50)] text-[color:var(--nexus-red-700)]",
             trend.direction === "flat" && "bg-muted text-muted-foreground",
           )}
         >

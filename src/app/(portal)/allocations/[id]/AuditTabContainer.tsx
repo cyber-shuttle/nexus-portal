@@ -1,15 +1,15 @@
 "use client";
 
-import * as React from "react";
-import { useQueries } from "@tanstack/react-query";
-import { useAllocationDiffs } from "@features/audit/queries";
-import {
-  useChangeRequestsForAllocation,
-  changeRequestKeys,
-} from "@features/change-requests/queries";
-import { getChangeRequestEvents } from "@features/change-requests/api";
-import { buildAuditTimeline } from "@shared/api/audit-orchestrator";
 import { AuditTab } from "@features/audit/components/AuditTab";
+import { useAllocationDiffs } from "@features/audit/queries";
+import { getChangeRequestEvents } from "@features/change-requests/api";
+import {
+  changeRequestKeys,
+  useChangeRequestsForAllocation,
+} from "@features/change-requests/queries";
+import { buildAuditTimeline } from "@shared/api/audit-orchestrator";
+import { useQueries } from "@tanstack/react-query";
+import * as React from "react";
 
 export function AuditTabContainer({ allocationId }: { allocationId: string }) {
   const diffsQuery = useAllocationDiffs(allocationId);

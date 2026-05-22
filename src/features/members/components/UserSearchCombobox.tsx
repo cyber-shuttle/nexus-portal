@@ -1,8 +1,8 @@
 "use client";
 
-import * as React from "react";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
+import * as React from "react";
 import { useSearchUsers } from "../queries";
 import type { User } from "../schemas";
 

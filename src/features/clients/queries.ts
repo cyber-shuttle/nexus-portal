@@ -1,19 +1,13 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  createClient,
-  deactivateClient,
-  getClient,
-  listClients,
-  rotateClientSecret,
-} from "./api";
-import type { ClientListParams } from "./types";
+import { createClient, deactivateClient, getClient, listClients, rotateClientSecret } from "./api";
 import type {
   CreateClientPayload,
   DeactivateClientPayload,
   RotateClientSecretPayload,
 } from "./schemas";
+import type { ClientListParams } from "./types";
 
 export const clientKeys = {
   all: ["clients"] as const,

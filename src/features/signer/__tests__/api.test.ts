@@ -1,11 +1,8 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
-import {
-  certificateSchema,
-  revokeCertificatePayloadSchema,
-} from "../schemas";
-import { deriveCertificateStatus } from "../types";
-import { listCertificates, revokeCertificate } from "../api";
 import { ApiError } from "@shared/api/client";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { listCertificates, revokeCertificate } from "../api";
+import { certificateSchema, revokeCertificatePayloadSchema } from "../schemas";
+import { deriveCertificateStatus } from "../types";
 
 const fetchMock = vi.fn();
 vi.stubGlobal("fetch", fetchMock as unknown as typeof fetch);
@@ -43,9 +40,7 @@ describe("certificateSchema", () => {
   });
 
   it("rejects when revoked flag is wrong type", () => {
-    expect(
-      certificateSchema.safeParse({ ...validCert, revoked: "yes" }).success,
-    ).toBe(false);
+    expect(certificateSchema.safeParse({ ...validCert, revoked: "yes" }).success).toBe(false);
   });
 });
 
@@ -54,9 +49,9 @@ describe("revokeCertificatePayloadSchema", () => {
     expect(revokeCertificatePayloadSchema.safeParse({ reason: "no" }).success).toBe(false);
   });
   it("accepts a valid reason", () => {
-    expect(
-      revokeCertificatePayloadSchema.safeParse({ reason: "User requested" }).success,
-    ).toBe(true);
+    expect(revokeCertificatePayloadSchema.safeParse({ reason: "User requested" }).success).toBe(
+      true,
+    );
   });
 });
 
@@ -112,8 +107,8 @@ describe("revokeCertificate", () => {
 
   it("throws ApiError on 409 already_revoked", async () => {
     fetchMock.mockResolvedValueOnce(mockResponse(409, { error: "already_revoked" }));
-    await expect(
-      revokeCertificate(1024, { reason: "Already revoked" }),
-    ).rejects.toBeInstanceOf(ApiError);
+    await expect(revokeCertificate(1024, { reason: "Already revoked" })).rejects.toBeInstanceOf(
+      ApiError,
+    );
   });
 });

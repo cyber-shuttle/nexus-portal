@@ -1,10 +1,10 @@
 "use client";
 
-import * as React from "react";
 import { subject } from "@casl/ability";
-import { useAbility } from "@shared/casl/AbilityProvider";
 import { ProposalsList } from "@features/proposals/components/ProposalsList";
 import { useProposals } from "@features/proposals/queries";
+import { useAbility } from "@shared/casl/AbilityProvider";
+import * as React from "react";
 
 export function ProposalsListContainer() {
   const ability = useAbility();

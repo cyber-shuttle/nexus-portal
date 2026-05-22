@@ -1,10 +1,10 @@
-import { describe, expect, it } from "vitest";
 import { buildAuditTimeline } from "@shared/api/audit-orchestrator";
 import type {
   ComputeAllocationChangeRequest,
   ComputeAllocationChangeRequestEvent,
   ComputeAllocationDiff,
 } from "@shared/api/domain";
+import { describe, expect, it } from "vitest";
 
 const diff: ComputeAllocationDiff = {
   id: "diff-1",
@@ -40,11 +40,7 @@ describe("buildAuditTimeline", () => {
   it("merges diffs and change-request events sorted desc", () => {
     const timeline = buildAuditTimeline([diff], [{ request, events: [event] }]);
     expect(timeline).toHaveLength(3);
-    expect(timeline.map((t) => t.kind)).toEqual([
-      "diff",
-      "change_request_event",
-      "change_request",
-    ]);
+    expect(timeline.map((t) => t.kind)).toEqual(["diff", "change_request_event", "change_request"]);
   });
 
   it("handles empty inputs", () => {

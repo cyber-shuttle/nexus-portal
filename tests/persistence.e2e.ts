@@ -5,9 +5,7 @@ import { loginAs } from "./fixtures/personas";
 // sign-out + sign-in cycle. Before the persistence fix, the change request
 // would be lost when the page reloaded and the seed module re-evaluated.
 test.describe("seed persistence", () => {
-  test("change request submitted as pi is visible to admin after re-login", async ({
-    page,
-  }) => {
+  test("change request submitted as pi is visible to admin after re-login", async ({ page }) => {
     const reason = `Persistence probe — ${Date.now()}`;
 
     await loginAs(page, "pi");

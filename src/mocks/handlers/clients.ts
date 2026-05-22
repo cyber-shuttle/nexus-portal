@@ -1,12 +1,12 @@
-import { HttpResponse, http } from "msw";
-import { persistSeed, seed } from "../seed";
-import { clientSlug, nextClientRowId, randomSecretLast4 } from "../seed/ids";
-import { path } from "./_utils";
 import {
   createClientPayloadSchema,
   deactivateClientPayloadSchema,
   rotateClientSecretPayloadSchema,
 } from "@features/clients/schemas";
+import { http, HttpResponse } from "msw";
+import { persistSeed, seed } from "../seed";
+import { clientSlug, nextClientRowId, randomSecretLast4 } from "../seed/ids";
+import { path } from "./_utils";
 
 export const clientHandlers = [
   http.get(path("/clients"), ({ request }) => {
@@ -17,9 +17,7 @@ export const clientHandlers = [
     const limit = Math.max(0, Number(url.searchParams.get("limit") ?? "0"));
     const offset = Math.max(0, Number(url.searchParams.get("offset") ?? "0"));
 
-    let rows = seed.clients
-      .slice()
-      .sort((a, b) => b.issued_at.localeCompare(a.issued_at));
+    let rows = seed.clients.slice().sort((a, b) => b.issued_at.localeCompare(a.issued_at));
     if (status && status !== "all") {
       rows = rows.filter((c) => c.status === status);
     }

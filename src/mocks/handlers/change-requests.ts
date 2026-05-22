@@ -1,25 +1,18 @@
-import { HttpResponse, http } from "msw";
-import { persistSeed, seed } from "../seed";
-import { path, paginate } from "./_utils";
-import type {
-  ChangeRequestStatus,
-  ComputeAllocationChangeRequest,
-} from "@shared/api/domain";
 import {
   createChangeRequestPayloadSchema,
   updateChangeRequestPayloadSchema,
 } from "@features/change-requests/api";
+import type { ChangeRequestStatus, ComputeAllocationChangeRequest } from "@shared/api/domain";
+import { http, HttpResponse } from "msw";
+import { persistSeed, seed } from "../seed";
+import { path, paginate } from "./_utils";
 
 function newId(prefix: string): string {
   const rand = globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2);
   return `${prefix}-${rand.slice(0, 8)}`;
 }
 
-function appendEvent(
-  reqId: string,
-  eventType: string,
-  description: string,
-): void {
+function appendEvent(reqId: string, eventType: string, description: string): void {
   seed.changeRequestEvents.push({
     id: newId(`${reqId}-evt`),
     compute_allocation_change_request_id: reqId,
@@ -78,11 +71,7 @@ export const changeRequestHandlers = [
       timestamp: new Date().toISOString(),
     };
     seed.changeRequests.push(created);
-    appendEvent(
-      created.id,
-      "CREATED",
-      `Change request created by ${body.requester_id}`,
-    );
+    appendEvent(created.id, "CREATED", `Change request created by ${body.requester_id}`);
     persistSeed();
     return HttpResponse.json(created, { status: 201 });
   }),

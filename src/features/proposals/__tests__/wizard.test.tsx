@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   createProposalPayloadSchema,
-  updateProposalPayloadSchema,
   proposalDecisionPayloadSchema,
+  updateProposalPayloadSchema,
 } from "../schemas";
 
 const fetchMock = vi.fn();
@@ -81,9 +81,7 @@ describe("createProposalPayloadSchema", () => {
     const result = createProposalPayloadSchema.safeParse({
       ...baseValid,
       cascade_to_sub_projects: true,
-      child_allocations: [
-        { project_id: "p-a", project_title: "Sub A", su_split_percent: 140 },
-      ],
+      child_allocations: [{ project_id: "p-a", project_title: "Sub A", su_split_percent: 140 }],
     });
     expect(result.success).toBe(false);
   });

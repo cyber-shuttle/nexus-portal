@@ -1,8 +1,8 @@
-import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 import { auth } from "@/shared/auth/auth";
 import { Breadcrumbs } from "@/shared/ui/Breadcrumbs";
-import { HomePersonaSwitch, type HomePersona } from "./HomePersonaSwitch";
+import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { type HomePersona, HomePersonaSwitch } from "./HomePersonaSwitch";
 
 export const metadata: Metadata = {
   title: "Home · Nexus Portal",

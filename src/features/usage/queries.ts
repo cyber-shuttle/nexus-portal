@@ -2,10 +2,10 @@
 
 import { useQuery } from "@tanstack/react-query";
 import {
-  getAllocationUsageTotal,
-  getAllocationUserUsageTotal,
-  getAllocationUsages,
   type UsageListParams,
+  getAllocationUsageTotal,
+  getAllocationUsages,
+  getAllocationUserUsageTotal,
 } from "./api";
 
 export const usageKeys = {
@@ -37,10 +37,7 @@ export function useAllocationUserUsageTotal(
   });
 }
 
-export function useAllocationUsages(
-  allocId: string | undefined,
-  params: UsageListParams = {},
-) {
+export function useAllocationUsages(allocId: string | undefined, params: UsageListParams = {}) {
   return useQuery({
     queryKey: allocId ? usageKeys.list(allocId, params) : ["usage", "list", "none"],
     queryFn: () => getAllocationUsages(allocId as string, params),

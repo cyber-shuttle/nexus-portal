@@ -1,10 +1,10 @@
 "use client";
 
-import { signOut, useSession } from "next-auth/react";
-import { LogOut } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
 import { Button } from "@/shared/ui/button";
 import { Separator } from "@/shared/ui/separator";
+import { LogOut } from "lucide-react";
+import { signOut, useSession } from "next-auth/react";
 import { PersonaSwitcher } from "./PersonaSwitcher";
 
 export function Topbar() {

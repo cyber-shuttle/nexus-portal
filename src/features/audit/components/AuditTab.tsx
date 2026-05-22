@@ -1,17 +1,12 @@
 "use client";
 
-import * as React from "react";
-import {
-  ClipboardListIcon,
-  PencilIcon,
-  TriangleAlertIcon,
-  UsersIcon,
-} from "lucide-react";
-import type { AuditEvent } from "@shared/api/audit-orchestrator";
-import { CenteredSpinner } from "@/shared/ui/Loading";
-import { ErrorState } from "@/shared/ui/ErrorState";
-import { EmptyState } from "@/shared/ui/EmptyState";
 import { cn } from "@/lib/utils";
+import { EmptyState } from "@/shared/ui/EmptyState";
+import { ErrorState } from "@/shared/ui/ErrorState";
+import { CenteredSpinner } from "@/shared/ui/Loading";
+import type { AuditEvent } from "@shared/api/audit-orchestrator";
+import { ClipboardListIcon, PencilIcon, TriangleAlertIcon, UsersIcon } from "lucide-react";
+import * as React from "react";
 
 type RangeOption = "all" | "7d" | "30d" | "90d";
 
@@ -54,7 +49,9 @@ function eventActor(event: AuditEvent): string | null {
 function eventIcon(event: AuditEvent) {
   const className = "size-4";
   if (event.kind === "diff") {
-    return <PencilIcon className={cn(className, "text-[color:var(--nexus-blue-600)]")} aria-hidden />;
+    return (
+      <PencilIcon className={cn(className, "text-[color:var(--nexus-blue-600)]")} aria-hidden />
+    );
   }
   if (event.kind === "change_request") {
     return (

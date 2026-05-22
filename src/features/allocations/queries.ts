@@ -5,8 +5,7 @@ import { getAllocation, getAllocationResources, getResourceRatesEffective } from
 
 export const allocationKeys = {
   all: ["allocations"] as const,
-  list: (params: Record<string, unknown> = {}) =>
-    [...allocationKeys.all, "list", params] as const,
+  list: (params: Record<string, unknown> = {}) => [...allocationKeys.all, "list", params] as const,
   detail: (id: string) => [...allocationKeys.all, "detail", id] as const,
   resources: (id: string) => [...allocationKeys.detail(id), "resources"] as const,
   resourceRate: (resourceId: string) =>
@@ -29,9 +28,7 @@ export function useAllocations(ids: string[]) {
       enabled: Boolean(id),
     })),
   });
-  const data = queries
-    .map((q) => q.data)
-    .filter((a): a is NonNullable<typeof a> => Boolean(a));
+  const data = queries.map((q) => q.data).filter((a): a is NonNullable<typeof a> => Boolean(a));
   return {
     data,
     isLoading: queries.some((q) => q.isLoading),

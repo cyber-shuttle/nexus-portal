@@ -1,21 +1,15 @@
 "use client";
 
+import { SideDrawer } from "@/shared/ui/SideDrawer";
+import { Button } from "@/shared/ui/button";
+import { Input } from "@/shared/ui/input";
+import { Label } from "@/shared/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
+import { ApiError } from "@shared/api/client";
 import * as React from "react";
 import { toast } from "sonner";
-import { ApiError } from "@shared/api/client";
-import { Button } from "@/shared/ui/button";
-import { Label } from "@/shared/ui/label";
-import { SideDrawer } from "@/shared/ui/SideDrawer";
-import { Input } from "@/shared/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/ui/select";
-import { MEMBERSHIP_ROLE_LABELS, type MembershipRole } from "../roles";
 import { useCreateMembership } from "../queries";
+import { MEMBERSHIP_ROLE_LABELS, type MembershipRole } from "../roles";
 import type { User } from "../schemas";
 import { UserSearchCombobox } from "./UserSearchCombobox";
 
@@ -35,9 +29,7 @@ export function AddMemberDrawer({
   excludeUserIds,
 }: AddMemberDrawerProps) {
   const [user, setUser] = React.useState<User | null>(null);
-  const [endTime, setEndTime] = React.useState<string>(
-    () => allocationEndTime.slice(0, 10),
-  );
+  const [endTime, setEndTime] = React.useState<string>(() => allocationEndTime.slice(0, 10));
   const [role, setRole] = React.useState<MembershipRole>("user");
   const createMutation = useCreateMembership();
 
@@ -98,8 +90,7 @@ export function AddMemberDrawer({
             </SelectContent>
           </Select>
           <p className="text-xs text-muted-foreground">
-            Stored portal-side until the backend grows a role column on
-            ComputeAllocationMembership.
+            Stored portal-side until the backend grows a role column on ComputeAllocationMembership.
           </p>
         </div>
         <div className="space-y-1.5">

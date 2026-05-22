@@ -1,5 +1,5 @@
-import type { ReactNode } from "react";
 import { Breadcrumbs } from "@/shared/ui/Breadcrumbs";
+import type { ReactNode } from "react";
 
 export default async function AllocationDetailLayout(props: {
   children: ReactNode;
@@ -8,12 +8,7 @@ export default async function AllocationDetailLayout(props: {
   const { id } = await props.params;
   return (
     <div className="space-y-6">
-      <Breadcrumbs
-        items={[
-          { label: "Allocations", href: "/allocations" },
-          { label: id },
-        ]}
-      />
+      <Breadcrumbs items={[{ label: "Allocations", href: "/allocations" }, { label: id }]} />
       {props.children}
     </div>
   );

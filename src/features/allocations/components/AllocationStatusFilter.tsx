@@ -17,9 +17,7 @@ export function AllocationStatusFilter({ value, onChange }: StatusFilterProps) {
   };
   return (
     <fieldset className="flex flex-wrap items-center gap-2 border-0 p-0">
-      <legend className="mr-2 text-xs uppercase tracking-wide text-muted-foreground">
-        Status
-      </legend>
+      <legend className="mr-2 text-xs uppercase tracking-wide text-muted-foreground">Status</legend>
       {STATUSES.map((status) => {
         const active = value.includes(status);
         return (

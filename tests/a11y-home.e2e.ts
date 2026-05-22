@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
-import { loginAs, type Persona } from "./fixtures/personas";
+import { type Persona, loginAs } from "./fixtures/personas";
 
 const SEVERITIES = ["serious", "critical"] as const;
 

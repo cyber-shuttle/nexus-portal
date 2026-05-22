@@ -1,10 +1,10 @@
 "use client";
 
-import * as React from "react";
+import { cn } from "@/lib/utils";
+import { ChevronRightIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronRightIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
+import * as React from "react";
 
 export type BreadcrumbItem = {
   label: string;
@@ -20,9 +20,7 @@ function fromPathname(pathname: string): BreadcrumbItem[] {
   const segments = pathname.split("/").filter(Boolean);
   return segments.map((segment, i) => {
     const href = `/${segments.slice(0, i + 1).join("/")}`;
-    const label = segment
-      .replace(/-/g, " ")
-      .replace(/\b\w/g, (c) => c.toUpperCase());
+    const label = segment.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
     return { label, href: i === segments.length - 1 ? undefined : href };
   });
 }

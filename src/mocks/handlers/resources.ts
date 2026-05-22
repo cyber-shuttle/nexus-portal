@@ -1,4 +1,4 @@
-import { HttpResponse, http } from "msw";
+import { http, HttpResponse } from "msw";
 import { seed } from "../seed";
 import { path } from "./_utils";
 
@@ -7,9 +7,7 @@ export const resourceHandlers = [
     const url = new URL(request.url);
     const atRaw = url.searchParams.get("at");
     const at = atRaw ? Date.parse(atRaw) : Date.now();
-    const rates = seed.resourceRates.filter(
-      (r) => r.compute_allocation_resource_id === params.id,
-    );
+    const rates = seed.resourceRates.filter((r) => r.compute_allocation_resource_id === params.id);
     const effective = rates.find(
       (r) => Date.parse(r.start_time) <= at && at <= Date.parse(r.end_time),
     );

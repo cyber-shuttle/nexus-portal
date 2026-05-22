@@ -1,8 +1,8 @@
-import { describe, expect, it } from "vitest";
 import { render } from "@testing-library/react";
-import { StackedAreaUsage } from "../StackedAreaUsage";
+import { describe, expect, it } from "vitest";
 import { BurnDownBar } from "../BurnDownBar";
 import { Sparkline } from "../Sparkline";
+import { StackedAreaUsage } from "../StackedAreaUsage";
 
 describe("chart wrappers", () => {
   it("StackedAreaUsage renders without throwing", () => {

@@ -1,7 +1,7 @@
+import { ApiError } from "@shared/api/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { transferCredits } from "../api";
 import { creditTransferPayloadSchema } from "../schemas";
-import { ApiError } from "@shared/api/client";
 
 const fetchMock = vi.fn();
 vi.stubGlobal("fetch", fetchMock as unknown as typeof fetch);
@@ -32,9 +32,9 @@ describe("creditTransferPayloadSchema", () => {
   });
 
   it("rejects a non-positive amount", () => {
-    expect(
-      creditTransferPayloadSchema.safeParse({ ...validPayload, su_amount: 0 }).success,
-    ).toBe(false);
+    expect(creditTransferPayloadSchema.safeParse({ ...validPayload, su_amount: 0 }).success).toBe(
+      false,
+    );
   });
 
   it("rejects missing transferred_by", () => {
@@ -148,9 +148,7 @@ describe("transferCredits fetcher", () => {
   });
 
   it("throws ApiError on 409", async () => {
-    fetchMock.mockResolvedValueOnce(
-      mockResponse(409, { error: "insufficient_balance" }),
-    );
+    fetchMock.mockResolvedValueOnce(mockResponse(409, { error: "insufficient_balance" }));
     await expect(transferCredits(validPayload)).rejects.toBeInstanceOf(ApiError);
   });
 });

@@ -1,5 +1,5 @@
-import type { Metadata } from "next";
 import { Breadcrumbs } from "@/shared/ui/Breadcrumbs";
+import type { Metadata } from "next";
 import { CertificateDetailContainer } from "./CertificateDetailContainer";
 
 export const metadata: Metadata = {

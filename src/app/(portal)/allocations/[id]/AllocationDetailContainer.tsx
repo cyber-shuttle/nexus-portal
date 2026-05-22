@@ -1,23 +1,20 @@
 "use client";
 
-import * as React from "react";
-import { useSession } from "next-auth/react";
-import { useQuery } from "@tanstack/react-query";
+import { TabsRouter } from "@/shared/ui/TabsRouter";
 import { subject } from "@casl/ability";
-import { useAbility } from "@shared/casl/AbilityProvider";
-import { useAllocation, useAllocationResources } from "@features/allocations/queries";
-import { useProject } from "@features/projects/queries";
-import {
-  useAllocationUsageTotal,
-  usageKeys,
-} from "@features/usage/queries";
-import { getAllocationUsages } from "@features/usage/api";
 import { AllocationDetailHeader } from "@features/allocations/components/AllocationDetailHeader";
 import { CreditsAndResources } from "@features/allocations/components/CreditsAndResources";
-import { MembersTab } from "@features/members/components/MembersTab";
+import { useAllocation, useAllocationResources } from "@features/allocations/queries";
 import { RequestExtensionDrawer } from "@features/change-requests/components/RequestExtensionDrawer";
+import { MembersTab } from "@features/members/components/MembersTab";
+import { useProject } from "@features/projects/queries";
+import { getAllocationUsages } from "@features/usage/api";
+import { usageKeys, useAllocationUsageTotal } from "@features/usage/queries";
+import { useAbility } from "@shared/casl/AbilityProvider";
+import { useQuery } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
+import * as React from "react";
 import { AuditTabContainer } from "./AuditTabContainer";
-import { TabsRouter } from "@/shared/ui/TabsRouter";
 
 // TODO: server aggregation. Fetch up to 1000 usage rows and group client-side
 // per resource until the backend exposes /compute-allocation-resources/{id}/usages/total.
@@ -48,10 +45,7 @@ export function AllocationDetailContainer({ allocationId }: { allocationId: stri
   const session = useSession().data;
   const requesterId = session?.user?.id ?? "";
   const ability = useAbility();
-  const canManageMembers = ability.can(
-    "manage",
-    subject("Membership", { allocationId }),
-  );
+  const canManageMembers = ability.can("manage", subject("Membership", { allocationId }));
 
   const resourcesQuery = useAllocationResources(allocationId);
   const resourceList = React.useMemo(

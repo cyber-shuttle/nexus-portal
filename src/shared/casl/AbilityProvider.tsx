@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, type ReactNode } from "react";
-import { useSession } from "next-auth/react";
 import { AbilityProvider as CaslAbilityProvider, useAbility as useCaslAbility } from "@casl/react";
-import { defineAbilityForRole, type AppAbility } from "./abilities";
+import { useSession } from "next-auth/react";
+import { type ReactNode, useMemo } from "react";
+import { type AppAbility, defineAbilityForRole } from "./abilities";
 
 export function AbilityProvider({ children }: { children: ReactNode }) {
   const { data: session } = useSession();
@@ -16,12 +16,7 @@ export function AbilityProvider({ children }: { children: ReactNode }) {
         myPiAllocations: session?.user?.myPiAllocations,
         assignedAllocations: session?.user?.assignedAllocations,
       }),
-    [
-      role,
-      session?.user?.id,
-      session?.user?.myPiAllocations,
-      session?.user?.assignedAllocations,
-    ],
+    [role, session?.user?.id, session?.user?.myPiAllocations, session?.user?.assignedAllocations],
   );
 
   return <CaslAbilityProvider value={ability}>{children}</CaslAbilityProvider>;

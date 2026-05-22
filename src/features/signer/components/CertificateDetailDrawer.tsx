@@ -1,11 +1,11 @@
 "use client";
 
-import type * as React from "react";
-import { SideDrawer } from "@/shared/ui/SideDrawer";
-import { Button } from "@/shared/ui/button";
-import { StatusBadge, type StatusBadgeVariant } from "@/shared/ui/StatusBadge";
-import { CenteredSpinner } from "@/shared/ui/Loading";
 import { ErrorState } from "@/shared/ui/ErrorState";
+import { CenteredSpinner } from "@/shared/ui/Loading";
+import { SideDrawer } from "@/shared/ui/SideDrawer";
+import { StatusBadge, type StatusBadgeVariant } from "@/shared/ui/StatusBadge";
+import { Button } from "@/shared/ui/button";
+import type * as React from "react";
 import {
   type Certificate,
   type CertificateStatus,
@@ -83,10 +83,7 @@ function CertificateDetailBody({ cert, canRevoke }: { cert: Certificate; canRevo
           </div>
         </div>
         {canRevoke && isActive && (
-          <RevokeDialog
-            trigger={<Button variant="destructive">Revoke</Button>}
-            cert={cert}
-          />
+          <RevokeDialog trigger={<Button variant="destructive">Revoke</Button>} cert={cert} />
         )}
       </div>
 

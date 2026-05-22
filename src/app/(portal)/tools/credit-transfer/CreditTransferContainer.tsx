@@ -1,19 +1,19 @@
 "use client";
 
-import * as React from "react";
-import { useQueries } from "@tanstack/react-query";
-import { useSession } from "next-auth/react";
-import { useAbility } from "@shared/casl/AbilityProvider";
-import { CenteredSpinner } from "@/shared/ui/Loading";
-import { ErrorState } from "@/shared/ui/ErrorState";
 import { EmptyState } from "@/shared/ui/EmptyState";
+import { ErrorState } from "@/shared/ui/ErrorState";
+import { CenteredSpinner } from "@/shared/ui/Loading";
+import { getAllocationResources } from "@features/allocations/api";
 import { useAllocations } from "@features/allocations/queries";
 import { allocationKeys } from "@features/allocations/queries";
-import { getAllocationResources } from "@features/allocations/api";
 import {
-  CreditTransferWizard,
   type CreditTransferResource,
+  CreditTransferWizard,
 } from "@features/tools/components/CreditTransferWizard";
+import { useAbility } from "@shared/casl/AbilityProvider";
+import { useQueries } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
+import * as React from "react";
 
 export function CreditTransferContainer() {
   const { data: session } = useSession();
@@ -74,9 +74,10 @@ export function CreditTransferContainer() {
 
   if (isLoading) return <CenteredSpinner label="Loading allocations" />;
 
-  const queryError = allocationsQuery.error
-    ?? usageQueries.find((q) => q.error)?.error
-    ?? resourceQueries.find((q) => q.error)?.error;
+  const queryError =
+    allocationsQuery.error ??
+    usageQueries.find((q) => q.error)?.error ??
+    resourceQueries.find((q) => q.error)?.error;
   if (queryError) {
     return (
       <ErrorState
