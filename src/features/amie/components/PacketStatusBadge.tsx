@@ -2,23 +2,17 @@ import { cn } from "@/lib/utils";
 import type { PacketStatus, ReplyStatus } from "../types";
 
 const packetStyles: Record<PacketStatus, string> = {
-  NEW: "bg-[color:var(--nexus-blue-50)] text-[color:var(--nexus-blue-700)] ring-[color:var(--nexus-blue-200)]",
-  DECODED:
-    "bg-[color:var(--nexus-amber-50)] text-[color:var(--nexus-amber-700)] ring-[color:var(--nexus-amber-200)]",
-  PROCESSED:
-    "bg-[color:var(--nexus-green-50)] text-[color:var(--nexus-green-700)] ring-[color:var(--nexus-green-200)]",
-  FAILED:
-    "bg-[color:var(--nexus-red-50)] text-[color:var(--nexus-red-700)] ring-[color:var(--nexus-red-200)]",
+  NEW: "bg-[color:var(--nexus-blue-50)] text-[color:var(--nexus-blue-700)]",
+  DECODED: "bg-[color:var(--nexus-amber-50)] text-[color:var(--nexus-amber-700)]",
+  PROCESSED: "bg-[color:var(--nexus-green-50)] text-[color:var(--nexus-green-700)]",
+  FAILED: "bg-[color:var(--nexus-red-50)] text-[color:var(--nexus-red-700)]",
 };
 
 const replyStyles: Record<ReplyStatus, string> = {
-  PENDING:
-    "bg-[color:var(--nexus-amber-50)] text-[color:var(--nexus-amber-700)] ring-[color:var(--nexus-amber-200)]",
-  SENT: "bg-[color:var(--nexus-blue-50)] text-[color:var(--nexus-blue-700)] ring-[color:var(--nexus-blue-200)]",
-  ACKED:
-    "bg-[color:var(--nexus-green-50)] text-[color:var(--nexus-green-700)] ring-[color:var(--nexus-green-200)]",
-  FAILED:
-    "bg-[color:var(--nexus-red-50)] text-[color:var(--nexus-red-700)] ring-[color:var(--nexus-red-200)]",
+  PENDING: "bg-[color:var(--nexus-amber-50)] text-[color:var(--nexus-amber-700)]",
+  SENT: "bg-[color:var(--nexus-blue-50)] text-[color:var(--nexus-blue-700)]",
+  ACKED: "bg-[color:var(--nexus-green-50)] text-[color:var(--nexus-green-700)]",
+  FAILED: "bg-[color:var(--nexus-red-50)] text-[color:var(--nexus-red-700)]",
 };
 
 export function PacketStatusBadge({
@@ -30,14 +24,14 @@ export function PacketStatusBadge({
   ageHours?: number;
   className?: string;
 }) {
-  // Per spec: a FAILED packet >24h old is louder. Use a deeper red ring + bold.
+  // Aged-FAILED packets stay louder via weight + the trailing "!" — no ring.
   const loud = status === "FAILED" && ageHours !== undefined && ageHours > 24;
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset",
+        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
         packetStyles[status],
-        loud && "ring-2 ring-[color:var(--nexus-red-400)] font-semibold",
+        loud && "font-semibold",
         className,
       )}
     >
@@ -57,7 +51,7 @@ export function ReplyStatusBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset",
+        "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
         replyStyles[status],
         className,
       )}
