@@ -3,14 +3,11 @@ import Credentials from "next-auth/providers/credentials";
 import { z } from "zod";
 import type { Role } from "@/shared/casl/abilities";
 import { serverEnv } from "@/lib/env";
+import { derivePersonaScopes } from "@/shared/auth/personaScopes";
 
-const devPersonas: Record<string, { name: string; role: Role; myPiAllocations?: string[] }> = {
+const devPersonas: Record<string, { name: string; role: Role }> = {
   "researcher@nexus.local": { name: "Riya Researcher", role: "user" },
-  "pi@nexus.local": {
-    name: "Pat PI",
-    role: "pi",
-    myPiAllocations: ["alloc-001"],
-  },
+  "pi@nexus.local": { name: "Pat PI", role: "pi" },
   "admin@nexus.local": { name: "Avery Admin", role: "admin" },
 };
 
@@ -32,16 +29,25 @@ const credentialsProvider = Credentials({
 
     const email = parsed.data.email.toLowerCase();
     const preset = devPersonas[email];
+    const scopes = derivePersonaScopes(email);
     if (preset) {
       return {
         id: email,
         email,
         name: preset.name,
         role: preset.role,
-        myPiAllocations: preset.myPiAllocations,
+        myPiAllocations: scopes.myPiAllocations,
+        assignedAllocations: scopes.assignedAllocations,
       };
     }
-    return { id: email, email, name: email.split("@")[0], role: "user" as Role };
+    return {
+      id: email,
+      email,
+      name: email.split("@")[0],
+      role: "user" as Role,
+      myPiAllocations: scopes.myPiAllocations,
+      assignedAllocations: scopes.assignedAllocations,
+    };
   },
 });
 
