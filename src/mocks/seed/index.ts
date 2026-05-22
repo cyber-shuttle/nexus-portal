@@ -26,6 +26,7 @@ import type {
 import type { Proposal } from "@features/proposals/types";
 import type { Certificate } from "@features/signer/types";
 import type { Client } from "@features/clients/types";
+import { clientSlug, nextClientRowId } from "./ids";
 import { daysFromNow, hoursFromNow, makeRng, pick, rangeInt } from "./random";
 
 const FIRST_NAMES = [
@@ -494,12 +495,12 @@ export function buildSeed(): Seed {
     const issuedAt = daysFromNow(-rangeInt(rng, 1, 200)).toISOString();
     const rotated = rng() < 0.3 ? daysFromNow(-rangeInt(rng, 1, 60)).toISOString() : undefined;
     clients.push({
-      id: `client-${String(i + 1).padStart(3, "0")}`,
+      id: nextClientRowId(clients.map((c) => c.id)),
       name: `Pipeline ${i + 1}`,
       allocation_id: ownerAllocation.id,
       allocation_name: ownerAllocation.name,
       owner_user_id: ownerUser.id,
-      client_id: `nexus-${ownerAllocation.id}-${i + 1}`,
+      client_id: clientSlug(ownerAllocation.id, i + 1),
       client_secret_last4: String(rangeInt(rng, 1000, 9999)),
       issued_at: issuedAt,
       last_rotated_at: rotated,
@@ -595,13 +596,65 @@ export function buildSeed(): Seed {
 }
 
 // Singleton: MSW mutations live on this seed in-memory. We pin it to globalThis
-// so a full-page reload (sign-out + sign-in) or HMR re-evaluation reuses the
-// same dataset instead of regenerating and losing user-submitted rows.
+// so HMR re-evaluation reuses the same dataset, and we mirror it to localStorage
+// so a full-page reload (sign-out + sign-in) restores user-submitted rows
+// instead of rebuilding from scratch.
 type SeedHolder = { __nexusSeed?: Seed };
 const holder = globalThis as unknown as SeedHolder;
-if (!holder.__nexusSeed) {
+
+const STORAGE_KEY = "nexus.msw.seed.v1";
+
+function getStorage(): Storage | null {
+  try {
+    if (typeof window === "undefined") return null;
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+}
+
+function tryHydrate(): Seed | null {
+  const storage = getStorage();
+  if (!storage) return null;
+  try {
+    const raw = storage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as Seed;
+  } catch {
+    return null;
+  }
+}
+
+export function persistSeed(): void {
+  const storage = getStorage();
+  if (!storage) return;
+  try {
+    storage.setItem(STORAGE_KEY, JSON.stringify(holder.__nexusSeed));
+  } catch {
+    // Storage quota or serialization failure — best effort, do not crash MSW.
+  }
+}
+
+export function resetSeed(): void {
+  const storage = getStorage();
+  if (storage) storage.removeItem(STORAGE_KEY);
   holder.__nexusSeed = buildSeed();
 }
+
+if (!holder.__nexusSeed) {
+  const hydrated = tryHydrate();
+  holder.__nexusSeed = hydrated ?? buildSeed();
+  if (!hydrated) persistSeed();
+}
+
+// All handlers read seed through this getter so a re-import after sign-out
+// always sees the holder's current snapshot.
+export function getSeed(): Seed {
+  return holder.__nexusSeed as Seed;
+}
+
+// Back-compat export. Stays in sync with the holder because it IS the holder
+// object reference. Mutations through `seed.x.push(...)` mutate the holder.
 export const seed: Seed = holder.__nexusSeed;
 
 export function getAllocationUsageTotalRow(allocId: string): ComputeAllocationUsageTotal {

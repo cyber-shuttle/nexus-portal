@@ -1,6 +1,6 @@
 import { HttpResponse, http } from "msw";
 import { z } from "zod";
-import { seed } from "../seed";
+import { persistSeed, seed } from "../seed";
 import { path, paginate } from "./_utils";
 import type { Proposal } from "@features/proposals/types";
 import {
@@ -68,6 +68,7 @@ export const proposalHandlers = [
       updated_at: now,
     };
     seed.proposals.unshift(created);
+    persistSeed();
     return HttpResponse.json(created, { status: 201 });
   }),
 
@@ -82,6 +83,7 @@ export const proposalHandlers = [
       );
     }
     Object.assign(existing, parsed.data, { updated_at: new Date().toISOString() });
+    persistSeed();
     return HttpResponse.json(existing);
   }),
 
@@ -103,6 +105,7 @@ export const proposalHandlers = [
       decision_note: parsed.data.decision_note,
     };
     existing.updated_at = now;
+    persistSeed();
     return HttpResponse.json(existing);
   }),
 
@@ -124,6 +127,7 @@ export const proposalHandlers = [
       decision_note: parsed.data.decision_note,
     };
     existing.updated_at = now;
+    persistSeed();
     return HttpResponse.json(existing);
   }),
 
@@ -142,6 +146,7 @@ export const proposalHandlers = [
     }
     existing.status = "WITHDRAWN";
     existing.updated_at = new Date().toISOString();
+    persistSeed();
     return HttpResponse.json(existing);
   }),
 ];

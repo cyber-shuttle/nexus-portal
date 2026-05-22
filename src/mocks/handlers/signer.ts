@@ -1,5 +1,5 @@
 import { HttpResponse, http } from "msw";
-import { seed } from "../seed";
+import { persistSeed, seed } from "../seed";
 import { path } from "./_utils";
 import { revokeCertificatePayloadSchema } from "@features/signer/schemas";
 import { deriveCertificateStatus } from "@features/signer/types";
@@ -87,6 +87,7 @@ export const signerHandlers = [
     row.revoked = true;
     row.revoked_at = nowSeconds();
     row.revocation_reason = parsed.data.reason;
+    persistSeed();
     return HttpResponse.json(row);
   }),
 ];

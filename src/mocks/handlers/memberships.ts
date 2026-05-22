@@ -1,6 +1,6 @@
 import { HttpResponse, http } from "msw";
 import { z } from "zod";
-import { seed } from "../seed";
+import { persistSeed, seed } from "../seed";
 import { path, paginate } from "./_utils";
 import type {
   ComputeAllocationMembership,
@@ -77,6 +77,7 @@ export const membershipHandlers = [
     };
     seed.memberships.push(created);
     if (body.portal_role) seed.membershipRoles[created.id] = body.portal_role;
+    persistSeed();
     return HttpResponse.json(created, { status: 201 });
   }),
 
@@ -91,6 +92,7 @@ export const membershipHandlers = [
       );
     }
     existing.membership_status = parsed.data.membership_status;
+    persistSeed();
     return HttpResponse.json(existing);
   }),
 
@@ -105,6 +107,7 @@ export const membershipHandlers = [
       );
     }
     Object.assign(existing, parsed.data);
+    persistSeed();
     return HttpResponse.json(existing);
   }),
 
@@ -112,6 +115,7 @@ export const membershipHandlers = [
     const idx = seed.memberships.findIndex((m) => m.id === params.id);
     if (idx < 0) return HttpResponse.json({ error: "not_found" }, { status: 404 });
     seed.memberships.splice(idx, 1);
+    persistSeed();
     return new HttpResponse(null, { status: 204 });
   }),
 
@@ -132,6 +136,7 @@ export const membershipHandlers = [
       override_resource_time: body.override_resource_time,
     };
     seed.overrides.push(created);
+    persistSeed();
     return HttpResponse.json(created, { status: 201 });
   }),
 
@@ -148,6 +153,7 @@ export const membershipHandlers = [
         );
       }
       Object.assign(existing, parsed.data);
+      persistSeed();
       return HttpResponse.json(existing);
     },
   ),
@@ -156,6 +162,7 @@ export const membershipHandlers = [
     const idx = seed.overrides.findIndex((o) => o.id === params.id);
     if (idx < 0) return HttpResponse.json({ error: "not_found" }, { status: 404 });
     seed.overrides.splice(idx, 1);
+    persistSeed();
     return new HttpResponse(null, { status: 204 });
   }),
 ];

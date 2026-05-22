@@ -1,5 +1,5 @@
 import { HttpResponse, http } from "msw";
-import { seed } from "../seed";
+import { persistSeed, seed } from "../seed";
 import { path, paginate } from "./_utils";
 import type {
   ChangeRequestStatus,
@@ -83,6 +83,7 @@ export const changeRequestHandlers = [
       "CREATED",
       `Change request created by ${body.requester_id}`,
     );
+    persistSeed();
     return HttpResponse.json(created, { status: 201 });
   }),
 
@@ -107,6 +108,7 @@ export const changeRequestHandlers = [
         `Change request ${(patch.change_status as string).toLowerCase()} by ${actor}`,
       );
     }
+    persistSeed();
     return HttpResponse.json(existing);
   }),
 
@@ -114,6 +116,7 @@ export const changeRequestHandlers = [
     const idx = seed.changeRequests.findIndex((c) => c.id === params.id);
     if (idx < 0) return HttpResponse.json({ error: "not_found" }, { status: 404 });
     seed.changeRequests.splice(idx, 1);
+    persistSeed();
     return new HttpResponse(null, { status: 204 });
   }),
 ];

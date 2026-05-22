@@ -1,28 +1,12 @@
 import { HttpResponse, http } from "msw";
-import { seed } from "../seed";
+import { persistSeed, seed } from "../seed";
+import { clientSlug, nextClientRowId, randomSecretLast4 } from "../seed/ids";
 import { path } from "./_utils";
 import {
   createClientPayloadSchema,
   deactivateClientPayloadSchema,
   rotateClientSecretPayloadSchema,
 } from "@features/clients/schemas";
-
-function newId(): string {
-  const max = seed.clients.reduce((acc, c) => {
-    const match = c.id.match(/client-(\d+)/);
-    if (!match || !match[1]) return acc;
-    return Math.max(acc, Number.parseInt(match[1], 10));
-  }, 0);
-  return `client-${String(max + 1).padStart(3, "0")}`;
-}
-
-function newClientId(allocationId: string): string {
-  return `nexus-${allocationId}-${seed.clients.length + 1}`;
-}
-
-function newSecretLast4(): string {
-  return String(Math.floor(1000 + Math.random() * 9000));
-}
 
 export const clientHandlers = [
   http.get(path("/clients"), ({ request }) => {
@@ -67,18 +51,19 @@ export const clientHandlers = [
     }
     const now = new Date().toISOString();
     const created = {
-      id: newId(),
+      id: nextClientRowId(seed.clients.map((c) => c.id)),
       name: parsed.data.name,
       allocation_id: parsed.data.allocation_id,
       allocation_name: allocation.name,
       owner_user_id: parsed.data.owner_user_id,
-      client_id: newClientId(parsed.data.allocation_id),
-      client_secret_last4: newSecretLast4(),
+      client_id: clientSlug(parsed.data.allocation_id, seed.clients.length + 1),
+      client_secret_last4: randomSecretLast4(),
       issued_at: now,
       last_rotated_at: undefined,
       status: "active" as const,
     };
     seed.clients.unshift(created);
+    persistSeed();
     return HttpResponse.json(created, { status: 201 });
   }),
 
@@ -95,8 +80,9 @@ export const clientHandlers = [
     if (row.status === "deactivated") {
       return HttpResponse.json({ error: "client_deactivated" }, { status: 409 });
     }
-    row.client_secret_last4 = newSecretLast4();
+    row.client_secret_last4 = randomSecretLast4();
     row.last_rotated_at = new Date().toISOString();
+    persistSeed();
     return HttpResponse.json(row);
   }),
 
@@ -111,6 +97,7 @@ export const clientHandlers = [
       );
     }
     row.status = "deactivated";
+    persistSeed();
     return HttpResponse.json(row);
   }),
 ];
