@@ -1,16 +1,17 @@
 import type { HttpHandler } from "msw";
-import { allocationHandlers } from "./allocations";
-import { resourceHandlers } from "./resources";
-import { membershipHandlers } from "./memberships";
-import { userHandlers } from "./users";
-import { identityHandlers } from "./identities";
-import { changeRequestHandlers } from "./change-requests";
-import { diffHandlers } from "./diffs";
 import { adminHandlers } from "./admin";
-import { proposalHandlers } from "./proposals";
-import { toolsHandlers } from "./tools";
-import { signerHandlers } from "./signer";
+import { allocationHandlers } from "./allocations";
+import { amieHandlers } from "./amie";
+import { changeRequestHandlers } from "./change-requests";
 import { clientHandlers } from "./clients";
+import { diffHandlers } from "./diffs";
+import { identityHandlers } from "./identities";
+import { membershipHandlers } from "./memberships";
+import { proposalHandlers } from "./proposals";
+import { resourceHandlers } from "./resources";
+import { signerHandlers } from "./signer";
+import { toolsHandlers } from "./tools";
+import { userHandlers } from "./users";
 
 export const handlers: HttpHandler[] = [
   ...allocationHandlers,
@@ -25,4 +26,5 @@ export const handlers: HttpHandler[] = [
   ...toolsHandlers,
   ...signerHandlers,
   ...clientHandlers,
+  ...amieHandlers,
 ];

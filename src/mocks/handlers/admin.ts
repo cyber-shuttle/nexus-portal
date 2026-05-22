@@ -1,7 +1,15 @@
-import { HttpResponse, http } from "msw";
+import { http, HttpResponse } from "msw";
 import { seed } from "../seed";
-import { amieFailed24h } from "../seed/amie-packets";
 import { path } from "./_utils";
+
+function amieFailedWithin24h(): number {
+  const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+  return seed.amiePackets.filter((p) => {
+    if (p.status !== "FAILED") return false;
+    const t = Date.parse(p.received_at);
+    return !Number.isNaN(t) && t >= cutoff;
+  }).length;
+}
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const NINETY_DAYS = 90 * DAY_MS;
@@ -47,7 +55,7 @@ export const adminHandlers = [
       total_su_allocated_quarter,
       total_su_charged_quarter,
       pending_proposals: 4,
-      amie_failed_24h: amieFailed24h(),
+      amie_failed_24h: amieFailedWithin24h(),
       allocations_by_day,
     });
   }),

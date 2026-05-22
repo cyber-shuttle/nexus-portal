@@ -6,26 +6,25 @@ import type {
   ComputeAllocationResourceRate,
   ComputeCluster,
 } from "@features/allocations/schemas";
-import type { Project } from "@features/projects/schemas";
+import type { Packet, PacketEvent, Reply } from "@features/amie/types";
+import type { Client } from "@features/clients/types";
+import type { MembershipRole } from "@features/members/roles";
 import type {
   ComputeAllocationMembership,
   ComputeAllocationMembershipResourceOverride,
   User,
   UserIdentity,
 } from "@features/members/schemas";
-import type { MembershipRole } from "@features/members/roles";
-import type {
-  ComputeAllocationUsage,
-  ComputeAllocationUsageTotal,
-} from "@features/usage/schemas";
+import type { Project } from "@features/projects/schemas";
+import type { Proposal } from "@features/proposals/types";
+import type { Certificate } from "@features/signer/types";
+import type { ComputeAllocationUsage, ComputeAllocationUsageTotal } from "@features/usage/schemas";
 import type {
   ComputeAllocationChangeRequest,
   ComputeAllocationChangeRequestEvent,
   ComputeAllocationDiff,
 } from "@shared/api/domain";
-import type { Proposal } from "@features/proposals/types";
-import type { Certificate } from "@features/signer/types";
-import type { Client } from "@features/clients/types";
+import { buildAmieSeed } from "./amie";
 import { clientSlug, nextClientRowId } from "./ids";
 import { daysFromNow, hoursFromNow, makeRng, pick, rangeInt } from "./random";
 
@@ -103,6 +102,9 @@ export type Seed = {
   proposals: Proposal[];
   certificates: Certificate[];
   clients: Client[];
+  amiePackets: Packet[];
+  amieEvents: PacketEvent[];
+  amieReplies: Reply[];
 };
 
 function statusFor(rng: () => number): AllocationStatus {
@@ -414,9 +416,7 @@ export function buildSeed(): Seed {
       const project = projects[(proposalSeq * 7) % projects.length];
       if (!project) continue;
       const projectAllocResources = resources.filter((r) =>
-        allocations.some(
-          (a) => a.project_id === project.id && r.id.startsWith(`${a.id}-res`),
-        ),
+        allocations.some((a) => a.project_id === project.id && r.id.startsWith(`${a.id}-res`)),
       );
       const pickedResources =
         projectAllocResources.length > 0 ? projectAllocResources : resources.slice(0, 2);
@@ -488,8 +488,8 @@ export function buildSeed(): Seed {
     const ownerMemberships = memberships.filter((m) => m.user_id === ownerUser.id);
     const ownerAllocation =
       ownerMemberships.length > 0
-        ? allocations.find((a) => a.id === ownerMemberships[0]?.compute_allocation_id) ??
-          allocations[i % allocations.length]
+        ? (allocations.find((a) => a.id === ownerMemberships[0]?.compute_allocation_id) ??
+          allocations[i % allocations.length])
         : allocations[i % allocations.length];
     if (!ownerAllocation) continue;
     const issuedAt = daysFromNow(-rangeInt(rng, 1, 200)).toISOString();
@@ -572,6 +572,9 @@ export function buildSeed(): Seed {
     }
   }
 
+  const projectOriginatedIds = projects.map((p) => p.originated_id);
+  const amie = buildAmieSeed({ projectIds: projectOriginatedIds, total: 100 });
+
   return {
     clusters,
     organizations,
@@ -592,6 +595,9 @@ export function buildSeed(): Seed {
     proposals,
     certificates,
     clients,
+    amiePackets: amie.packets,
+    amieEvents: amie.events,
+    amieReplies: amie.replies,
   };
 }
 
