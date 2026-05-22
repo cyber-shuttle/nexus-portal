@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
-import { useAllocation } from "@features/allocations/queries";
+import { useAllocation, useAllocationResources } from "@features/allocations/queries";
 import { useProject } from "@features/projects/queries";
 import {
   useAllocationUsageTotal,
@@ -43,10 +43,23 @@ export function AllocationDetailContainer({ allocationId }: { allocationId: stri
 
   const used = usageQuery.data?.total_su_amount ?? 0;
   const piUserId = projectQuery.data?.project_pi_id;
-  const requesterId = useSession().data?.user?.id ?? "";
+  const session = useSession().data;
+  const requesterId = session?.user?.id ?? "";
+  const role = session?.user?.role;
+  const myPiAllocations = session?.user?.myPiAllocations ?? [];
+  const canManageMembers =
+    role === "admin" ||
+    ((role === "pi" || role === "co_pi") && myPiAllocations.includes(allocationId));
+
+  const resourcesQuery = useAllocationResources(allocationId);
+  const resourceList = React.useMemo(
+    () => (resourcesQuery.data ?? []).map((r) => ({ id: r.id, name: r.name })),
+    [resourcesQuery.data],
+  );
 
   const [extensionOpen, setExtensionOpen] = React.useState(false);
   const currentSuAmount = allocationQuery.data?.initial_su_amount ?? 0;
+  const allocationEndTime = allocationQuery.data?.end_time ?? new Date().toISOString();
 
   return (
     <div className="space-y-6">
@@ -68,7 +81,15 @@ export function AllocationDetailContainer({ allocationId }: { allocationId: stri
           {
             value: "users",
             label: "Users & Roles",
-            content: <MembersTab allocationId={allocationId} piUserId={piUserId} />,
+            content: (
+              <MembersTab
+                allocationId={allocationId}
+                piUserId={piUserId}
+                allocationEndTime={allocationEndTime}
+                canManage={canManageMembers}
+                resources={resourceList}
+              />
+            ),
           },
           {
             value: "audit",

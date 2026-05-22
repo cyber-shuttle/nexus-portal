@@ -1,7 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { useAllocationMembers, type AllocationMemberRow } from "../queries";
+import { toast } from "sonner";
+import { ApiError } from "@shared/api/client";
+import {
+  useAllocationMembers,
+  useDeleteMembership,
+  useSetMembershipStatus,
+  type AllocationMemberRow,
+} from "../queries";
 import { DataTable, type DataTableColumn } from "@/shared/ui/DataTable";
 import { TableSkeleton } from "@/shared/ui/Loading";
 import { ErrorState } from "@/shared/ui/ErrorState";
@@ -9,8 +16,17 @@ import { EmptyState } from "@/shared/ui/EmptyState";
 import { StatusBadge, statusBadgeVariantFromAllocationStatus } from "@/shared/ui/StatusBadge";
 import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
 import { Button } from "@/shared/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/ui/tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/shared/ui/dialog";
 import { MemberDetailDrawer } from "./MemberDetailDrawer";
+import { AddMemberDrawer } from "./AddMemberDrawer";
+import { OverridesDrawer, type OverridesDrawerResource } from "./OverridesDrawer";
 
 function initials(row: AllocationMemberRow): string {
   if (!row.user) return "?";
@@ -36,13 +52,56 @@ function roleFor(row: AllocationMemberRow, piUserId: string | undefined): string
 export type MembersTabProps = {
   allocationId: string;
   piUserId: string | undefined;
+  allocationEndTime: string;
+  canManage: boolean;
+  resources: OverridesDrawerResource[];
 };
 
-export function MembersTab({ allocationId, piUserId }: MembersTabProps) {
+type ConfirmState =
+  | null
+  | { kind: "deactivate"; membershipId: string; userLabel: string }
+  | { kind: "activate"; membershipId: string; userLabel: string }
+  | { kind: "remove"; membershipId: string; userId: string; userLabel: string };
+
+export function MembersTab({
+  allocationId,
+  piUserId,
+  allocationEndTime,
+  canManage,
+  resources,
+}: MembersTabProps) {
   const { data: rows, isLoading, error, refetch } = useAllocationMembers(allocationId);
+  const setStatusMutation = useSetMembershipStatus();
+  const deleteMutation = useDeleteMembership();
 
   const [activeMember, setActiveMember] = React.useState<AllocationMemberRow | null>(null);
   const [drawerOpen, setDrawerOpen] = React.useState(false);
+  const [addOpen, setAddOpen] = React.useState(false);
+  const [overridesFor, setOverridesFor] = React.useState<AllocationMemberRow | null>(null);
+  const [confirm, setConfirm] = React.useState<ConfirmState>(null);
+
+  async function runConfirm(state: NonNullable<ConfirmState>) {
+    try {
+      if (state.kind === "deactivate") {
+        await setStatusMutation.mutateAsync({ id: state.membershipId, status: "INACTIVE" });
+        toast.success(`${state.userLabel} deactivated`);
+      } else if (state.kind === "activate") {
+        await setStatusMutation.mutateAsync({ id: state.membershipId, status: "ACTIVE" });
+        toast.success(`${state.userLabel} reactivated`);
+      } else {
+        await deleteMutation.mutateAsync({
+          id: state.membershipId,
+          allocationId,
+          userId: state.userId,
+        });
+        toast.success(`${state.userLabel} removed`);
+      }
+    } catch (err) {
+      const msg =
+        err instanceof ApiError ? `Failed (${err.status}): ${err.message}` : "Action failed";
+      toast.error(msg);
+    }
+  }
 
   const columns: Array<DataTableColumn<AllocationMemberRow>> = [
     {
@@ -99,7 +158,82 @@ export function MembersTab({ allocationId, piUserId }: MembersTabProps) {
         />
       ),
     },
+    {
+      key: "actions",
+      header: "",
+      align: "right",
+      cell: (row) => {
+        if (!canManage || row.membership.user_id === piUserId) return null;
+        const label = fullName(row);
+        const status = row.membership.membership_status;
+        return (
+          <div className="flex justify-end gap-1.5">
+            <Button
+              variant="ghost"
+              size="sm"
+              data-testid={`overrides-${row.membership.id}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                setOverridesFor(row);
+              }}
+            >
+              Overrides
+            </Button>
+            {status === "ACTIVE" ? (
+              <Button
+                variant="outline"
+                size="sm"
+                data-testid={`deactivate-${row.membership.id}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setConfirm({
+                    kind: "deactivate",
+                    membershipId: row.membership.id,
+                    userLabel: label,
+                  });
+                }}
+              >
+                Deactivate
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setConfirm({
+                    kind: "activate",
+                    membershipId: row.membership.id,
+                    userLabel: label,
+                  });
+                }}
+              >
+                Activate
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              data-testid={`remove-${row.membership.id}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                setConfirm({
+                  kind: "remove",
+                  membershipId: row.membership.id,
+                  userId: row.membership.user_id,
+                  userLabel: label,
+                });
+              }}
+            >
+              Remove
+            </Button>
+          </div>
+        );
+      },
+    },
   ];
+
+  const excludeUserIds = (rows ?? []).map((r) => r.membership.user_id);
 
   return (
     <div className="space-y-4">
@@ -113,25 +247,19 @@ export function MembersTab({ allocationId, piUserId }: MembersTabProps) {
             Roles: PI, Co-PI, Allocation Manager, User
           </span>
         </div>
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <Button
-                variant="outline"
-                aria-disabled
-                aria-label="Manage members (available in Phase 3)"
-                className="opacity-50 cursor-not-allowed"
-                onClick={(e) => e.preventDefault()}
-              >
-                Manage members
-              </Button>
-            }
-          />
-          <TooltipContent>Available in Phase 3</TooltipContent>
-        </Tooltip>
+        {canManage ? (
+          <Button
+            variant="outline"
+            aria-label="Add member"
+            data-testid="add-member"
+            onClick={() => setAddOpen(true)}
+          >
+            Add member
+          </Button>
+        ) : null}
       </div>
       {isLoading ? (
-        <TableSkeleton rows={5} columns={4} />
+        <TableSkeleton rows={5} columns={5} />
       ) : error ? (
         <ErrorState message={error.message} onRetry={() => refetch()} />
       ) : !rows || rows.length === 0 ? (
@@ -151,6 +279,65 @@ export function MembersTab({ allocationId, piUserId }: MembersTabProps) {
         />
       )}
       <MemberDetailDrawer open={drawerOpen} onOpenChange={setDrawerOpen} member={activeMember} />
+      <AddMemberDrawer
+        open={addOpen}
+        onOpenChange={setAddOpen}
+        allocationId={allocationId}
+        allocationEndTime={allocationEndTime}
+        excludeUserIds={excludeUserIds}
+      />
+      {overridesFor ? (
+        <OverridesDrawer
+          open={Boolean(overridesFor)}
+          onOpenChange={(open) => {
+            if (!open) setOverridesFor(null);
+          }}
+          membershipId={overridesFor.membership.id}
+          memberLabel={fullName(overridesFor)}
+          resources={resources}
+        />
+      ) : null}
+      <Dialog
+        open={confirm !== null}
+        onOpenChange={(open) => {
+          if (!open) setConfirm(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {confirm?.kind === "remove"
+                ? `Remove ${confirm?.userLabel}?`
+                : confirm?.kind === "deactivate"
+                  ? `Deactivate ${confirm?.userLabel}?`
+                  : `Reactivate ${confirm?.userLabel}?`}
+            </DialogTitle>
+            <DialogDescription>
+              {confirm?.kind === "remove"
+                ? "Removes the membership row. The user can be re-added later."
+                : confirm?.kind === "deactivate"
+                  ? "Sets membership_status to INACTIVE. Usage already recorded is preserved."
+                  : "Sets membership_status back to ACTIVE."}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setConfirm(null)}>
+              Cancel
+            </Button>
+            <Button
+              data-testid="confirm-action"
+              onClick={async () => {
+                if (!confirm) return;
+                const c = confirm;
+                setConfirm(null);
+                await runConfirm(c);
+              }}
+            >
+              Confirm
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
