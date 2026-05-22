@@ -49,7 +49,8 @@ export function ProposalWizardStepper({
                     isCurrent
                       ? "bg-primary text-primary-foreground"
                       : isCompleted
-                        ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+                        ? // Tokenized success surface — keeps the green completion cue without leaving the token system.
+                          "bg-[color:var(--nexus-green-50)] text-[color:var(--nexus-green-700)]"
                         : "bg-muted text-muted-foreground",
                   )}
                   aria-hidden
