@@ -1,9 +1,19 @@
 import type { Metadata } from "next";
-import "./globals.css";
-import { Geist } from "next/font/google";
+import { Inter, Manrope } from "next/font/google";
 import { cn } from "@/lib/utils";
+import "./globals.css";
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--nexus-font-sans",
+  display: "swap",
+});
+
+const manrope = Manrope({
+  subsets: ["latin"],
+  variable: "--nexus-font-display",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Nexus Portal",
@@ -16,8 +26,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn("h-full antialiased", "font-sans", geist.variable)}>
-      <body className="min-h-full flex flex-col">{children}</body>
+    <html
+      lang="en"
+      className={cn("h-full antialiased", inter.variable, manrope.variable)}
+    >
+      <body className="min-h-full flex flex-col bg-background text-foreground">
+        {children}
+      </body>
     </html>
   );
 }

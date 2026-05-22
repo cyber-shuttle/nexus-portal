@@ -1,0 +1,88 @@
+:root {
+  --nexus-blue-50: #e9f0f8;
+  --nexus-blue-100: #d2e1f1;
+  --nexus-blue-200: #a6c3e4;
+  --nexus-blue-300: #79a4d6;
+  --nexus-blue-400: #4d86c9;
+  --nexus-blue-500: #2361b8;
+  --nexus-blue-600: #1c4e93;
+  --nexus-blue-700: #153b6e;
+  --nexus-blue-800: #0e274a;
+
+  --nexus-red-50: #fef2f2;
+  --nexus-red-100: #fee2e2;
+  --nexus-red-200: #fecaca;
+  --nexus-red-300: #fca5a5;
+  --nexus-red-400: #f87171;
+  --nexus-red-500: #ef4444;
+  --nexus-red-600: #dc2626;
+  --nexus-red-700: #b91c1c;
+  --nexus-red-800: #991b1b;
+
+  --nexus-green-50: #f0fdf4;
+  --nexus-green-100: #dcfce7;
+  --nexus-green-200: #bbf7d0;
+  --nexus-green-300: #86efac;
+  --nexus-green-400: #4ade80;
+  --nexus-green-500: #22c55e;
+  --nexus-green-600: #16a34a;
+  --nexus-green-700: #15803d;
+  --nexus-green-800: #166534;
+
+  /* Gray scale derived around observed text colors (#191C1E, #515F74) since the
+     gray-scale section was not fetched from Figma before the rate limit hit. */
+  --nexus-gray-50: #f4f5f7;
+  --nexus-gray-100: #e5e7eb;
+  --nexus-gray-200: #cbd0d8;
+  --nexus-gray-300: #9aa1ae;
+  --nexus-gray-400: #6b7280;
+  --nexus-gray-500: #515f74;
+  --nexus-gray-600: #3d4658;
+  --nexus-gray-700: #2a3142;
+  --nexus-gray-800: #1a1f2b;
+  --nexus-gray-900: #191c1e;
+
+  --nexus-white: #ffffff;
+
+  --nexus-primary: var(--nexus-blue-500);
+  --nexus-primary-foreground: var(--nexus-white);
+  --nexus-action: var(--nexus-blue-500);
+  --nexus-error: var(--nexus-red-600);
+  --nexus-success: var(--nexus-green-600);
+  --nexus-warning: #f59e0b;
+
+  --background: var(--nexus-white);
+  --foreground: var(--nexus-gray-900);
+  --card: var(--nexus-white);
+  --card-foreground: var(--nexus-gray-900);
+  --popover: var(--nexus-white);
+  --popover-foreground: var(--nexus-gray-900);
+  --primary: var(--nexus-blue-500);
+  --primary-foreground: var(--nexus-white);
+  --secondary: var(--nexus-gray-100);
+  --secondary-foreground: var(--nexus-gray-900);
+  --muted: var(--nexus-gray-100);
+  --muted-foreground: var(--nexus-gray-500);
+  --accent: var(--nexus-blue-50);
+  --accent-foreground: var(--nexus-blue-700);
+  --destructive: var(--nexus-red-600);
+  --destructive-foreground: var(--nexus-white);
+  --border: var(--nexus-gray-200);
+  --input: var(--nexus-gray-200);
+  --ring: var(--nexus-blue-500);
+
+  --sidebar: var(--nexus-gray-50);
+  --sidebar-foreground: var(--nexus-gray-900);
+  --sidebar-primary: var(--nexus-blue-500);
+  --sidebar-primary-foreground: var(--nexus-white);
+  --sidebar-accent: var(--nexus-white);
+  --sidebar-accent-foreground: var(--nexus-gray-900);
+  --sidebar-border: var(--nexus-gray-200);
+  --sidebar-ring: var(--nexus-blue-500);
+
+  --chart-1: var(--nexus-blue-500);
+  --chart-2: var(--nexus-green-500);
+  --chart-3: var(--nexus-red-500);
+  --chart-4: var(--nexus-blue-700);
+  --chart-5: var(--nexus-gray-500);
+}

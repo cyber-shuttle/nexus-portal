@@ -1,0 +1,11 @@
+:root {
+  --nexus-radius-none: 0;
+  --nexus-radius-sm: 0.375rem;
+  --nexus-radius-md: 0.5rem;
+  --nexus-radius-lg: 0.75rem;
+  --nexus-radius-xl: 1rem;
+  --nexus-radius-2xl: 1.5rem;
+  --nexus-radius-pill: 9999px;
+
+  --radius: var(--nexus-radius-md);
+}
