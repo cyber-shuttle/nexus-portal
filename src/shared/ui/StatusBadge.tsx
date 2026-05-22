@@ -11,23 +11,18 @@ export type StatusBadgeVariant =
   | "expired"
   | "warning";
 
+// Drop the ring per spec §7.2 — Figma uses flat fill + tinted text only. Lean
+// on `bg-muted` for inactive/expired so neutral pills follow the theme token
+// rather than a fixed gray ramp.
 const variantStyles: Record<StatusBadgeVariant, string> = {
-  active:
-    "bg-[color:var(--nexus-green-50)] text-[color:var(--nexus-green-700)] ring-1 ring-inset ring-[color:var(--nexus-green-200)]",
-  inactive:
-    "bg-[color:var(--nexus-gray-100)] text-[color:var(--nexus-gray-700)] ring-1 ring-inset ring-[color:var(--nexus-gray-200)]",
-  deleted:
-    "bg-[color:var(--nexus-red-50)] text-[color:var(--nexus-red-700)] ring-1 ring-inset ring-[color:var(--nexus-red-200)]",
-  pending:
-    "bg-[color:var(--nexus-blue-50)] text-[color:var(--nexus-blue-700)] ring-1 ring-inset ring-[color:var(--nexus-blue-200)]",
-  approved:
-    "bg-[color:var(--nexus-green-50)] text-[color:var(--nexus-green-700)] ring-1 ring-inset ring-[color:var(--nexus-green-200)]",
-  rejected:
-    "bg-[color:var(--nexus-red-50)] text-[color:var(--nexus-red-700)] ring-1 ring-inset ring-[color:var(--nexus-red-200)]",
-  expired:
-    "bg-[color:var(--nexus-gray-100)] text-[color:var(--nexus-gray-700)] ring-1 ring-inset ring-[color:var(--nexus-gray-300)]",
-  warning:
-    "bg-[color:var(--nexus-amber-50)] text-[color:var(--nexus-amber-700)] ring-1 ring-inset ring-[color:var(--nexus-amber-200)]",
+  active: "bg-[color:var(--nexus-green-50)] text-[color:var(--nexus-green-700)]",
+  inactive: "bg-muted text-muted-foreground",
+  deleted: "bg-[color:var(--nexus-red-50)] text-[color:var(--nexus-red-700)]",
+  pending: "bg-[color:var(--nexus-blue-50)] text-[color:var(--nexus-blue-700)]",
+  approved: "bg-[color:var(--nexus-green-50)] text-[color:var(--nexus-green-700)]",
+  rejected: "bg-[color:var(--nexus-red-50)] text-[color:var(--nexus-red-700)]",
+  expired: "bg-muted text-muted-foreground",
+  warning: "bg-[color:var(--nexus-amber-50)] text-[color:var(--nexus-amber-700)]",
 };
 
 const labels: Record<StatusBadgeVariant, string> = {
@@ -51,11 +46,14 @@ export function StatusBadge({ variant, label, className }: StatusBadgeProps) {
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
+        "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium",
         variantStyles[variant],
         className,
       )}
     >
+      {variant === "active" ? (
+        <span aria-hidden="true" className="h-2 w-2 rounded-full bg-current" />
+      ) : null}
       {label ?? labels[variant]}
     </span>
   );
