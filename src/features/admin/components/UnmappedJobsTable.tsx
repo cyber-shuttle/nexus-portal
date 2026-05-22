@@ -114,9 +114,14 @@ export function UnmappedJobsTable({
                   <select
                     aria-label={`Link ${j.job_id} to allocation`}
                     value={picked}
-                    onChange={(e) =>
-                      setLinkPicks((prev) => ({ ...prev, [j.id]: e.currentTarget.value }))
-                    }
+                    onChange={(e) => {
+                      // Read the value synchronously: React nulls
+                      // `e.currentTarget` after the handler returns, so a
+                      // lazy setState updater would crash with
+                      // `Cannot read properties of null (reading 'value')`.
+                      const next = e.currentTarget.value;
+                      setLinkPicks((prev) => ({ ...prev, [j.id]: next }));
+                    }}
                     className="rounded-md border bg-background px-2 py-1 text-xs"
                   >
                     <option value="">Pick allocation…</option>
@@ -151,9 +156,10 @@ export function UnmappedJobsTable({
                       type="text"
                       placeholder="reason (≥3 chars)"
                       value={draftReason}
-                      onChange={(e) =>
-                        setDiscardDrafts((prev) => ({ ...prev, [j.id]: e.currentTarget.value }))
-                      }
+                      onChange={(e) => {
+                        const next = e.currentTarget.value;
+                        setDiscardDrafts((prev) => ({ ...prev, [j.id]: next }));
+                      }}
                       className="w-56"
                     />
                   </div>
