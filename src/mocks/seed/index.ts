@@ -8,6 +8,7 @@ import type {
   ComputeCluster,
 } from "@features/allocations/schemas";
 import type { Packet, PacketEvent, Reply } from "@features/amie/types";
+import type { Job, QueueWaitTime } from "@features/analytics/schemas";
 import type { Client } from "@features/clients/types";
 import type { MembershipRole } from "@features/members/roles";
 import type {
@@ -108,6 +109,8 @@ export type Seed = {
   amieReplies: Reply[];
   unmappedJobs: UnmappedJob[];
   adjustments: Adjustment[];
+  jobs: Job[];
+  queueWaitTimes: QueueWaitTime[];
   preferences: Record<string, { timezone: string; notify_on_change_request_decided: boolean; notify_on_proposal_decided: boolean }>;
 };
 
@@ -631,6 +634,60 @@ export function buildSeed(): Seed {
     });
   }
 
+  // Analytics jobs + queue wait-time — MSW-only in v1 (no backend yet; see
+  // docs/backend-contracts/analytics.md). Distribute across allocations and
+  // bias toward the researcher persona so /analytics has visible rows.
+  const jobs: Job[] = [];
+  const researcherId = "researcher@nexus.local";
+  const researcherMemberships = memberships.filter((m) => m.user_id === researcherId);
+  for (let i = 0; i < 200; i += 1) {
+    // Every 3rd job goes to the researcher persona so the e2e + manual demo
+    // see a populated table without having to bulk-create memberships.
+    const useResearcher = i % 3 === 0 && researcherMemberships.length > 0;
+    const membership = useResearcher
+      ? (researcherMemberships[i % researcherMemberships.length] as ComputeAllocationMembership)
+      : (memberships[(i * 13) % memberships.length] as ComputeAllocationMembership);
+    if (!membership) continue;
+    const allocation = allocations.find((a) => a.id === membership.compute_allocation_id);
+    if (!allocation) continue;
+    const allocResources = resources.filter((r) => r.id.startsWith(`${allocation.id}-res`));
+    const resource = allocResources[i % Math.max(1, allocResources.length)];
+    if (!resource) continue;
+    const startedAt = hoursFromNow(-rangeInt(rng, 1, 30 * 24));
+    const statusRoll = rng();
+    const status: Job["status"] =
+      statusRoll < 0.85
+        ? "COMPLETED"
+        : statusRoll < 0.92
+          ? "RUNNING"
+          : statusRoll < 0.97
+            ? "FAILED"
+            : "CANCELLED";
+    jobs.push({
+      job_id: `job-${String(i + 1).padStart(5, "0")}`,
+      user_id: membership.user_id,
+      allocation_id: allocation.id,
+      resource_id: resource.id,
+      started_at: startedAt.toISOString(),
+      su_used: rangeInt(rng, 50, 8000),
+      wait_seconds: rangeInt(rng, 30, 60 * 30),
+      status,
+    });
+  }
+
+  const QUEUE_NAMES = ["normal", "gpu", "largemem", "debug", "interactive"];
+  const queueWaitTimes: QueueWaitTime[] = QUEUE_NAMES.map((queue) => {
+    const p50 = rangeInt(rng, 60, 400);
+    const p90 = p50 + rangeInt(rng, 60, 800);
+    return {
+      queue,
+      avg_wait_seconds: Math.round((p50 + p90) / 2),
+      p50,
+      p90,
+      sample_size: rangeInt(rng, 40, 400),
+    };
+  });
+
   return {
     clusters,
     organizations,
@@ -656,6 +713,8 @@ export function buildSeed(): Seed {
     amieReplies: amie.replies,
     unmappedJobs,
     adjustments,
+    jobs,
+    queueWaitTimes,
     preferences: {},
   };
 }

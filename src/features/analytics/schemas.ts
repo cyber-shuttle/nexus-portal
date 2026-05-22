@@ -28,3 +28,34 @@ export const analyticsDashboardSchema = z.object({
   syncedAt: z.string(),
   kpis: z.array(kpiValueSchema),
 });
+
+// --- A1: jobs + queue wait-time (MSW-backed; docs/backend-contracts/analytics.md) ---
+
+export const jobStatusSchema = z.enum(["COMPLETED", "RUNNING", "FAILED", "CANCELLED"]);
+
+export const jobSchema = z.object({
+  job_id: z.string(),
+  user_id: z.string(),
+  allocation_id: z.string(),
+  resource_id: z.string(),
+  started_at: z.string(),
+  su_used: z.number(),
+  wait_seconds: z.number().int().nonnegative(),
+  status: jobStatusSchema,
+});
+
+export const jobListSchema = z.array(jobSchema);
+
+export const queueWaitTimeSchema = z.object({
+  queue: z.string(),
+  avg_wait_seconds: z.number().int().nonnegative(),
+  p50: z.number().int().nonnegative(),
+  p90: z.number().int().nonnegative(),
+  sample_size: z.number().int().nonnegative(),
+});
+
+export const queueWaitTimeListSchema = z.array(queueWaitTimeSchema);
+
+export type Job = z.infer<typeof jobSchema>;
+export type JobStatus = z.infer<typeof jobStatusSchema>;
+export type QueueWaitTime = z.infer<typeof queueWaitTimeSchema>;

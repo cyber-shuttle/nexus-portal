@@ -6,6 +6,7 @@ import { changeRequestHandlers } from "./change-requests";
 import { clientHandlers } from "./clients";
 import { diffHandlers } from "./diffs";
 import { identityHandlers } from "./identities";
+import { jobsHandlers } from "./jobs";
 import { membershipHandlers } from "./memberships";
 import { proposalHandlers } from "./proposals";
 import { resourceHandlers } from "./resources";
@@ -27,4 +28,5 @@ export const handlers: HttpHandler[] = [
   ...signerHandlers,
   ...clientHandlers,
   ...amieHandlers,
+  ...jobsHandlers,
 ];
