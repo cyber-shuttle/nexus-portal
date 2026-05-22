@@ -93,3 +93,36 @@
   --chart-4: var(--nexus-blue-700);
   --chart-5: var(--nexus-gray-500);
 }
+
+/* Dark theme. Re-points the shadcn-style semantic tokens at the Nexus palette
+   so contrast stays Figma-aligned without re-extracting tokens. */
+.dark {
+  --background: var(--nexus-gray-900);
+  --foreground: var(--nexus-gray-50);
+  --card: var(--nexus-gray-800);
+  --card-foreground: var(--nexus-gray-50);
+  --popover: var(--nexus-gray-800);
+  --popover-foreground: var(--nexus-gray-50);
+  --primary: var(--nexus-blue-400);
+  --primary-foreground: var(--nexus-gray-900);
+  --secondary: var(--nexus-gray-800);
+  --secondary-foreground: var(--nexus-gray-50);
+  --muted: var(--nexus-gray-800);
+  --muted-foreground: var(--nexus-gray-300);
+  --accent: var(--nexus-blue-800);
+  --accent-foreground: var(--nexus-blue-100);
+  --destructive: var(--nexus-red-500);
+  --destructive-foreground: var(--nexus-white);
+  --border: var(--nexus-gray-700);
+  --input: var(--nexus-gray-700);
+  --ring: var(--nexus-blue-400);
+
+  --sidebar: var(--nexus-gray-900);
+  --sidebar-foreground: var(--nexus-gray-50);
+  --sidebar-primary: var(--nexus-blue-400);
+  --sidebar-primary-foreground: var(--nexus-gray-900);
+  --sidebar-accent: var(--nexus-gray-800);
+  --sidebar-accent-foreground: var(--nexus-gray-50);
+  --sidebar-border: var(--nexus-gray-700);
+  --sidebar-ring: var(--nexus-blue-400);
+}

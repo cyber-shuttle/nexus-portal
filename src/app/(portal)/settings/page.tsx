@@ -1,5 +1,5 @@
-import { PlaceholderPage } from "@/shared/ui/PlaceholderPage";
+import { SettingsPage } from "@features/auth/components/SettingsPage";
 
-export default function SettingsPage() {
-  return <PlaceholderPage title="Settings" phase={7} />;
+export default function SettingsRoute() {
+  return <SettingsPage />;
 }

@@ -1,0 +1,30 @@
+import { apiFetch } from "@shared/api/client";
+import { userIdentitySchema, type UserIdentity } from "@features/members/schemas";
+import { z } from "zod";
+import {
+  type UpdatePreferencesPayload,
+  type UserPreferences,
+  updatePreferencesPayloadSchema,
+  userPreferencesSchema,
+} from "./schemas";
+
+export async function getMyPreferences(): Promise<UserPreferences> {
+  const raw = await apiFetch("/me/preferences");
+  return userPreferencesSchema.parse(raw);
+}
+
+export async function updateMyPreferences(
+  payload: UpdatePreferencesPayload,
+): Promise<UserPreferences> {
+  const validated = updatePreferencesPayloadSchema.parse(payload);
+  const raw = await apiFetch("/me/preferences", {
+    method: "PUT",
+    body: validated,
+  });
+  return userPreferencesSchema.parse(raw);
+}
+
+export async function getMyIdentities(): Promise<UserIdentity[]> {
+  const raw = await apiFetch("/me/identities");
+  return z.array(userIdentitySchema).parse(raw ?? []);
+}

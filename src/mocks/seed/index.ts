@@ -108,6 +108,7 @@ export type Seed = {
   amieReplies: Reply[];
   unmappedJobs: UnmappedJob[];
   adjustments: Adjustment[];
+  preferences: Record<string, { timezone: string; notify_on_change_request_decided: boolean; notify_on_proposal_decided: boolean }>;
 };
 
 function statusFor(rng: () => number): AllocationStatus {
@@ -655,6 +656,7 @@ export function buildSeed(): Seed {
     amieReplies: amie.replies,
     unmappedJobs,
     adjustments,
+    preferences: {},
   };
 }
 

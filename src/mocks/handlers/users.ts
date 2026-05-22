@@ -1,9 +1,51 @@
+import { updatePreferencesPayloadSchema } from "@features/auth/schemas";
 import { http, HttpResponse } from "msw";
 import { derivePersonaScopes } from "@/shared/auth/personaScopes";
-import { seed } from "../seed";
+import { persistSeed, seed } from "../seed";
 import { path } from "./_utils";
 
+const DEFAULT_PREFS = {
+  timezone: "UTC",
+  notify_on_change_request_decided: true,
+  notify_on_proposal_decided: true,
+};
+
+function currentUserId(request: Request): string {
+  const url = new URL(request.url);
+  return (
+    url.searchParams.get("user") ??
+    request.headers.get("x-nexus-user") ??
+    "researcher@nexus.local"
+  );
+}
+
 export const userHandlers = [
+  http.get(path("/me/preferences"), ({ request }) => {
+    const userId = currentUserId(request);
+    const existing = seed.preferences[userId] ?? DEFAULT_PREFS;
+    return HttpResponse.json({ user_id: userId, ...existing });
+  }),
+
+  http.put(path("/me/preferences"), async ({ request }) => {
+    const userId = currentUserId(request);
+    const body = await request.json();
+    const parsed = updatePreferencesPayloadSchema.safeParse(body);
+    if (!parsed.success) {
+      return HttpResponse.json(
+        { error: "invalid_request", issues: parsed.error.flatten() },
+        { status: 400 },
+      );
+    }
+    seed.preferences[userId] = parsed.data;
+    persistSeed();
+    return HttpResponse.json({ user_id: userId, ...parsed.data });
+  }),
+
+  http.get(path("/me/identities"), ({ request }) => {
+    const userId = currentUserId(request);
+    return HttpResponse.json(seed.identities.filter((i) => i.user_id === userId));
+  }),
+
   // Phase 7 portal-only fallback for OIDC scope mapping; documented in
   // docs/backend-contracts/auth.md. The portal hits /me/scopes if the OIDC
   // token didn't carry a `nexus_role` or `nexus_admin` claim.
