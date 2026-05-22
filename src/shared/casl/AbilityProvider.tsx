@@ -1,27 +1,32 @@
 "use client";
 
-import { createContext, useContext, useMemo, type ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 import { useSession } from "next-auth/react";
+import { AbilityProvider as CaslAbilityProvider, useAbility as useCaslAbility } from "@casl/react";
 import { defineAbilityForRole, type AppAbility } from "./abilities";
-
-const AbilityContext = createContext<AppAbility | null>(null);
 
 export function AbilityProvider({ children }: { children: ReactNode }) {
   const { data: session } = useSession();
   const role = session?.user?.role ?? "guest";
 
   const ability = useMemo(
-    () => defineAbilityForRole(role, { userId: session?.user?.id }),
-    [role, session?.user?.id],
+    () =>
+      defineAbilityForRole(role, {
+        userId: session?.user?.id,
+        myPiAllocations: session?.user?.myPiAllocations,
+        assignedAllocations: session?.user?.assignedAllocations,
+      }),
+    [
+      role,
+      session?.user?.id,
+      session?.user?.myPiAllocations,
+      session?.user?.assignedAllocations,
+    ],
   );
 
-  return <AbilityContext.Provider value={ability}>{children}</AbilityContext.Provider>;
+  return <CaslAbilityProvider value={ability}>{children}</CaslAbilityProvider>;
 }
 
 export function useAbility(): AppAbility {
-  const ability = useContext(AbilityContext);
-  if (!ability) {
-    return defineAbilityForRole("guest");
-  }
-  return ability;
+  return useCaslAbility() as AppAbility;
 }
