@@ -5,6 +5,7 @@ import { UserCog } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -40,20 +41,22 @@ export function PersonaSwitcher() {
         )}
       />
       <DropdownMenuContent align="end" className="w-64">
-        <DropdownMenuLabel>Dev personas</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {personas.map((p) => (
-          <DropdownMenuItem
-            key={p.id}
-            onSelect={() => void switchTo(p.email)}
-            disabled={session?.user?.email === p.email}
-          >
-            <div className="flex flex-col">
-              <span className="text-sm font-medium">{p.label}</span>
-              <span className="text-xs text-muted-foreground">{p.email}</span>
-            </div>
-          </DropdownMenuItem>
-        ))}
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>Dev personas</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          {personas.map((p) => (
+            <DropdownMenuItem
+              key={p.id}
+              onSelect={() => void switchTo(p.email)}
+              disabled={session?.user?.email === p.email}
+            >
+              <div className="flex flex-col">
+                <span className="text-sm font-medium">{p.label}</span>
+                <span className="text-xs text-muted-foreground">{p.email}</span>
+              </div>
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   );
