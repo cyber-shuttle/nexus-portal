@@ -1,5 +1,10 @@
-import { PlaceholderPage } from "@/shared/ui/PlaceholderPage";
+import { redirect } from "next/navigation";
+import { auth } from "@/shared/auth/auth";
+import { AllocationsList } from "@features/allocations/components/AllocationsList";
 
-export default function AllocationsListPage() {
-  return <PlaceholderPage title="Allocations" phase={1} />;
+export default async function AllocationsListPage() {
+  const session = await auth();
+  const userId = session?.user?.id ?? session?.user?.email ?? null;
+  if (!userId) redirect("/sign-in");
+  return <AllocationsList userId={userId} />;
 }
