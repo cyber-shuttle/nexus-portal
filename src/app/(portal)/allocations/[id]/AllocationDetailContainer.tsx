@@ -125,7 +125,6 @@ export function AllocationDetailContainer({ allocationId }: { allocationId: stri
               <CreditsAndResources
                 allocationId={allocationId}
                 usedByResource={usedByResource}
-                onRequestExtension={() => setExtensionOpen(true)}
               />
             ),
           },
@@ -146,7 +145,15 @@ export function AllocationDetailContainer({ allocationId }: { allocationId: stri
               Add user
             </Button>
           ) : undefined,
-          credits: undefined,
+          credits: (
+            <Button
+              variant="outline"
+              aria-label="Request extension"
+              onClick={() => setExtensionOpen(true)}
+            >
+              Request extension
+            </Button>
+          ),
           audit: undefined,
         }}
       />

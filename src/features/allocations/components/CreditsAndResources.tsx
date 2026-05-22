@@ -5,7 +5,6 @@ import { EmptyState } from "@/shared/ui/EmptyState";
 import { ErrorState } from "@/shared/ui/ErrorState";
 import { CardSkeleton } from "@/shared/ui/Loading";
 import { UsageBar } from "@/shared/ui/UsageBar";
-import { Button } from "@/shared/ui/button";
 import { useQueries } from "@tanstack/react-query";
 import * as React from "react";
 import { getResourceRatesEffective } from "../api";
@@ -15,14 +14,9 @@ export type CreditsAndResourcesProps = {
   allocationId: string;
   // Pre-aggregated used SU per resource id. Populated by the route layer.
   usedByResource: Map<string, number>;
-  onRequestExtension: () => void;
 };
 
-export function CreditsAndResources({
-  allocationId,
-  usedByResource,
-  onRequestExtension,
-}: CreditsAndResourcesProps) {
+export function CreditsAndResources({ allocationId, usedByResource }: CreditsAndResourcesProps) {
   const allocationQuery = useAllocation(allocationId);
   const resourcesQuery = useAllocationResources(allocationId);
 
@@ -54,16 +48,11 @@ export function CreditsAndResources({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-heading text-xl font-semibold">Resources</h2>
-          <p className="text-sm text-muted-foreground">
-            Per-resource allocation, usage, and effective rate.
-          </p>
-        </div>
-        <Button variant="outline" aria-label="Request extension" onClick={onRequestExtension}>
-          Request extension
-        </Button>
+      <div>
+        <h2 className="font-heading text-xl font-semibold">Resources</h2>
+        <p className="text-sm text-muted-foreground">
+          Per-resource allocation, usage, and effective rate.
+        </p>
       </div>
 
       {resources.length === 0 ? (
