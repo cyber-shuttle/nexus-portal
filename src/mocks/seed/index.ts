@@ -23,6 +23,7 @@ import type {
   ComputeAllocationChangeRequestEvent,
   ComputeAllocationDiff,
 } from "@shared/api/domain";
+import type { Proposal } from "@features/proposals/types";
 import { daysFromNow, hoursFromNow, makeRng, pick, rangeInt } from "./random";
 
 const FIRST_NAMES = [
@@ -96,6 +97,7 @@ export type Seed = {
   changeRequests: ComputeAllocationChangeRequest[];
   changeRequestEvents: ComputeAllocationChangeRequestEvent[];
   diffs: ComputeAllocationDiff[];
+  proposals: Proposal[];
 };
 
 function statusFor(rng: () => number): AllocationStatus {
@@ -392,6 +394,88 @@ export function buildSeed(): Seed {
     if (allocCount >= 200) break;
   }
 
+  const proposals: Proposal[] = [];
+  const statusPlan: Array<{ status: Proposal["status"]; count: number }> = [
+    { status: "DRAFT", count: 3 },
+    { status: "SUBMITTED", count: 4 },
+    { status: "UNDER_REVIEW", count: 3 },
+    { status: "APPROVED", count: 3 },
+    { status: "DENIED", count: 2 },
+  ];
+  let proposalSeq = 0;
+  for (const { status, count } of statusPlan) {
+    for (let i = 0; i < count; i += 1) {
+      proposalSeq += 1;
+      const project = projects[(proposalSeq * 7) % projects.length];
+      if (!project) continue;
+      const projectAllocResources = resources.filter((r) =>
+        allocations.some(
+          (a) => a.project_id === project.id && r.id.startsWith(`${a.id}-res`),
+        ),
+      );
+      const pickedResources =
+        projectAllocResources.length > 0 ? projectAllocResources : resources.slice(0, 2);
+      const proposalResources = pickedResources.slice(0, rangeInt(rng, 1, 3)).map((r) => ({
+        resource_id: r.id,
+        resource_name: r.name,
+        resource_type: r.resource_type,
+        requested_su_amount: rangeInt(rng, 5000, 80000),
+      }));
+      const startOffset = rangeInt(rng, 7, 60);
+      const lengthDays = rangeInt(rng, 90, 365);
+      const cascade = rng() < 0.4;
+      const childAllocations = cascade
+        ? [
+            {
+              project_id: `${project.id}-sub-a`,
+              project_title: `${project.title} — Sub A`,
+              su_split_percent: 60,
+            },
+            {
+              project_id: `${project.id}-sub-b`,
+              project_title: `${project.title} — Sub B`,
+              su_split_percent: 40,
+            },
+          ]
+        : [];
+      const createdAt = daysFromNow(-rangeInt(rng, 1, 90)).toISOString();
+      const decided = status === "APPROVED" || status === "DENIED";
+      proposals.push({
+        id: `prop-${String(proposalSeq).padStart(3, "0")}`,
+        project_id: project.id,
+        project_title: project.title,
+        requester_id: project.project_pi_id,
+        title: `Proposal: ${project.title} — Phase ${proposalSeq}`,
+        abstract: `Extension proposal for ${project.title}. Targets a downstream milestone with quantitative deliverables across ${proposalResources.length} resource pool(s).`,
+        justification:
+          `Project ${project.title} (origination ${project.origination}) is approaching a critical milestone that requires additional compute capacity. ` +
+          "We have characterized the workload, profiled hot paths, and validated scaling on existing nodes. " +
+          "This proposal requests sustained capacity for the next quarter to complete the planned set of experiments, integrate downstream collaborators, and publish results. " +
+          "The plan includes regular check-ins with the allocation manager and quarterly reporting on burn rate and outcomes. " +
+          "Without this allocation the team would be forced to defer the publication window by at least one cycle, which materially affects funder commitments. " +
+          "We commit to releasing reproducible artifacts at the end of the cycle.",
+        start_date: daysFromNow(startOffset).toISOString(),
+        end_date: daysFromNow(startOffset + lengthDays).toISOString(),
+        resources: proposalResources,
+        cascade_to_sub_projects: cascade,
+        child_allocations: childAllocations,
+        status,
+        decision: decided
+          ? {
+              decided_by: "admin@nexus.local",
+              decided_at: daysFromNow(-rangeInt(rng, 0, 10)).toISOString(),
+              decision_note:
+                status === "APPROVED"
+                  ? "Aligned with quarterly capacity plan."
+                  : "Burn rate on current allocation does not justify the requested extension.",
+            }
+          : undefined,
+        created_at: createdAt,
+        updated_at: createdAt,
+      });
+    }
+  }
+
   return {
     clusters,
     organizations,
@@ -409,6 +493,7 @@ export function buildSeed(): Seed {
     changeRequests,
     changeRequestEvents,
     diffs,
+    proposals,
   };
 }
 
