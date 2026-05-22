@@ -66,19 +66,69 @@ function StepIndicator({ current }: { current: Step }) {
   );
 }
 
+type WizardState = {
+  step: Step;
+  sourceId: string;
+  resourceId: string;
+  amount: number;
+  destinationId: string;
+  note: string;
+  result: CreditTransferResult | null;
+  error: string | null;
+};
+
+const INITIAL_STATE: WizardState = {
+  step: "source",
+  sourceId: "",
+  resourceId: "",
+  amount: 0,
+  destinationId: "",
+  note: "",
+  result: null,
+  error: null,
+};
+
+type WizardAction =
+  | { type: "set-source"; id: string }
+  | { type: "set-resource"; id: string }
+  | { type: "set-amount"; value: number }
+  | { type: "set-destination"; id: string }
+  | { type: "set-note"; value: string }
+  | { type: "set-step"; step: Step }
+  | { type: "set-error"; error: string | null }
+  | { type: "set-result"; result: CreditTransferResult }
+  | { type: "reset" };
+
+function reducer(state: WizardState, action: WizardAction): WizardState {
+  switch (action.type) {
+    case "set-source":
+      return { ...state, sourceId: action.id };
+    case "set-resource":
+      return { ...state, resourceId: action.id };
+    case "set-amount":
+      return { ...state, amount: action.value };
+    case "set-destination":
+      return { ...state, destinationId: action.id };
+    case "set-note":
+      return { ...state, note: action.value };
+    case "set-step":
+      return { ...state, step: action.step, error: null };
+    case "set-error":
+      return { ...state, error: action.error };
+    case "set-result":
+      return { ...state, result: action.result, step: "result", error: null };
+    case "reset":
+      return INITIAL_STATE;
+  }
+}
+
 export function CreditTransferWizard({
   transferableAllocations,
   resourcesByAllocation,
   transferredBy,
 }: CreditTransferWizardProps) {
-  const [step, setStep] = React.useState<Step>("source");
-  const [sourceId, setSourceId] = React.useState<string>("");
-  const [resourceId, setResourceId] = React.useState<string>("");
-  const [amount, setAmount] = React.useState<number>(0);
-  const [destinationId, setDestinationId] = React.useState<string>("");
-  const [note, setNote] = React.useState<string>("");
-  const [result, setResult] = React.useState<CreditTransferResult | null>(null);
-  const [error, setError] = React.useState<string | null>(null);
+  const [state, dispatch] = React.useReducer(reducer, INITIAL_STATE);
+  const { step, sourceId, resourceId, amount, destinationId, note, result, error } = state;
   const mutation = useTransferCredits();
 
   const source = transferableAllocations.find((a) => a.id === sourceId);
@@ -89,46 +139,47 @@ export function CreditTransferWizard({
   );
 
   function validateAndAdvance(next: Step) {
-    setError(null);
     if (step === "source" && !sourceId) {
-      setError("Pick a source allocation.");
+      dispatch({ type: "set-error", error: "Pick a source allocation." });
       return;
     }
     if (step === "amount") {
       if (!resourceId) {
-        setError("Pick a resource.");
+        dispatch({ type: "set-error", error: "Pick a resource." });
         return;
       }
       if (!source || amount <= 0) {
-        setError("Enter a positive SU amount.");
+        dispatch({ type: "set-error", error: "Enter a positive SU amount." });
         return;
       }
       if (amount > source.remaining_su) {
-        setError(`Amount exceeds remaining balance (${source.remaining_su.toLocaleString()} SU).`);
+        dispatch({
+          type: "set-error",
+          error: `Amount exceeds remaining balance (${source.remaining_su.toLocaleString()} SU).`,
+        });
         return;
       }
     }
     if (step === "destination") {
       if (!destinationId) {
-        setError("Pick a destination allocation.");
+        dispatch({ type: "set-error", error: "Pick a destination allocation." });
         return;
       }
       if (destinationId === sourceId) {
-        setError("Source and destination must differ.");
+        dispatch({ type: "set-error", error: "Source and destination must differ." });
         return;
       }
     }
-    setStep(next);
+    dispatch({ type: "set-step", step: next });
   }
 
   function goBack() {
-    setError(null);
     const i = STEP_ORDER.indexOf(step);
-    if (i > 0) setStep(STEP_ORDER[i - 1] as Step);
+    if (i > 0) dispatch({ type: "set-step", step: STEP_ORDER[i - 1] as Step });
   }
 
   async function confirm() {
-    setError(null);
+    dispatch({ type: "set-error", error: null });
     try {
       const res = await mutation.mutateAsync({
         source_allocation_id: sourceId,
@@ -138,28 +189,20 @@ export function CreditTransferWizard({
         transferred_by: transferredBy,
         note: note || undefined,
       });
-      setResult(res);
-      setStep("result");
+      dispatch({ type: "set-result", result: res });
       toast.success(`Transferred ${res.su_amount.toLocaleString()} SU — ${res.transfer_id}`);
     } catch (err) {
       const msg =
         err instanceof ApiError
           ? `Failed (${err.status}): ${typeof err.body === "object" && err.body && "error" in err.body ? String((err.body as { error: string }).error) : err.message}`
           : "Transfer failed";
-      setError(msg);
+      dispatch({ type: "set-error", error: msg });
       toast.error(msg);
     }
   }
 
   function restart() {
-    setSourceId("");
-    setResourceId("");
-    setAmount(0);
-    setDestinationId("");
-    setNote("");
-    setResult(null);
-    setError(null);
-    setStep("source");
+    dispatch({ type: "reset" });
   }
 
   return (
@@ -186,7 +229,7 @@ export function CreditTransferWizard({
                         name="source"
                         value={a.id}
                         checked={sourceId === a.id}
-                        onChange={() => setSourceId(a.id)}
+                        onChange={() => dispatch({ type: "set-source", id: a.id })}
                         className="mt-1"
                       />
                       <span className="flex-1">
@@ -217,7 +260,9 @@ export function CreditTransferWizard({
               <select
                 id="xfer-resource"
                 value={resourceId}
-                onChange={(e) => setResourceId(e.currentTarget.value)}
+                onChange={(e) =>
+                  dispatch({ type: "set-resource", id: e.currentTarget.value })
+                }
                 className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
               >
                 <option value="">Select a resource…</option>
@@ -236,7 +281,9 @@ export function CreditTransferWizard({
                 min={1}
                 max={source.remaining_su}
                 value={amount || ""}
-                onChange={(e) => setAmount(Number(e.currentTarget.value))}
+                onChange={(e) =>
+                  dispatch({ type: "set-amount", value: Number(e.currentTarget.value) })
+                }
               />
               <p className="text-xs text-muted-foreground">
                 Cannot exceed {source.remaining_su.toLocaleString()} SU.
@@ -262,7 +309,7 @@ export function CreditTransferWizard({
                       name="destination"
                       value={a.id}
                       checked={destinationId === a.id}
-                      onChange={() => setDestinationId(a.id)}
+                      onChange={() => dispatch({ type: "set-destination", id: a.id })}
                       className="mt-1"
                     />
                     <span className="flex-1">
@@ -322,7 +369,7 @@ export function CreditTransferWizard({
                 id="xfer-note"
                 rows={3}
                 value={note}
-                onChange={(e) => setNote(e.currentTarget.value)}
+                onChange={(e) => dispatch({ type: "set-note", value: e.currentTarget.value })}
                 className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
                 placeholder="Why are you moving these credits? Surfaced in the audit diff on both sides."
               />
