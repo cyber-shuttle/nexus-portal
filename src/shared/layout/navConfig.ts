@@ -7,6 +7,7 @@ import {
   FileText,
   GitPullRequest,
   LayoutDashboard,
+  LineChart,
   ListChecks,
   Server,
   Settings,
@@ -26,6 +27,15 @@ export type NavItem = {
 
 export const portalNav: NavItem[] = [
   { href: "/home", label: "Overview", icon: LayoutDashboard },
+  // Per spec §5.1 slot 2 between Overview and Allocations. CASL gate uses the
+  // researcher subject so every authed persona sees the link (admin via
+  // `manage all`, PI also has `read AnalyticsResearcher` for self).
+  {
+    href: "/analytics",
+    label: "Analytics",
+    icon: LineChart,
+    ability: { action: "read", subject: "AnalyticsResearcher" },
+  },
   { href: "/allocations", label: "Allocations", icon: Server },
   { href: "/change-requests", label: "Change Requests", icon: GitPullRequest },
   { href: "/proposals", label: "Proposals", icon: FileText },
