@@ -17,15 +17,19 @@ export function MetaRow({
   children: ReactNode;
   className?: string;
 }) {
+  // Not a <dl> — items aren't true term/definition pairs (status pill has no
+  // term, value can be a node, etc.). A labeled group reads correctly for AT.
   return (
-    <dl
+    <div
+      role="group"
+      aria-label="Metadata"
       className={cn(
         "flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-foreground",
         className,
       )}
     >
       {children}
-    </dl>
+    </div>
   );
 }
 

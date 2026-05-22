@@ -4,15 +4,17 @@ import { describe, expect, it } from "vitest";
 import { MetaItem, MetaRow } from "../MetaRow";
 
 describe("MetaRow", () => {
-  it("renders as a definition list with horizontal layout", () => {
+  it("renders as a labeled group with horizontal layout", () => {
     const { container } = render(
       <MetaRow>
         <MetaItem label="PI" value="Eroma" />
       </MetaRow>,
     );
-    const dl = container.firstElementChild as HTMLElement;
-    expect(dl.tagName).toBe("DL");
-    expect(dl.className).toContain("flex-wrap");
+    const root = container.firstElementChild as HTMLElement;
+    expect(root.tagName).toBe("DIV");
+    expect(root.getAttribute("role")).toBe("group");
+    expect(root.getAttribute("aria-label")).toBe("Metadata");
+    expect(root.className).toContain("flex-wrap");
   });
 });
 
