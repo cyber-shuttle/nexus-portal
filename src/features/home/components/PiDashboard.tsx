@@ -1,5 +1,6 @@
 import { formatSU } from "@/lib/format";
 import { internalLinks } from "@/lib/links";
+import { DataTable, type DataTableColumn } from "@/shared/ui/DataTable";
 import { EmptyState } from "@/shared/ui/EmptyState";
 import { ErrorState } from "@/shared/ui/ErrorState";
 import { CenteredSpinner } from "@/shared/ui/Loading";
@@ -16,6 +17,41 @@ export type PiDashboardProps = {
   isLoading: boolean;
   error: Error | null;
 };
+
+type ProjectRow = PiHomeSummary["projects"][number];
+
+const projectColumns: Array<DataTableColumn<ProjectRow>> = [
+  {
+    key: "project",
+    header: "Project",
+    cell: (row) => (
+      <div>
+        <div className="font-medium text-foreground">{row.project.originated_id}</div>
+        <div className="text-xs text-muted-foreground">{row.project.title}</div>
+      </div>
+    ),
+  },
+  {
+    key: "allocations",
+    header: "Allocations",
+    cell: (row) => <span className="tabular-nums">{row.allocation_count}</span>,
+  },
+  {
+    key: "total",
+    header: "SUs allocated",
+    cell: (row) => <span className="tabular-nums">{formatSU(row.total_su)}</span>,
+  },
+  {
+    key: "used",
+    header: "Used",
+    cell: (row) => <span className="tabular-nums">{formatSU(row.used_su)}</span>,
+  },
+  {
+    key: "pending",
+    header: "Pending CRs",
+    cell: (row) => <span className="tabular-nums">{row.pending_cr_count}</span>,
+  },
+];
 
 export function PiDashboard({ firstName, summary, isLoading, error }: PiDashboardProps) {
   if (isLoading) return <CenteredSpinner label="Loading PI dashboard" />;
@@ -46,44 +82,19 @@ export function PiDashboard({ firstName, summary, isLoading, error }: PiDashboar
         <StatCard title="Pending change requests" value={pendingCount} />
       </section>
 
-      <section className="rounded-lg border bg-card">
-        <header className="border-b px-5 py-3">
-          <h2 className="font-heading text-base font-semibold">My projects</h2>
-        </header>
-        {summary.projects.length === 0 ? (
-          <div className="p-5">
+      <section className="space-y-3">
+        <h2 className="font-heading text-base font-semibold">My projects</h2>
+        <DataTable
+          columns={projectColumns}
+          rows={summary.projects}
+          rowKey={(p) => p.project.id}
+          empty={
             <EmptyState
               heading="No projects yet"
               description="You are not the PI on any project."
             />
-          </div>
-        ) : (
-          <table className="w-full text-sm">
-            <thead className="border-b text-left text-xs uppercase tracking-wide text-muted-foreground">
-              <tr>
-                <th className="px-5 py-2 font-medium">Project</th>
-                <th className="px-5 py-2 font-medium">Allocations</th>
-                <th className="px-5 py-2 font-medium">SUs allocated</th>
-                <th className="px-5 py-2 font-medium">Used</th>
-                <th className="px-5 py-2 font-medium">Pending CRs</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {summary.projects.map((p) => (
-                <tr key={p.project.id}>
-                  <td className="px-5 py-3 font-medium">
-                    <span>{p.project.originated_id}</span>
-                    <div className="text-xs text-muted-foreground">{p.project.title}</div>
-                  </td>
-                  <td className="px-5 py-3 tabular-nums">{p.allocation_count}</td>
-                  <td className="px-5 py-3 tabular-nums">{formatSU(p.total_su)}</td>
-                  <td className="px-5 py-3 tabular-nums">{formatSU(p.used_su)}</td>
-                  <td className="px-5 py-3 tabular-nums">{p.pending_cr_count}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+          }
+        />
       </section>
 
       <section className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr,1fr]">
@@ -92,7 +103,7 @@ export function PiDashboard({ firstName, summary, isLoading, error }: PiDashboar
             <h2 className="font-heading text-base font-semibold">Pending change requests</h2>
             <Link
               href={internalLinks.changeRequests}
-              className="text-xs text-brand hover:underline"
+              className="text-sm text-brand hover:underline"
             >
               View all
             </Link>

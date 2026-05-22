@@ -1,11 +1,13 @@
 import { formatSU } from "@/lib/format";
 import { internalLinks } from "@/lib/links";
 import { StackedAreaUsage } from "@/shared/charts/StackedAreaUsage";
+import { DataTable, type DataTableColumn } from "@/shared/ui/DataTable";
 import { EmptyState } from "@/shared/ui/EmptyState";
 import { ErrorState } from "@/shared/ui/ErrorState";
 import { CenteredSpinner } from "@/shared/ui/Loading";
 import { StatCard } from "@/shared/ui/StatCard";
 import { StatusBadge } from "@/shared/ui/StatusBadge";
+import type { ComputeAllocationChangeRequest } from "@shared/api/domain";
 import Link from "next/link";
 import type { AdminHomeSummary } from "../types";
 import { PersonaPill } from "./PersonaPill";
@@ -17,6 +19,32 @@ export type AdminDashboardProps = {
   isLoading: boolean;
   error: Error | null;
 };
+
+const pendingCrColumns: Array<DataTableColumn<ComputeAllocationChangeRequest>> = [
+  {
+    key: "allocation",
+    header: "Allocation",
+    cell: (cr) => (
+      <Link
+        href={`/allocations/${cr.compute_allocation_id}`}
+        className="font-medium text-foreground hover:underline"
+      >
+        {cr.compute_allocation_id}
+      </Link>
+    ),
+    interactive: true,
+  },
+  {
+    key: "requester",
+    header: "Requester",
+    cell: (cr) => <span className="text-muted-foreground">{cr.requester_id}</span>,
+  },
+  {
+    key: "status",
+    header: "Status",
+    cell: (cr) => <StatusBadge variant="pending" label={cr.change_status} />,
+  },
+];
 
 export function AdminDashboard({ firstName, summary, isLoading, error }: AdminDashboardProps) {
   if (isLoading) return <CenteredSpinner label="Loading admin dashboard" />;
@@ -77,49 +105,22 @@ export function AdminDashboard({ firstName, summary, isLoading, error }: AdminDa
       </section>
 
       <section className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr,1fr]">
-        <section className="rounded-lg border bg-card">
-          <header className="flex items-center justify-between border-b px-5 py-3">
+        <section className="space-y-3">
+          <div className="flex items-center justify-between">
             <h2 className="font-heading text-base font-semibold">Pending change requests</h2>
             <Link
               href={internalLinks.changeRequests}
-              className="text-xs text-brand hover:underline"
+              className="text-sm text-brand hover:underline"
             >
               View queue
             </Link>
-          </header>
-          {summary.pending_change_requests.length === 0 ? (
-            <div className="p-5">
-              <EmptyState heading="Queue empty" description="No pending change requests." />
-            </div>
-          ) : (
-            <table className="w-full text-sm">
-              <thead className="border-b text-left text-xs uppercase tracking-wide text-muted-foreground">
-                <tr>
-                  <th className="px-5 py-2 font-medium">Allocation</th>
-                  <th className="px-5 py-2 font-medium">Requester</th>
-                  <th className="px-5 py-2 font-medium">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {summary.pending_change_requests.slice(0, 8).map((cr) => (
-                  <tr key={cr.id}>
-                    <td className="px-5 py-3 font-medium">
-                      <Link
-                        href={`/allocations/${cr.compute_allocation_id}`}
-                        className="hover:underline"
-                      >
-                        {cr.compute_allocation_id}
-                      </Link>
-                    </td>
-                    <td className="px-5 py-3 text-muted-foreground">{cr.requester_id}</td>
-                    <td className="px-5 py-3">
-                      <StatusBadge variant="pending" label={cr.change_status} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+          </div>
+          <DataTable
+            columns={pendingCrColumns}
+            rows={summary.pending_change_requests.slice(0, 8)}
+            rowKey={(cr) => cr.id}
+            empty={<EmptyState heading="Queue empty" description="No pending change requests." />}
+          />
         </section>
         <div className="space-y-4">
           <StatCard
