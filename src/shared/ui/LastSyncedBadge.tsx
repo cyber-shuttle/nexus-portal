@@ -2,7 +2,6 @@
 
 import { RefreshCw } from "lucide-react";
 
-import { formatRelative } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export type LastSyncedBadgeProps = {
@@ -13,7 +12,8 @@ export type LastSyncedBadgeProps = {
   className?: string;
 };
 
-const HOUR_MS = 60 * 60 * 1000;
+const MIN_MS = 60 * 1000;
+const HOUR_MS = 60 * MIN_MS;
 const DAY_MS = 24 * HOUR_MS;
 
 type Tint = "fresh" | "stale" | "expired";
@@ -22,6 +22,15 @@ function tintFor(ageMs: number): Tint {
   if (ageMs < HOUR_MS) return "fresh";
   if (ageMs < DAY_MS) return "stale";
   return "expired";
+}
+
+// Abbreviated relative time (`12m ago`, `3h ago`, `2d ago`) — keeps the
+// MetaRow badge dense per spec §6.1 mockup.
+function formatAbbreviated(ageMs: number): string {
+  if (ageMs < MIN_MS) return "just now";
+  if (ageMs < HOUR_MS) return `${Math.floor(ageMs / MIN_MS)}m ago`;
+  if (ageMs < DAY_MS) return `${Math.floor(ageMs / HOUR_MS)}h ago`;
+  return `${Math.floor(ageMs / DAY_MS)}d ago`;
 }
 
 const tintStyles: Record<Tint, string> = {
@@ -51,7 +60,7 @@ export function LastSyncedBadge({
       data-tint={tint}
     >
       <span aria-hidden="true" className="h-2 w-2 rounded-full bg-current" />
-      <span>Synced {formatRelative(syncedDate, reference)}</span>
+      <span>Synced {formatAbbreviated(ageMs)}</span>
       {onRefetch ? (
         <button
           type="button"

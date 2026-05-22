@@ -5,10 +5,19 @@ import { LastSyncedBadge } from "../LastSyncedBadge";
 const NOW = new Date("2026-05-22T12:00:00Z");
 
 describe("LastSyncedBadge", () => {
-  it("shows relative-time copy for a minutes-old sync", () => {
+  it("shows abbreviated relative-time copy for a minutes-old sync", () => {
     const syncedAt = new Date(NOW.getTime() - 12 * 60 * 1000);
     render(<LastSyncedBadge syncedAt={syncedAt} now={NOW} />);
-    expect(screen.getByText(/Synced 12 min ago/)).toBeInTheDocument();
+    expect(screen.getByText(/Synced 12m ago/)).toBeInTheDocument();
+  });
+
+  it("abbreviates hours and days too", () => {
+    const hours = new Date(NOW.getTime() - 3 * 60 * 60 * 1000);
+    const { rerender } = render(<LastSyncedBadge syncedAt={hours} now={NOW} />);
+    expect(screen.getByText(/Synced 3h ago/)).toBeInTheDocument();
+    const days = new Date(NOW.getTime() - 2 * 24 * 60 * 60 * 1000);
+    rerender(<LastSyncedBadge syncedAt={days} now={NOW} />);
+    expect(screen.getByText(/Synced 2d ago/)).toBeInTheDocument();
   });
 
   it("uses fresh tint when sync is under 1 hour old", () => {
