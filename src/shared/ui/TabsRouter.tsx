@@ -50,7 +50,7 @@ export function TabsRouter({
               // rests directly on the list's bottom border.
               "relative -mb-px inline-flex items-center justify-center pb-3 text-sm font-medium text-muted-foreground transition-colors",
               "hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              "data-selected:border-b-2 data-selected:border-brand data-selected:font-semibold data-selected:text-brand",
+              "data-[active]:border-b-2 data-[active]:border-brand data-[active]:font-semibold data-[active]:text-brand",
             )}
           >
             {tab.label}

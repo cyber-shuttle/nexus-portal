@@ -290,7 +290,7 @@ export function PacketDetailDrawer({
                   className={cn(
                     "relative -mb-px inline-flex items-center justify-center rounded-t-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors",
                     "hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                    "data-selected:border-b-2 data-selected:border-[color:var(--nexus-blue-500)] data-selected:text-foreground",
+                    "data-[active]:border-b-2 data-[active]:border-[color:var(--nexus-blue-500)] data-[active]:text-foreground",
                   )}
                 >
                   {t.label}
