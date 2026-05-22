@@ -113,7 +113,7 @@ function OverviewTab({ packet }: { packet: Packet }) {
         <dd className="tabular-nums">{formatDate(packet.updated_at)}</dd>
       </dl>
       {packet.last_error ? (
-        <div className="rounded-md border border-[color:var(--nexus-red-200)] bg-[color:var(--nexus-red-50)] p-3 text-sm text-[color:var(--nexus-red-700)]">
+        <div className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
           <strong>Last error:</strong> {packet.last_error}
         </div>
       ) : null}

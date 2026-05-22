@@ -22,11 +22,11 @@ export function ErrorState({
     <div
       role="alert"
       className={cn(
-        "flex flex-col items-center justify-center gap-3 rounded-md border border-[color:var(--nexus-red-200)] bg-[color:var(--nexus-red-50)] px-6 py-10 text-center",
+        "flex flex-col items-center justify-center gap-3 rounded-md border border-destructive/40 bg-destructive/5 px-6 py-10 text-center",
         className,
       )}
     >
-      <AlertCircleIcon className="size-8 text-[color:var(--nexus-red-600)]" aria-hidden="true" />
+      <AlertCircleIcon className="size-8 text-destructive" aria-hidden="true" />
       <h3 className="font-heading text-base font-medium text-foreground">{heading}</h3>
       {message ? <p className="max-w-md text-sm text-muted-foreground">{message}</p> : null}
       {onRetry ? (

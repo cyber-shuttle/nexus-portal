@@ -128,7 +128,7 @@ export function AdminDashboard({ firstName, summary, isLoading, error }: AdminDa
             sublabel="Failed in last 24h"
             className={
               summary.amie_failed_24h > 0
-                ? "ring-1 ring-[color:var(--nexus-red-200)] bg-[color:var(--nexus-red-50)]"
+                ? "border-destructive/40 bg-destructive/5"
                 : undefined
             }
           />

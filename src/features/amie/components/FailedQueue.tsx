@@ -93,7 +93,7 @@ export function FailedQueue({
           <span
             className={cn(
               "text-xs tabular-nums",
-              loud ? "font-semibold text-[color:var(--nexus-red-700)]" : "text-muted-foreground",
+              loud ? "font-semibold text-destructive" : "text-muted-foreground",
             )}
           >
             {age < 1 ? `${Math.round(age * 60)}m` : `${Math.round(age)}h`}
@@ -179,7 +179,7 @@ export function FailedQueue({
       {failedOver24h > 0 ? (
         <div
           role="alert"
-          className="sticky top-0 z-10 flex items-center gap-3 rounded-md border border-[color:var(--nexus-red-200)] bg-[color:var(--nexus-red-50)] px-4 py-2 text-sm text-[color:var(--nexus-red-700)]"
+          className="sticky top-0 z-10 flex items-center gap-3 rounded-md border border-destructive/40 bg-destructive/5 px-4 py-2 text-sm text-destructive"
         >
           <TriangleAlertIcon className="size-4" aria-hidden />
           <span>
