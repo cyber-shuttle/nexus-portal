@@ -8,7 +8,10 @@ import type { CreateRatePayload } from "../schemas";
 
 export type CreateRateFormProps = {
   isSubmitting: boolean;
-  onSubmit: (payload: CreateRatePayload) => void;
+  // Resolve to true when the rate was created so the form clears its inputs.
+  // Resolving false (or rejecting) keeps the form populated so the user can
+  // adjust the dates after a 409 overlap rejection.
+  onSubmit: (payload: CreateRatePayload) => Promise<boolean> | boolean;
 };
 
 export function CreateRateForm({ isSubmitting, onSubmit }: CreateRateFormProps) {
@@ -22,7 +25,7 @@ export function CreateRateForm({ isSubmitting, onSubmit }: CreateRateFormProps) 
   });
   const [error, setError] = React.useState<string | null>(null);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     const parsedRate = Number(rate);
@@ -38,14 +41,18 @@ export function CreateRateForm({ isSubmitting, onSubmit }: CreateRateFormProps) 
       setError("Effective-from must be before effective-to.");
       return;
     }
-    onSubmit({
-      compute_allocation_resource_id: resourceId.trim(),
-      rate: parsedRate,
-      effective_from: `${from}T00:00:00Z`,
-      effective_to: `${to}T23:59:59Z`,
-    });
-    setResourceId("");
-    setRate("");
+    const ok = await Promise.resolve(
+      onSubmit({
+        compute_allocation_resource_id: resourceId.trim(),
+        rate: parsedRate,
+        effective_from: `${from}T00:00:00Z`,
+        effective_to: `${to}T23:59:59Z`,
+      }),
+    ).catch(() => false);
+    if (ok) {
+      setResourceId("");
+      setRate("");
+    }
   }
 
   return (

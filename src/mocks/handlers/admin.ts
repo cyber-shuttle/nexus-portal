@@ -17,6 +17,34 @@ function amieFailedWithin24h(): number {
   }).length;
 }
 
+// Exported for unit tests. Half-open `[from, to)` overlap: two windows
+// collide iff `aFrom < bTo && bFrom < aTo` — touching boundaries do not
+// overlap, matching the contract in docs/backend-contracts/admin.md.
+export function findOverlappingRate(
+  resourceRates: Array<{
+    id: string;
+    compute_allocation_resource_id: string;
+    start_time: string;
+    end_time: string;
+  }>,
+  candidate: {
+    compute_allocation_resource_id: string;
+    effective_from: string;
+    effective_to: string;
+  },
+): { id: string } | undefined {
+  const newFrom = Date.parse(candidate.effective_from);
+  const newTo = Date.parse(candidate.effective_to);
+  return resourceRates.find((rr) => {
+    if (rr.compute_allocation_resource_id !== candidate.compute_allocation_resource_id) {
+      return false;
+    }
+    const existingFrom = Date.parse(rr.start_time);
+    const existingTo = Date.parse(rr.end_time);
+    return newFrom < existingTo && existingFrom < newTo;
+  });
+}
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 const NINETY_DAYS = 90 * DAY_MS;
 
@@ -175,6 +203,16 @@ export const adminHandlers = [
       return HttpResponse.json(
         { error: "invalid_request", issues: parsed.error.flatten() },
         { status: 400 },
+      );
+    }
+    // Reject creates that overlap an existing rate window for the same resource.
+    // Spec §11 Phase 7 — non-overlapping constraint; documented in
+    // docs/backend-contracts/admin.md as 409 rate_overlaps_existing.
+    const conflict = findOverlappingRate(seed.resourceRates, parsed.data);
+    if (conflict) {
+      return HttpResponse.json(
+        { error: "rate_overlaps_existing", existing_rate_id: conflict.id },
+        { status: 409 },
       );
     }
     const newId = `${parsed.data.compute_allocation_resource_id}-rate-${seed.resourceRates.length + 1}`;

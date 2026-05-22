@@ -114,9 +114,27 @@ CRUD over `ComputeAllocationResourceRate` rows.
 ```
 
 `POST /admin/rates/{id}/deactivate` sets `effective_to = now` and
-returns the updated row. The portal does not yet enforce
-non-overlapping windows — the backend should reject creates that
-overlap an existing active row with `409 conflict_overlapping_rate`.
+returns the updated row.
+
+Non-overlapping windows are enforced on create. The MSW handler
+treats `[effective_from, effective_to)` as half-open and rejects a
+create whose window overlaps any existing rate for the same
+`compute_allocation_resource_id` with:
+
+```http
+HTTP/1.1 409 Conflict
+Content-Type: application/json
+
+{
+  "error": "rate_overlaps_existing",
+  "existing_rate_id": "alloc-001-rate-1"
+}
+```
+
+The portal surfaces this as a toast pointing at the conflicting row;
+the form stays populated so the admin can adjust the window or
+supersede the existing rate first. The real backend must enforce the
+same constraint atomically (DB unique-exclude / `tstzrange` GiST).
 
 ## GET /admin/allocations
 

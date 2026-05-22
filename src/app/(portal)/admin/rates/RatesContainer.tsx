@@ -7,10 +7,23 @@ import {
   useCreateAdminRate,
   useDeactivateAdminRate,
 } from "@features/admin/queries";
+import { ApiError } from "@shared/api/client";
 import { useAbility } from "@shared/casl/AbilityProvider";
 import { ErrorState } from "@/shared/ui/ErrorState";
 import * as React from "react";
 import { toast } from "sonner";
+
+function describeCreateError(err: unknown): string {
+  if (err instanceof ApiError && err.status === 409) {
+    const body = err.body as { error?: string; existing_rate_id?: string } | null;
+    if (body?.error === "rate_overlaps_existing") {
+      return body.existing_rate_id
+        ? `Overlaps existing rate ${body.existing_rate_id}. Supersede it first or pick a non-overlapping window.`
+        : "Overlaps an existing rate window for this resource.";
+    }
+  }
+  return err instanceof Error ? err.message : "Failed to add rate";
+}
 
 export function RatesContainer() {
   const ability = useAbility();
@@ -37,11 +50,15 @@ export function RatesContainer() {
 
       <CreateRateForm
         isSubmitting={createMutation.isPending}
-        onSubmit={(payload) => {
-          createMutation.mutate(payload, {
-            onSuccess: () => toast.success("Rate added"),
-            onError: (err) => toast.error(err instanceof Error ? err.message : "Failed to add rate"),
-          });
+        onSubmit={async (payload) => {
+          try {
+            await createMutation.mutateAsync(payload);
+            toast.success("Rate added");
+            return true;
+          } catch (err) {
+            toast.error(describeCreateError(err));
+            return false;
+          }
         }}
       />
 
