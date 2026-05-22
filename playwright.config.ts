@@ -1,7 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const port = Number(process.env.PORT ?? 3000);
-const baseURL = `http://127.0.0.1:${port}`;
+const port = Number(process.env.PORT ?? 3217);
+const baseURL = `http://localhost:${port}`;
 
 export default defineConfig({
   testDir: "./tests",
@@ -24,12 +24,15 @@ export default defineConfig({
   webServer: {
     command: `pnpm dev --port ${port}`,
     url: baseURL,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
     timeout: 120_000,
     env: {
+      PORT: String(port),
       PORTAL_AUTH_MODE: "dev",
+      NEXT_PUBLIC_PORTAL_AUTH_MODE: "dev",
       NEXT_PUBLIC_PORTAL_USE_MSW: "true",
       NEXTAUTH_SECRET: "dev-secret-do-not-use-in-prod",
+      NEXTAUTH_URL: baseURL,
     },
   },
 });

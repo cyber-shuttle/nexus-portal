@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
@@ -14,7 +14,6 @@ const personas = [
 ];
 
 export function SignInForm() {
-  const router = useRouter();
   const params = useSearchParams();
   const callbackUrl = params.get("callbackUrl") ?? "/home";
 
@@ -36,12 +35,11 @@ export function SignInForm() {
       callbackUrl,
     });
     setSubmitting(false);
-    if (res?.error) {
-      setError("Sign in failed");
+    if (!res || res.error) {
+      setError(res?.error ?? "Sign in failed");
       return;
     }
-    router.push(res?.url ?? callbackUrl);
-    router.refresh();
+    window.location.assign(res.url ?? callbackUrl);
   };
 
   return (
