@@ -43,7 +43,10 @@ test.describe("members", () => {
       .getByRole("button", { name: /^Remove$/i })
       .click();
     await page.getByTestId("confirm-action").click();
-    await expect(page.getByText(/removed/i)).toBeVisible({ timeout: 10_000 });
+    // Anchor /removed/i to the Sonner toast region; otherwise strict-mode
+    // collides with other layout text once the row is gone from the table.
+    const toastRegion = page.locator("[data-sonner-toaster]");
+    await expect(toastRegion.getByText(/removed/i).first()).toBeVisible({ timeout: 10_000 });
     await expect.poll(() => page.locator("tbody tr").count()).toBe(rowsBefore);
   });
 });
