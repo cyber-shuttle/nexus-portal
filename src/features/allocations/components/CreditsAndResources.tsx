@@ -15,21 +15,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/ui/tooltip";
 import { CardSkeleton } from "@/shared/ui/Loading";
 import { ErrorState } from "@/shared/ui/ErrorState";
 import { EmptyState } from "@/shared/ui/EmptyState";
-function formatDate(iso: string): string {
-  try {
-    return new Date(iso).toLocaleDateString(undefined, {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  } catch {
-    return iso;
-  }
-}
-
-function formatSU(n: number): string {
-  return new Intl.NumberFormat().format(n);
-}
+import { formatDate, formatRate, formatSU } from "@/lib/format";
 
 export type CreditsAndResourcesProps = {
   allocationId: string;
@@ -115,7 +101,7 @@ export function CreditsAndResources({ allocationId, usedByResource }: CreditsAnd
                   </div>
                   {typeof rate?.rate === "number" ? (
                     <span className="rounded-full bg-[color:var(--nexus-blue-50)] px-2 py-1 text-xs font-medium text-[color:var(--nexus-blue-700)]">
-                      {rate.rate} SU/unit
+                      {formatRate(rate.rate)} SU/unit
                     </span>
                   ) : null}
                 </header>

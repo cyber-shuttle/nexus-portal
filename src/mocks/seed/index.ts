@@ -261,12 +261,18 @@ export function buildSeed(): Seed {
       memberships.push(piMembership);
       const memberPool = users.filter((u) => u.id !== project.project_pi_id);
       const pickedMembers = new Set<string>([project.project_pi_id]);
-      for (let m = 0; m < memberCount - 1; m += 1) {
+      let memberSeq = 0;
+      let attempts = 0;
+      // Loop until we have memberCount unique members or we've tried 4x that many
+      // — earlier code silently dropped duplicates and produced short lists.
+      while (pickedMembers.size < memberCount && attempts < memberCount * 4) {
+        attempts += 1;
         const candidate = pick(rng, memberPool);
         if (pickedMembers.has(candidate.id)) continue;
         pickedMembers.add(candidate.id);
+        memberSeq += 1;
         memberships.push({
-          id: `${id}-mem-${m + 1}`,
+          id: `${id}-mem-${memberSeq}`,
           compute_allocation_id: id,
           user_id: candidate.id,
           start_time: daysFromNow(startOffset + rangeInt(rng, 0, 30)).toISOString(),
@@ -276,7 +282,8 @@ export function buildSeed(): Seed {
       }
 
       const personaResearcher = personaUsers.find((u) => u.id === "researcher@nexus.local");
-      if (personaResearcher && allocCount % 8 === 1) {
+      if (personaResearcher && !pickedMembers.has(personaResearcher.id) && allocCount % 8 === 1) {
+        pickedMembers.add(personaResearcher.id);
         memberships.push({
           id: `${id}-mem-researcher`,
           compute_allocation_id: id,
