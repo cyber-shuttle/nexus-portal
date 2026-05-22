@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { Button } from "@/shared/ui/button";
 import * as React from "react";
 
 export type DataTableColumn<T> = {
@@ -44,11 +45,11 @@ export function DataTable<T>({
   className,
 }: DataTableProps<T>) {
   return (
-    <div className={cn("rounded-md border bg-card", className)}>
+    <div className={cn("overflow-hidden rounded-lg border border-border bg-card", className)}>
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
           {caption ? <caption className="sr-only">{caption}</caption> : null}
-          <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
+          <thead className="bg-muted text-xs font-medium uppercase tracking-wide text-muted-foreground">
             <tr>
               {columns.map((col) => (
                 <th
@@ -77,9 +78,11 @@ export function DataTable<T>({
               rows.map((row, index) => (
                 <tr
                   key={rowKey(row, index)}
+                  // Row hover bg removed per spec §7.6 — the keyboard target
+                  // inside the first cell provides the affordance instead.
                   className={cn(
-                    "border-t border-border/60",
-                    onRowClick && "cursor-pointer transition-colors hover:bg-muted/40",
+                    "border-t border-border/60 bg-card",
+                    onRowClick && "cursor-pointer",
                   )}
                   onClick={
                     onRowClick
@@ -113,7 +116,7 @@ export function DataTable<T>({
                         <td
                           key={col.key}
                           className={cn(
-                            "px-4 py-3 align-middle",
+                            "px-4 py-3 align-middle text-sm text-foreground",
                             col.align === "right" && "text-right",
                             col.align === "center" && "text-center",
                           )}
@@ -157,30 +160,36 @@ function DataTablePager({ pagination }: { pagination: DataTablePagination }) {
   const start = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const end = Math.min(total, page * pageSize);
   return (
-    <div className="flex items-center justify-between border-t border-border/60 px-4 py-3 text-xs text-muted-foreground">
+    <div className="flex items-center justify-between border-t border-border/60 bg-card px-4 py-3 text-xs text-muted-foreground">
       <span>
         Showing {start}–{end} of {total}
       </span>
       <div className="flex items-center gap-2">
-        <button
-          type="button"
-          className="rounded border px-2 py-1 disabled:opacity-50"
+        <Button
+          variant="outline"
+          size="sm"
           onClick={() => onPageChange(Math.max(1, page - 1))}
           disabled={page <= 1}
         >
           Previous
-        </button>
-        <span>
-          Page {page} of {totalPages}
+        </Button>
+        {/* Active page renders as solid primary (near-black) to match the
+            collaborator's tables; sibling prev/next are outlined. */}
+        <span
+          aria-current="page"
+          className="inline-flex h-8 min-w-8 items-center justify-center rounded-md bg-primary px-3 text-[0.8rem] font-semibold text-primary-foreground"
+        >
+          {page}
         </span>
-        <button
-          type="button"
-          className="rounded border px-2 py-1 disabled:opacity-50"
+        <span className="text-muted-foreground">of {totalPages}</span>
+        <Button
+          variant="outline"
+          size="sm"
           onClick={() => onPageChange(Math.min(totalPages, page + 1))}
           disabled={page >= totalPages}
         >
           Next
-        </button>
+        </Button>
       </div>
     </div>
   );
