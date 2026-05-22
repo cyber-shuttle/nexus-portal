@@ -619,13 +619,23 @@ function getStorage(): Storage | null {
   }
 }
 
-function tryHydrate(): Seed | null {
+// Merge hydrated snapshot over a fresh build so new top-level fields added in
+// later phases (amiePackets, amieEvents, amieReplies, …) are backfilled while
+// the user's mutations from prior sessions survive.
+export function mergeHydrated(fresh: Seed, hydrated: Partial<Seed> | null): Seed {
+  if (!hydrated || typeof hydrated !== "object") return fresh;
+  return { ...fresh, ...hydrated } as Seed;
+}
+
+function tryHydrate(): Partial<Seed> | null {
   const storage = getStorage();
   if (!storage) return null;
   try {
     const raw = storage.getItem(STORAGE_KEY);
     if (!raw) return null;
-    return JSON.parse(raw) as Seed;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return null;
+    return parsed as Partial<Seed>;
   } catch {
     return null;
   }
@@ -649,8 +659,10 @@ export function resetSeed(): void {
 
 if (!holder.__nexusSeed) {
   const hydrated = tryHydrate();
-  holder.__nexusSeed = hydrated ?? buildSeed();
-  if (!hydrated) persistSeed();
+  const fresh = buildSeed();
+  holder.__nexusSeed = mergeHydrated(fresh, hydrated);
+  // Repersist after merge so newly backfilled fields land in localStorage too.
+  persistSeed();
 }
 
 // All handlers read seed through this getter so a re-import after sign-out
