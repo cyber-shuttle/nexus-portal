@@ -2,7 +2,13 @@
 
 import { PacketDetailDrawer } from "@features/amie/components/PacketDetailDrawer";
 import { type PacketFilters, PacketInboxTable } from "@features/amie/components/PacketInboxTable";
-import { PacketsTrendChart } from "@features/amie/components/PacketsTrendChart";
+// Recharts is heavy; defer until the inbox has hydrated so first paint stays fast.
+import dynamic from "next/dynamic";
+
+const PacketsTrendChart = dynamic(
+  () => import("@features/amie/components/PacketsTrendChart").then((m) => m.PacketsTrendChart),
+  { ssr: false, loading: () => <div className="h-40 rounded-md border bg-card" /> },
+);
 import {
   usePacket,
   usePacketEvents,

@@ -40,3 +40,135 @@ Query params:
 
 Response — array of `ComputeAllocationChangeRequest` rows as defined in
 `pkg/models/allocation.go` (snake_case JSON).
+
+## GET /admin/resources
+
+Site-wide rollup of `ComputeAllocationResource` rows with aggregated
+allocation / usage / rate counters. Powers the Phase 7 resources admin
+page.
+
+Query params:
+
+- `cluster` — optional cluster id filter.
+- `status` — optional, `ACTIVE` or `INACTIVE`. Derived from whether any
+  parent allocation is `ACTIVE`.
+- `q` — optional substring match against `name` and `resource_type`.
+
+Response (`application/json`) — array of:
+
+```json
+{
+  "id": "alloc-001-res-1",
+  "name": "cpu-standard",
+  "resource_type": "cpu",
+  "cluster_id": "cluster-001",
+  "cluster_name": "Nexus-A",
+  "allocation_count": 3,
+  "total_allocated_su": 240000,
+  "total_used_su": 96000,
+  "used_pct": 40.0,
+  "rate_count": 2,
+  "status": "ACTIVE"
+}
+```
+
+The portal will eventually replace the client-side aggregation with
+`GET /compute-allocation-resources/{id}/usages/total` (see
+`usage.md`).
+
+## GET /admin/resources/{id}/usage-trend
+
+30-day daily usage series for one resource.
+
+Response — array of `{ date: "YYYY-MM-DD", used_su: number }` (30 rows,
+zero-filled).
+
+## GET /admin/rates / POST /admin/rates / POST /admin/rates/{id}/deactivate
+
+CRUD over `ComputeAllocationResourceRate` rows.
+
+`GET /admin/rates` returns:
+
+```json
+{
+  "id": "alloc-001-rate-1",
+  "compute_allocation_resource_id": "alloc-001-res-1",
+  "resource_name": "cpu-standard",
+  "cluster_name": "Nexus-A",
+  "rate": 1.250,
+  "effective_from": "2026-01-01T00:00:00Z",
+  "effective_to": "2026-12-31T23:59:59Z",
+  "active": true
+}
+```
+
+`POST /admin/rates` body:
+
+```json
+{
+  "compute_allocation_resource_id": "alloc-001-res-1",
+  "rate": 1.5,
+  "effective_from": "2026-06-01T00:00:00Z",
+  "effective_to": "2027-05-31T23:59:59Z"
+}
+```
+
+`POST /admin/rates/{id}/deactivate` sets `effective_to = now` and
+returns the updated row. The portal does not yet enforce
+non-overlapping windows — the backend should reject creates that
+overlap an existing active row with `409 conflict_overlapping_rate`.
+
+## GET /admin/allocations
+
+Lightweight allocation summaries for picker UIs (unmapped jobs link,
+adjustments allocation field).
+
+Query params:
+
+- `q` — substring match against `id` and `name`.
+- `status` — `ACTIVE` or `INACTIVE`.
+- `limit` — default 50.
+
+Response — array of `{ id, name, status }`.
+
+## /admin/adjustments
+
+Manual SU credits / debits / expirations against an allocation.
+
+`GET /admin/adjustments?type=CREDIT&allocation_id=alloc-001` filters by
+type and/or allocation. Response — array of:
+
+```json
+{
+  "id": "adj-001",
+  "allocation_id": "alloc-001",
+  "allocation_name": "BIO130000-alloc-1",
+  "type": "CREDIT",
+  "amount": 5000,
+  "reason": "Goodwill credit for outage 2026-03",
+  "created_by": "admin@nexus.local",
+  "created_at": "2026-05-22T10:00:00Z"
+}
+```
+
+`POST /admin/adjustments` body:
+
+```json
+{
+  "allocation_id": "alloc-001",
+  "type": "CREDIT",
+  "amount": 5000,
+  "reason": "Goodwill credit for outage 2026-03"
+}
+```
+
+The backend should append a row to `compute_allocation_diffs` with
+`diff_type = ADJUSTMENT_*` so the change shows up in the allocation
+audit log. The `transfer_id` discussion in `tools.md` applies — a
+real diff schema with a nullable `adjustment_id` FK would be cleaner.
+
+### Authorization
+
+All endpoints in this file are admin-only — `manage all` or a
+subject-specific `manage Resource/Rate/Adjustment` ability.
+

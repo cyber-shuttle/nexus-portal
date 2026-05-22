@@ -1,5 +1,5 @@
-import { PlaceholderPage } from "@/shared/ui/PlaceholderPage";
+import { ResourcesContainer } from "./ResourcesContainer";
 
 export default function AdminResourcesPage() {
-  return <PlaceholderPage title="Resources" phase={7} />;
+  return <ResourcesContainer />;
 }

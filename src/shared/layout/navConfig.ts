@@ -2,9 +2,12 @@ import type { LucideIcon } from "lucide-react";
 import {
   BadgeCheck,
   ClipboardList,
+  Coins,
+  DollarSign,
   FileText,
   GitPullRequest,
   LayoutDashboard,
+  ListChecks,
   Server,
   Settings,
   ShieldCheck,
@@ -40,6 +43,24 @@ export const portalNav: NavItem[] = [
     label: "Resources",
     icon: ShieldCheck,
     ability: { action: "manage", subject: "Resource" },
+  },
+  {
+    href: "/admin/rates",
+    label: "Rates",
+    icon: DollarSign,
+    ability: { action: "manage", subject: "Rate" },
+  },
+  {
+    href: "/admin/unmapped-jobs",
+    label: "Unmapped Jobs",
+    icon: ListChecks,
+    ability: { action: "manage", subject: "UnmappedJob" },
+  },
+  {
+    href: "/admin/adjustments",
+    label: "Adjustments",
+    icon: Coins,
+    ability: { action: "manage", subject: "Adjustment" },
   },
   { href: "/settings", label: "Settings", icon: Settings },
 ];

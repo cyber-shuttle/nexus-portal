@@ -1,3 +1,4 @@
+import type { Adjustment, UnmappedJob } from "@features/admin/schemas";
 import type {
   AllocationStatus,
   ComputeAllocation,
@@ -105,6 +106,8 @@ export type Seed = {
   amiePackets: Packet[];
   amieEvents: PacketEvent[];
   amieReplies: Reply[];
+  unmappedJobs: UnmappedJob[];
+  adjustments: Adjustment[];
 };
 
 function statusFor(rng: () => number): AllocationStatus {
@@ -575,6 +578,58 @@ export function buildSeed(): Seed {
   const projectOriginatedIds = projects.map((p) => p.originated_id);
   const amie = buildAmieSeed({ projectIds: projectOriginatedIds, total: 100 });
 
+  const UNMAPPED_REASONS = [
+    "Unknown project code in job context",
+    "Username not in any allocation membership",
+    "Allocation expired before job submission",
+    "Cluster name not recognized",
+  ];
+  const unmappedJobs: UnmappedJob[] = [];
+  for (let i = 0; i < 18; i += 1) {
+    const cluster = pick(rng, clusters);
+    const submittedAt = hoursFromNow(-rangeInt(rng, 1, 96));
+    const u = pick(rng, users);
+    const jobId = `slurm-${String(2_500_000 + rangeInt(rng, 0, 999_999))}`;
+    unmappedJobs.push({
+      id: `umj-${String(i + 1).padStart(3, "0")}`,
+      job_id: jobId,
+      username: u.email.split("@")[0] ?? u.id,
+      cluster: cluster.name,
+      walltime_seconds: rangeInt(rng, 60, 8 * 3600),
+      su_charged: rangeInt(rng, 5, 5000),
+      reason: pick(rng, UNMAPPED_REASONS),
+      raw_data: {
+        accounting_record: `JOBID=${jobId} USER=${u.email.split("@")[0]} CLUSTER=${cluster.name}`,
+        partition: rng() < 0.5 ? "compute" : "gpu",
+        nodes: rangeInt(rng, 1, 8),
+        cpus_per_node: rangeInt(rng, 8, 64),
+      },
+      observed_at: submittedAt.toISOString(),
+    });
+  }
+
+  const adjustments: Adjustment[] = [];
+  const adjustmentTypes: Array<Adjustment["type"]> = ["CREDIT", "DEBIT", "EXPIRE"];
+  for (let i = 0; i < 12; i += 1) {
+    const alloc = allocations[i * 7] ?? allocations[i] ?? allocations[0];
+    if (!alloc) break;
+    adjustments.push({
+      id: `adj-${String(i + 1).padStart(3, "0")}`,
+      allocation_id: alloc.id,
+      allocation_name: alloc.name,
+      type: pick(rng, adjustmentTypes),
+      amount: rangeInt(rng, 100, 25_000),
+      reason: pick(rng, [
+        "Goodwill credit for cluster outage 2026-03",
+        "Reclaim — over-allocated at quarterly review",
+        "PI requested write-off after burn audit",
+        "Expire stale allocation per retention policy",
+      ]),
+      created_by: "admin@nexus.local",
+      created_at: daysFromNow(-rangeInt(rng, 1, 60)).toISOString(),
+    });
+  }
+
   return {
     clusters,
     organizations,
@@ -598,6 +653,8 @@ export function buildSeed(): Seed {
     amiePackets: amie.packets,
     amieEvents: amie.events,
     amieReplies: amie.replies,
+    unmappedJobs,
+    adjustments,
   };
 }
 
