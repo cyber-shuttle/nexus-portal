@@ -60,6 +60,8 @@ export function defineAbilityForRole(role: Role, ctx: AbilityContext = {}): AppA
 
   if (role === "admin") {
     can("manage", "all");
+    // Explicit so the rule is greppable; `manage all` already covers it.
+    can("manage", "Analytics");
   }
 
   return build();

@@ -70,4 +70,9 @@ describe("defineAbilityForRole", () => {
     expect(ability.can("read", "AnalyticsPI")).toBe(true);
     expect(ability.can("read", "AnalyticsResearcher")).toBe(true);
   });
+
+  it("admin has an explicit manage Analytics rule (greppable)", () => {
+    const ability = defineAbilityForRole("admin");
+    expect(ability.can("manage", "Analytics")).toBe(true);
+  });
 });
