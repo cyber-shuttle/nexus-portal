@@ -42,6 +42,13 @@
   --nexus-gray-800: #1a1f2b;
   --nexus-gray-900: #191c1e;
 
+  --nexus-amber-50: #fef3c7;
+  --nexus-amber-100: #fde68a;
+  --nexus-amber-200: #fcd34d;
+  --nexus-amber-500: #f59e0b;
+  --nexus-amber-600: #d97706;
+  --nexus-amber-700: #b45309;
+
   --nexus-white: #ffffff;
 
   --nexus-primary: var(--nexus-blue-500);
