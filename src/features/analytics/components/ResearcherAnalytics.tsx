@@ -8,6 +8,7 @@ import { DrillStack } from "@/shared/ui/DrillStack";
 import { GroupByChip, GroupByChipGroup } from "@/shared/ui/GroupByChip";
 import { KpiCard } from "@/shared/ui/KpiCard";
 import { LastSyncedBadge } from "@/shared/ui/LastSyncedBadge";
+import { StatCardRow } from "@/shared/ui/StatCardRow";
 import { Button } from "@/shared/ui/button";
 import { ForecastBar } from "@/shared/charts/ForecastBar";
 import { StackedAreaUsage } from "@/shared/charts/StackedAreaUsage";
@@ -176,10 +177,7 @@ export function ResearcherAnalytics(props: ResearcherAnalyticsProps) {
         </div>
       </header>
 
-      <div
-        className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5"
-        data-testid="analytics-kpi-strip"
-      >
+      <StatCardRow cols={5} data-testid="analytics-kpi-strip">
         <KpiCard
           icon={Coins}
           title="Used SUs"
@@ -211,7 +209,7 @@ export function ResearcherAnalytics(props: ResearcherAnalyticsProps) {
           value={fmtWaitSeconds(kpis.avgWaitSeconds)}
           deltaTone="neutral"
         />
-      </div>
+      </StatCardRow>
 
       <AnalyticsCard
         title="Burn vs allocated"

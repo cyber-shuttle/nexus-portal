@@ -70,14 +70,7 @@ export function StatCard(props: StatCardProps) {
   );
 }
 
-export function StatCardRow({
-  children,
-  className,
-}: {
-  children: ReactNode;
-  className?: string;
-}) {
-  return (
-    <div className={cn("grid grid-cols-1 gap-4 md:grid-cols-3", className)}>{children}</div>
-  );
-}
+// Re-export so callers can `import { StatCardRow } from "@/shared/ui/StatCard"`
+// or `"@/shared/ui/StatCardRow"` — the row is the canonical KPI strip primitive
+// (spec §7.1 + §8 KPI conformance), home-style 3-col is the default.
+export { StatCardRow } from "./StatCardRow";
