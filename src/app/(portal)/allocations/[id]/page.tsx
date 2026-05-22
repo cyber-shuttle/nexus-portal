@@ -1,5 +1,22 @@
-import { PlaceholderPage } from "@/shared/ui/PlaceholderPage";
+import { AllocationDetailHeader } from "@features/allocations/components/AllocationDetailHeader";
+import { CreditsAndResources } from "@features/allocations/components/CreditsAndResources";
+import { TabsRouter } from "@/shared/ui/TabsRouter";
 
-export default function AllocationDetailPage() {
-  return <PlaceholderPage title="Allocation detail" phase={1} />;
+export default async function AllocationDetailPage(props: { params: Promise<{ id: string }> }) {
+  const { id } = await props.params;
+  return (
+    <div className="space-y-6">
+      <AllocationDetailHeader allocationId={id} />
+      <TabsRouter
+        defaultValue="credits"
+        tabs={[
+          {
+            value: "credits",
+            label: "Credits & Resources",
+            content: <CreditsAndResources allocationId={id} />,
+          },
+        ]}
+      />
+    </div>
+  );
 }

@@ -3,9 +3,11 @@ import {
   type ComputeAllocation,
   type ComputeAllocationResource,
   type ComputeAllocationResourceRate,
+  type Project,
   computeAllocationResourceRateSchema,
   computeAllocationResourceSchema,
   computeAllocationSchema,
+  projectSchema,
 } from "./schemas";
 import {
   type ComputeAllocationMembership,
@@ -35,6 +37,11 @@ export async function getMembershipsForUser(
 ): Promise<ComputeAllocationMembership[]> {
   const raw = await apiFetch(`/users/${userId}/compute-allocation-memberships`);
   return z.array(computeAllocationMembershipSchema).parse(raw ?? []);
+}
+
+export async function getProject(id: string): Promise<Project> {
+  const raw = await apiFetch(`/projects/${id}`);
+  return projectSchema.parse(raw);
 }
 
 export async function getAllocationsForUser(userId: string): Promise<ComputeAllocation[]> {

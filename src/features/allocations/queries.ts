@@ -5,6 +5,7 @@ import {
   getAllocation,
   getAllocationResources,
   getAllocationsForUser,
+  getProject,
   getResourceRatesEffective,
 } from "./api";
 
@@ -17,6 +18,7 @@ export const allocationKeys = {
   resourceRate: (resourceId: string) =>
     ["compute-allocation-resources", resourceId, "rates", "effective"] as const,
   forUser: (userId: string) => [...allocationKeys.all, "for-user", userId] as const,
+  project: (projectId: string) => ["projects", projectId] as const,
 };
 
 export function useAllocation(id: string | undefined) {
@@ -40,6 +42,14 @@ export function useResourceRatesEffective(resourceId: string | undefined) {
     queryKey: resourceId ? allocationKeys.resourceRate(resourceId) : ["resource-rate", "none"],
     queryFn: () => getResourceRatesEffective(resourceId as string),
     enabled: Boolean(resourceId),
+  });
+}
+
+export function useProject(projectId: string | undefined) {
+  return useQuery({
+    queryKey: projectId ? allocationKeys.project(projectId) : ["projects", "none"],
+    queryFn: () => getProject(projectId as string),
+    enabled: Boolean(projectId),
   });
 }
 
