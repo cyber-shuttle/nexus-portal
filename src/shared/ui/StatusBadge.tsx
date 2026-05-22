@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import type { AllocationStatus, ChangeRequestStatus } from "@shared/api/domain";
 
 export type StatusBadgeVariant =
   | "active"
@@ -61,7 +62,7 @@ export function StatusBadge({ variant, label, className }: StatusBadgeProps) {
 }
 
 export function statusBadgeVariantFromAllocationStatus(
-  status: "ACTIVE" | "INACTIVE" | "DELETED",
+  status: AllocationStatus,
 ): StatusBadgeVariant {
   if (status === "ACTIVE") return "active";
   if (status === "INACTIVE") return "inactive";
@@ -69,7 +70,7 @@ export function statusBadgeVariantFromAllocationStatus(
 }
 
 export function statusBadgeVariantFromChangeRequest(
-  status: "PENDING" | "APPROVED" | "REJECTED",
+  status: ChangeRequestStatus,
 ): StatusBadgeVariant {
   if (status === "PENDING") return "pending";
   if (status === "APPROVED") return "approved";

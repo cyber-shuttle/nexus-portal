@@ -5,7 +5,7 @@ import {
   type ComputeAllocationChangeRequestEvent,
   computeAllocationChangeRequestEventSchema,
   computeAllocationChangeRequestSchema,
-} from "./schemas";
+} from "@shared/api/domain";
 
 export async function getChangeRequestsForAllocation(
   allocId: string,

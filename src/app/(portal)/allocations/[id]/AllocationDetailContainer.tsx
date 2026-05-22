@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useAllocation, useProject } from "@features/allocations/queries";
+import { useAllocation } from "@features/allocations/queries";
+import { useProject } from "@features/projects/queries";
 import {
   useAllocationUsageTotal,
   usageKeys,

@@ -2,21 +2,12 @@ import { z } from "zod";
 import {
   allocationStatusSchema,
   computeAllocationSchema,
-  projectSchema,
-  projectStatusSchema,
   type AllocationStatus,
   type ComputeAllocation,
-  type Project,
-  type ProjectStatus,
 } from "@shared/api/domain";
 
-export {
-  allocationStatusSchema,
-  projectStatusSchema,
-  computeAllocationSchema,
-  projectSchema,
-};
-export type { AllocationStatus, ProjectStatus, ComputeAllocation, Project };
+export { allocationStatusSchema, computeAllocationSchema };
+export type { AllocationStatus, ComputeAllocation };
 
 export const computeAllocationResourceSchema = z.object({
   id: z.string(),

@@ -5,8 +5,8 @@ import type {
   ComputeAllocationResourceMapping,
   ComputeAllocationResourceRate,
   ComputeCluster,
-  Project,
 } from "@features/allocations/schemas";
+import type { Project } from "@features/projects/schemas";
 import type {
   ComputeAllocationMembership,
   ComputeAllocationMembershipResourceOverride,
@@ -17,11 +17,11 @@ import type {
   ComputeAllocationUsage,
   ComputeAllocationUsageTotal,
 } from "@features/usage/schemas";
-import type { ComputeAllocationDiff } from "@features/audit/schemas";
 import type {
   ComputeAllocationChangeRequest,
   ComputeAllocationChangeRequestEvent,
-} from "@features/change-requests/schemas";
+  ComputeAllocationDiff,
+} from "@shared/api/domain";
 import { daysFromNow, hoursFromNow, makeRng, pick, rangeInt } from "./random";
 
 const FIRST_NAMES = [

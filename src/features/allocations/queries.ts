@@ -1,12 +1,7 @@
 "use client";
 
 import { useQueries, useQuery } from "@tanstack/react-query";
-import {
-  getAllocation,
-  getAllocationResources,
-  getProject,
-  getResourceRatesEffective,
-} from "./api";
+import { getAllocation, getAllocationResources, getResourceRatesEffective } from "./api";
 
 export const allocationKeys = {
   all: ["allocations"] as const,
@@ -16,7 +11,6 @@ export const allocationKeys = {
   resources: (id: string) => [...allocationKeys.detail(id), "resources"] as const,
   resourceRate: (resourceId: string) =>
     [...allocationKeys.all, "resource-rate", resourceId] as const,
-  project: (projectId: string) => [...allocationKeys.all, "project", projectId] as const,
 };
 
 export function useAllocation(id: string | undefined) {
@@ -58,13 +52,5 @@ export function useResourceRatesEffective(resourceId: string | undefined) {
     queryKey: resourceId ? allocationKeys.resourceRate(resourceId) : ["resource-rate", "none"],
     queryFn: () => getResourceRatesEffective(resourceId as string),
     enabled: Boolean(resourceId),
-  });
-}
-
-export function useProject(projectId: string | undefined) {
-  return useQuery({
-    queryKey: projectId ? allocationKeys.project(projectId) : ["projects", "none"],
-    queryFn: () => getProject(projectId as string),
-    enabled: Boolean(projectId),
   });
 }

@@ -1,33 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { useQuery } from "@tanstack/react-query";
-import { apiFetch } from "@shared/api/client";
-import { z } from "zod";
-import { computeAllocationChangeRequestSchema } from "@shared/api/domain";
 import { buildAuditTimeline } from "@shared/api/audit-orchestrator";
+import { useAdminChangeRequests, useAdminStats } from "@features/admin/queries";
 import type { AdminHomeSummary } from "@features/home/types";
-
-const adminStatsSchema = z.object({
-  total_projects: z.number(),
-  active_allocations: z.number(),
-  total_su_allocated_quarter: z.number(),
-  total_su_charged_quarter: z.number(),
-  pending_proposals: z.number(),
-  amie_failed_24h: z.number(),
-  allocations_by_day: z.array(z.object({ date: z.string(), count: z.number() })),
-});
-type AdminStats = z.infer<typeof adminStatsSchema>;
-
-async function getAdminStats(): Promise<AdminStats> {
-  const raw = await apiFetch("/admin/stats");
-  return adminStatsSchema.parse(raw);
-}
-
-async function getAdminPendingChangeRequests() {
-  const raw = await apiFetch("/admin/change-requests");
-  return z.array(computeAllocationChangeRequestSchema).parse(raw ?? []);
-}
 
 export type AdminHomeResult = {
   data: AdminHomeSummary | undefined;
@@ -36,14 +12,8 @@ export type AdminHomeResult = {
 };
 
 export function useAdminHomeSummary(): AdminHomeResult {
-  const statsQuery = useQuery({
-    queryKey: ["admin", "stats"],
-    queryFn: getAdminStats,
-  });
-  const crQuery = useQuery({
-    queryKey: ["admin", "pending-crs"],
-    queryFn: getAdminPendingChangeRequests,
-  });
+  const statsQuery = useAdminStats();
+  const crQuery = useAdminChangeRequests({ status: "PENDING" });
 
   const data = React.useMemo<AdminHomeSummary | undefined>(() => {
     if (!statsQuery.data) return undefined;

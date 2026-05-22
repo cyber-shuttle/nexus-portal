@@ -1,27 +1,12 @@
 "use client";
 
 import * as React from "react";
-import { useQueries, useQuery } from "@tanstack/react-query";
-import { apiFetch } from "@shared/api/client";
-import { z } from "zod";
 import {
-  computeAllocationSchema,
-  projectSchema,
-  type ComputeAllocation,
-  type Project,
-} from "@shared/api/domain";
+  useProjectsAsPi,
+  useProjectsComputeAllocations,
+} from "@features/projects/queries";
 import { useHomeSummary, type HomeSummaryResult } from "./useHomeSummary";
 import type { PiHomeSummary } from "@features/home/types";
-
-async function getProjectsForPi(userId: string): Promise<Project[]> {
-  const raw = await apiFetch(`/users/${userId}/projects-as-pi`);
-  return z.array(projectSchema).parse(raw ?? []);
-}
-
-async function getAllocationsForProject(projectId: string): Promise<ComputeAllocation[]> {
-  const raw = await apiFetch(`/projects/${projectId}/compute-allocations`);
-  return z.array(computeAllocationSchema).parse(raw ?? []);
-}
 
 export type PiHomeResult = Omit<HomeSummaryResult, "data"> & {
   data: PiHomeSummary | undefined;
@@ -30,20 +15,12 @@ export type PiHomeResult = Omit<HomeSummaryResult, "data"> & {
 export function usePiHomeSummary(userId: string | undefined): PiHomeResult {
   const base = useHomeSummary(userId);
 
-  const projectsQuery = useQuery({
-    queryKey: ["home", "pi-projects", userId ?? "none"],
-    queryFn: () => getProjectsForPi(userId as string),
-    enabled: Boolean(userId),
-  });
+  const projectsQuery = useProjectsAsPi(userId);
   const projects = projectsQuery.data ?? [];
 
-  const projectAllocationsQueries = useQueries({
-    queries: projects.map((p) => ({
-      queryKey: ["home", "pi-project-allocations", p.id],
-      queryFn: () => getAllocationsForProject(p.id),
-      enabled: true,
-    })),
-  });
+  const projectAllocationsQueries = useProjectsComputeAllocations(
+    projects.map((p) => p.id),
+  );
 
   const projectRows = React.useMemo(() => {
     return projects.map((project, i) => {

@@ -1,6 +1,4 @@
-export type {
-  ComputeAllocationDiff,
-} from "./schemas";
+export type { ComputeAllocationDiff } from "@shared/api/domain";
 
 export type {
   AuditEvent,

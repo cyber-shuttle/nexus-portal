@@ -3,11 +3,9 @@ import {
   type ComputeAllocation,
   type ComputeAllocationResource,
   type ComputeAllocationResourceRate,
-  type Project,
   computeAllocationResourceRateSchema,
   computeAllocationResourceSchema,
   computeAllocationSchema,
-  projectSchema,
 } from "./schemas";
 import { z } from "zod";
 
@@ -33,7 +31,3 @@ export async function getResourceRatesEffective(
   return computeAllocationResourceRateSchema.parse(raw);
 }
 
-export async function getProject(id: string): Promise<Project> {
-  const raw = await apiFetch(`/projects/${id}`);
-  return projectSchema.parse(raw);
-}
