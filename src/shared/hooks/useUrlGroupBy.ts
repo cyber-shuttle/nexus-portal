@@ -3,7 +3,11 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
 
-// `?gb=a,b,c` <-> ["a","b","c"]. Empty list clears the param so URLs stay short.
+/**
+ * `?gb=a,b,c` <-> `string[]` page-state. Returns/accepts the full list because
+ * one page composes multiple `GroupByChip`s; each chip's single-value
+ * `onChange` is spliced into its slot before calling `setGroupBy`.
+ */
 export function useUrlGroupBy() {
   const router = useRouter();
   const searchParams = useSearchParams();
