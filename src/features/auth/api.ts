@@ -1,9 +1,10 @@
 import { apiFetch } from "@shared/api/client";
-import { userIdentitySchema, type UserIdentity } from "@features/members/schemas";
 import { z } from "zod";
 import {
+  type AuthIdentity,
   type UpdatePreferencesPayload,
   type UserPreferences,
+  authIdentitySchema,
   updatePreferencesPayloadSchema,
   userPreferencesSchema,
 } from "./schemas";
@@ -24,7 +25,7 @@ export async function updateMyPreferences(
   return userPreferencesSchema.parse(raw);
 }
 
-export async function getMyIdentities(): Promise<UserIdentity[]> {
+export async function getMyIdentities(): Promise<AuthIdentity[]> {
   const raw = await apiFetch("/me/identities");
-  return z.array(userIdentitySchema).parse(raw ?? []);
+  return z.array(authIdentitySchema).parse(raw ?? []);
 }
