@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { useAbility } from "@/shared/casl/AbilityProvider";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { NeedHelpCard } from "./NeedHelpCard";
 import { portalNav } from "./navConfig";
 
 export function Sidebar() {
@@ -16,11 +17,11 @@ export function Sidebar() {
   });
 
   return (
-    <aside className="flex w-[230px] shrink-0 flex-col border-r border-border bg-sidebar text-sidebar-foreground">
-      <div className="px-7 pb-6 pt-6">
+    <aside className="flex w-[240px] shrink-0 flex-col border-r border-border bg-sidebar text-sidebar-foreground">
+      <div className="px-6 pt-8 pb-6">
         <Link
           href="/home"
-          className="font-display text-2xl font-extrabold uppercase tracking-tight text-nexus-blue-700"
+          className="font-display text-2xl font-extrabold uppercase tracking-tight text-brand"
         >
           Nexus
         </Link>
@@ -36,21 +37,24 @@ export function Sidebar() {
               href={item.href}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "relative flex min-h-11 items-center gap-3 px-7 py-2.5 text-sm transition",
+                "relative flex h-11 items-center gap-3 px-6 text-sm font-medium transition",
                 active
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                  : "text-muted-foreground hover:bg-sidebar-accent/70 hover:text-foreground",
+                  ? "bg-brand-tint font-semibold text-brand"
+                  : "text-muted-foreground hover:bg-muted/40 hover:text-foreground",
               )}
             >
               <Icon className="h-5 w-5 stroke-[1.75]" />
               <span className="truncate">{item.label}</span>
+              {/* Right-edge accent bar per Figma — opposite the collaborator's left-edge cue. */}
               {active && (
-                <span className="absolute left-0 top-2 h-7 w-1.5 rounded-r-full bg-nexus-blue-500" />
+                <span className="absolute top-2 right-0 bottom-2 w-1 rounded-l-full bg-brand" />
               )}
             </Link>
           );
         })}
       </nav>
+
+      <NeedHelpCard />
     </aside>
   );
 }
