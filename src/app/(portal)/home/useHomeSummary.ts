@@ -5,7 +5,7 @@ import { allocationKeys } from "@features/allocations/queries";
 import { getAllocationDiffs } from "@features/audit/api";
 import { auditKeys } from "@features/audit/queries";
 import { useChangeRequestsForUser } from "@features/change-requests/queries";
-import { aggregateHomeSummary } from "@features/home/aggregator";
+import { aggregateHomeSummary } from "@shared/api/aggregator";
 import type { HomeSummary } from "@features/home/types";
 import { useMembershipsForUser } from "@features/members/queries";
 import { getAllocationUsages } from "@features/usage/api";

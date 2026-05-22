@@ -1,32 +1,12 @@
-import type { AuditEvent } from "@shared/api/audit-orchestrator";
-import type {
-  ComputeAllocation,
-  ComputeAllocationChangeRequest,
-  Project,
-} from "@shared/api/domain";
+import type { AggregatedSummary, ResourceBreakdown } from "@shared/api/aggregator";
+import type { Project } from "@shared/api/domain";
 
-export type ResourceBreakdown = {
-  resource_id: string;
-  su: number;
-};
-
-export type HomeAllocations = {
-  active: ComputeAllocation[];
-  expiring_soon: ComputeAllocation[];
-  recently_active: ComputeAllocation[];
-};
-
-export type HomeUsage = {
-  last_30d_su: number;
-  last_30d_breakdown: ResourceBreakdown[];
-};
-
-export type HomeSummary = {
-  allocations: HomeAllocations;
-  usage: HomeUsage;
-  pending_change_requests: ComputeAllocationChangeRequest[];
-  recent_activity: AuditEvent[];
-};
+// Home dashboards consume the shared aggregator output directly; the type
+// aliases below stay for source compatibility with hooks/components.
+export type { ResourceBreakdown };
+export type HomeAllocations = AggregatedSummary["allocations"];
+export type HomeUsage = AggregatedSummary["usage"];
+export type HomeSummary = AggregatedSummary;
 
 export type PiHomeSummary = HomeSummary & {
   projects: Array<{

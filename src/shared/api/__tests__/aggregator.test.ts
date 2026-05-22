@@ -6,10 +6,15 @@ import type {
 import { describe, expect, it } from "vitest";
 import {
   aggregateHomeSummary,
+  bandForUsageRatio,
   buildRecentActivity,
   classifyAllocations,
+  complianceMatrix,
   computeUsage30d,
+  forecast,
+  pace,
   pendingChangeRequests,
+  topN,
 } from "../aggregator";
 
 const NOW = Date.parse("2026-05-01T00:00:00Z");
@@ -149,6 +154,159 @@ describe("buildRecentActivity", () => {
         expect(prev.timestamp >= curr.timestamp).toBe(true);
       }
     }
+  });
+});
+
+describe("pace", () => {
+  const allocation = {
+    initial_su_amount: 1000,
+    start_time: new Date(NOW - 50 * day).toISOString(),
+    end_time: new Date(NOW + 50 * day).toISOString(),
+  };
+
+  it("returns on-pace when burn ratio matches expected elapsed ratio", () => {
+    const usages = [{ used_su_amount: 500, last_updated: new Date(NOW - 1 * day).toISOString() }];
+    const result = pace(allocation, usages, NOW);
+    expect(result.status).toBe("on-pace");
+    expect(result.burn).toBeCloseTo(0.5, 5);
+    expect(result.expected).toBeCloseTo(0.5, 5);
+  });
+
+  it("returns over when used outruns elapsed by more than tolerance", () => {
+    const usages = [{ used_su_amount: 900, last_updated: new Date(NOW - 1 * day).toISOString() }];
+    expect(pace(allocation, usages, NOW).status).toBe("over");
+  });
+
+  it("returns under when used trails elapsed by more than tolerance", () => {
+    const usages = [{ used_su_amount: 100, last_updated: new Date(NOW - 1 * day).toISOString() }];
+    expect(pace(allocation, usages, NOW).status).toBe("under");
+  });
+
+  it("handles empty usages as under", () => {
+    expect(pace(allocation, [], NOW).status).toBe("under");
+  });
+});
+
+describe("forecast", () => {
+  const allocation = {
+    initial_su_amount: 1000,
+    start_time: new Date(NOW - 90 * day).toISOString(),
+    end_time: new Date(NOW + 90 * day).toISOString(),
+  };
+
+  it("returns null fields when fewer than 7 distinct days of usages exist", () => {
+    const usages = [
+      { used_su_amount: 50, last_updated: new Date(NOW - 1 * day).toISOString() },
+      { used_su_amount: 50, last_updated: new Date(NOW - 2 * day).toISOString() },
+    ];
+    const result = forecast(usages, allocation, NOW);
+    expect(result.exhaustDate).toBeNull();
+    expect(result.daysRemaining).toBeNull();
+    expect(result.method).toBe("rolling-7d");
+  });
+
+  it("projects exhaust from rolling-7d slope when window is full", () => {
+    const usages = Array.from({ length: 7 }).map((_, i) => ({
+      used_su_amount: 50,
+      last_updated: new Date(NOW - (i + 1) * day).toISOString(),
+    }));
+    const result = forecast(usages, allocation, NOW);
+    expect(result.daysRemaining).not.toBeNull();
+    expect(result.exhaustDate).toBeInstanceOf(Date);
+    expect(result.daysRemaining as number).toBeCloseTo((1000 - 350) / 50, 5);
+  });
+
+  it("returns null when 7-day slope is zero", () => {
+    const usages = Array.from({ length: 7 }).map((_, i) => ({
+      used_su_amount: 0,
+      last_updated: new Date(NOW - (i + 1) * day).toISOString(),
+    }));
+    expect(forecast(usages, allocation, NOW).exhaustDate).toBeNull();
+  });
+});
+
+describe("topN", () => {
+  it("returns the input unchanged when items are at-or-below N", () => {
+    const items = [{ k: "a", v: 1 }];
+    expect(topN(items, (i) => i.v, 5)).toEqual(items);
+  });
+
+  it("aggregates the tail via the provided reducer", () => {
+    const items = [
+      { k: "a", v: 10 },
+      { k: "b", v: 6 },
+      { k: "c", v: 4 },
+      { k: "d", v: 3 },
+    ];
+    const result = topN(
+      items,
+      (i) => i.v,
+      2,
+      "Other",
+      (acc, item) => ({ k: acc.k, v: acc.v + item.v }),
+    );
+    expect(result).toHaveLength(3);
+    expect(result.map((r) => r.v)).toEqual([10, 6, 7]);
+  });
+
+  it("uses makeOther factory when supplied", () => {
+    const items = [
+      { k: "a", v: 5 },
+      { k: "b", v: 3 },
+      { k: "c", v: 1 },
+    ];
+    const result = topN(items, (i) => i.v, 1, "Other", undefined, (rest, label) => ({
+      k: label,
+      v: rest.reduce((acc, x) => acc + x.v, 0),
+    }));
+    expect(result).toEqual([
+      { k: "a", v: 5 },
+      { k: "Other", v: 4 },
+    ]);
+  });
+
+  it("handles empty input", () => {
+    expect(topN<{ v: number }>([], (i) => i.v, 5)).toEqual([]);
+  });
+});
+
+describe("bandForUsageRatio", () => {
+  it("maps thresholds to bands matching UsageBar", () => {
+    expect(bandForUsageRatio(0)).toBe("empty");
+    expect(bandForUsageRatio(0.005)).toBe("empty");
+    expect(bandForUsageRatio(0.5)).toBe("ok");
+    expect(bandForUsageRatio(0.75)).toBe("warn");
+    expect(bandForUsageRatio(0.89)).toBe("warn");
+    expect(bandForUsageRatio(0.9)).toBe("hot");
+    expect(bandForUsageRatio(1.2)).toBe("hot");
+    expect(bandForUsageRatio(Number.NaN)).toBe("empty");
+  });
+});
+
+describe("complianceMatrix", () => {
+  it("returns a row x col grid of {value, band}", () => {
+    const rows = ["proj-a", "proj-b"];
+    const cols = ["res-1", "res-2"];
+    const scores: Record<string, Record<string, number>> = {
+      "proj-a": { "res-1": 0.95, "res-2": 0.5 },
+      "proj-b": { "res-1": 0, "res-2": 0.8 },
+    };
+    const matrix = complianceMatrix(rows, cols, (r, c) => scores[r]?.[c] ?? 0);
+    expect(matrix).toEqual([
+      [
+        { value: 0.95, band: "hot" },
+        { value: 0.5, band: "ok" },
+      ],
+      [
+        { value: 0, band: "empty" },
+        { value: 0.8, band: "warn" },
+      ],
+    ]);
+  });
+
+  it("handles empty rows and cols", () => {
+    expect(complianceMatrix([], ["c"], () => 0)).toEqual([]);
+    expect(complianceMatrix(["r"], [], () => 0)).toEqual([[]]);
   });
 });
 
