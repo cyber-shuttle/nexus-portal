@@ -18,6 +18,8 @@ describe("design-tokens/colors.css", () => {
   });
 
   it("defines the brand semantic in :root", () => {
+    expect(tokens).toContain("--primary: oklch(0.205 0 0)");
+    expect(tokens).toContain("--primary-foreground: oklch(0.985 0 0)");
     expect(tokens).toContain("--brand: var(--nexus-blue-500)");
     expect(tokens).toContain("--brand-foreground: #ffffff");
     expect(tokens).toContain("--brand-tint: var(--nexus-blue-50)");
@@ -27,7 +29,7 @@ describe("design-tokens/colors.css", () => {
     const darkBlockMatch = tokens.match(/\.dark\s*{[^}]*}/);
     expect(darkBlockMatch, "expected a .dark { ... } block").not.toBeNull();
     const darkBlock = darkBlockMatch?.[0] ?? "";
-    expect(darkBlock).toContain("--brand:");
+    expect(darkBlock).toContain("--brand: var(--nexus-blue-400)");
     expect(darkBlock).toContain("--brand-tint:");
   });
 });
