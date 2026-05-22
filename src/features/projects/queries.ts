@@ -1,14 +1,29 @@
 "use client";
 
 import { useQueries, useQuery } from "@tanstack/react-query";
-import { getProject, getProjectComputeAllocations, getProjectsAsPi } from "./api";
+import {
+  getProject,
+  getProjectComputeAllocations,
+  getProjectsAsPi,
+  searchProjects,
+} from "./api";
 
 export const projectKeys = {
   all: ["projects"] as const,
   detail: (id: string) => [...projectKeys.all, "detail", id] as const,
   asPi: (userId: string) => [...projectKeys.all, "as-pi", userId] as const,
   allocations: (projectId: string) => [...projectKeys.all, "allocations", projectId] as const,
+  search: (q: string) => [...projectKeys.all, "search", q] as const,
 };
+
+export function useProjectSearch(q: string) {
+  return useQuery({
+    queryKey: projectKeys.search(q),
+    queryFn: () => searchProjects(q),
+    enabled: q.trim().length > 0,
+    staleTime: 30_000,
+  });
+}
 
 export function useProject(projectId: string | undefined) {
   return useQuery({

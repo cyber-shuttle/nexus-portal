@@ -3,8 +3,14 @@
 import { ReconciliationQueue } from "@features/amie/components/ReconciliationQueue";
 import { useLinkUnmapped, useResolvePacket, useUnmapped } from "@features/amie/queries";
 import type { Packet } from "@features/amie/types";
+import { searchProjects } from "@features/projects/api";
 import * as React from "react";
 import { toast } from "sonner";
+
+const projectSearchAdapter = async (q: string) => {
+  const rows = await searchProjects(q, 10);
+  return rows.map((p) => ({ id: p.id, originated_id: p.originated_id, title: p.title }));
+};
 
 export function ReconciliationContainer() {
   const unmappedQuery = useUnmapped({ limit: 100 });
@@ -36,6 +42,7 @@ export function ReconciliationContainer() {
       total={unmappedQuery.data?.total ?? rows.length}
       isLoading={unmappedQuery.isLoading}
       error={unmappedQuery.error}
+      searchProjects={projectSearchAdapter}
       onLink={handleLink}
       onSkip={handleSkip}
       onRefresh={() => unmappedQuery.refetch()}

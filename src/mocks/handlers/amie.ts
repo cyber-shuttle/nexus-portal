@@ -223,6 +223,17 @@ export const amieHandlers = [
         { status: 400 },
       );
     }
+    if (parsed.data.entity_type === "project") {
+      const match = seed.projects.find(
+        (p) => p.id === parsed.data.entity_id || p.originated_id === parsed.data.entity_id,
+      );
+      if (!match) {
+        return HttpResponse.json(
+          { error: "entity_not_found", entity_type: "project", entity_id: parsed.data.entity_id },
+          { status: 404 },
+        );
+      }
+    }
     const now = new Date().toISOString();
     row.linked_entity = {
       type: parsed.data.entity_type,

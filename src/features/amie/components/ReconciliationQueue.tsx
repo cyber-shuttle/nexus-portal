@@ -4,6 +4,10 @@ import { DataTable, type DataTableColumn } from "@/shared/ui/DataTable";
 import { EmptyState } from "@/shared/ui/EmptyState";
 import { ErrorState } from "@/shared/ui/ErrorState";
 import { TableSkeleton } from "@/shared/ui/Loading";
+import {
+  ProjectAutocomplete,
+  type ProjectAutocompletePick,
+} from "@/shared/ui/ProjectAutocomplete";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
@@ -11,13 +15,14 @@ import * as React from "react";
 import type { Packet } from "../types";
 import { formatDate } from "../utils";
 
-type Row = Packet & { _draftEntityId?: string; _draftEntityType?: string };
+type Row = Packet;
 
 export type ReconciliationQueueProps = {
   rows: Packet[];
   total: number;
   isLoading: boolean;
   error: Error | null;
+  searchProjects: (q: string) => Promise<ProjectAutocompletePick[]>;
   onLink: (packet: Packet, entity_type: string, entity_id: string) => void;
   onSkip: (packet: Packet, reason: string) => void;
   onRefresh: () => void;
@@ -28,19 +33,13 @@ export function ReconciliationQueue({
   total,
   isLoading,
   error,
+  searchProjects,
   onLink,
   onSkip,
   onRefresh,
 }: ReconciliationQueueProps) {
-  const [drafts, setDrafts] = React.useState<Record<string, { type: string; id: string }>>({});
+  const [picks, setPicks] = React.useState<Record<string, ProjectAutocompletePick | null>>({});
   const [skipDraft, setSkipDraft] = React.useState<Record<string, string>>({});
-
-  function setDraft(id: string, key: "type" | "id", value: string) {
-    setDrafts((prev) => ({
-      ...prev,
-      [id]: { type: "project", id: "", ...prev[id], [key]: value },
-    }));
-  }
 
   const columns: DataTableColumn<Row>[] = [
     {
@@ -64,38 +63,25 @@ export function ReconciliationQueue({
     },
     {
       key: "link",
-      header: "Link to existing entity",
+      header: "Link to existing project",
       cell: (r) => {
-        const draft = drafts[r.id] ?? { type: "project", id: "" };
+        const pick = picks[r.id] ?? null;
         return (
           <form
             className="flex items-end gap-2"
             onSubmit={(e) => {
               e.preventDefault();
-              if (!draft.id.trim()) return;
-              onLink(r, draft.type, draft.id.trim());
+              if (!pick) return;
+              onLink(r, "project", pick.originated_id);
             }}
           >
-            <select
-              aria-label={`Entity type for ${r.amie_id}`}
-              value={draft.type}
-              onChange={(e) => setDraft(r.id, "type", e.currentTarget.value)}
-              className="rounded-md border bg-background px-2 py-1 text-xs"
-            >
-              <option value="project">project</option>
-              <option value="account">account</option>
-              <option value="person">person</option>
-              <option value="user_merge">user_merge</option>
-            </select>
-            <Input
-              type="text"
-              aria-label={`Entity id for ${r.amie_id}`}
-              placeholder="BIO130001"
-              value={draft.id}
-              onChange={(e) => setDraft(r.id, "id", e.currentTarget.value)}
-              className="w-40"
+            <ProjectAutocomplete
+              value={pick}
+              onChange={(next) => setPicks((prev) => ({ ...prev, [r.id]: next }))}
+              search={searchProjects}
+              ariaLabel={`Search projects to link ${r.amie_id}`}
             />
-            <Button type="submit" variant="outline" size="sm" disabled={!draft.id.trim()}>
+            <Button type="submit" variant="outline" size="sm" disabled={!pick}>
               Link
             </Button>
           </form>
