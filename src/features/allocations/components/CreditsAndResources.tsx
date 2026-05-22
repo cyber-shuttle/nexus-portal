@@ -10,8 +10,6 @@ import {
 import { getResourceRatesEffective } from "../api";
 import { UsageBar } from "@/shared/ui/UsageBar";
 import { Button } from "@/shared/ui/button";
-import { SideDrawer } from "@/shared/ui/SideDrawer";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/ui/tooltip";
 import { CardSkeleton } from "@/shared/ui/Loading";
 import { ErrorState } from "@/shared/ui/ErrorState";
 import { EmptyState } from "@/shared/ui/EmptyState";
@@ -21,9 +19,14 @@ export type CreditsAndResourcesProps = {
   allocationId: string;
   // Pre-aggregated used SU per resource id. Populated by the route layer.
   usedByResource: Map<string, number>;
+  onRequestExtension: () => void;
 };
 
-export function CreditsAndResources({ allocationId, usedByResource }: CreditsAndResourcesProps) {
+export function CreditsAndResources({
+  allocationId,
+  usedByResource,
+  onRequestExtension,
+}: CreditsAndResourcesProps) {
   const allocationQuery = useAllocation(allocationId);
   const resourcesQuery = useAllocationResources(allocationId);
 
@@ -37,8 +40,6 @@ export function CreditsAndResources({ allocationId, usedByResource }: CreditsAnd
       retry: false,
     })),
   });
-
-  const [drawerOpen, setDrawerOpen] = React.useState(false);
 
   if (allocationQuery.isLoading || resourcesQuery.isLoading) return <CardSkeleton />;
   if (resourcesQuery.error) {
@@ -64,20 +65,13 @@ export function CreditsAndResources({ allocationId, usedByResource }: CreditsAnd
             Per-resource allocation, usage, and effective rate.
           </p>
         </div>
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <Button
-                variant="outline"
-                aria-label="Request extension"
-                onClick={() => setDrawerOpen(true)}
-              >
-                Request extension
-              </Button>
-            }
-          />
-          <TooltipContent>Opens the change-request drawer (Phase 3)</TooltipContent>
-        </Tooltip>
+        <Button
+          variant="outline"
+          aria-label="Request extension"
+          onClick={onRequestExtension}
+        >
+          Request extension
+        </Button>
       </div>
 
       {resources.length === 0 ? (
@@ -127,22 +121,6 @@ export function CreditsAndResources({ allocationId, usedByResource }: CreditsAnd
         </div>
       )}
 
-      <SideDrawer
-        open={drawerOpen}
-        onOpenChange={setDrawerOpen}
-        title="Request extension"
-        description="Submit a change request to extend SUs or end date"
-      >
-        <div className="space-y-3">
-          <p className="text-sm text-muted-foreground">
-            Available in Phase 3 — change-request workflow.
-          </p>
-          <p className="text-sm text-muted-foreground">
-            You'll be able to request additional SUs or extend the end date here, and an
-            allocation manager will approve or reject the request.
-          </p>
-        </div>
-      </SideDrawer>
     </div>
   );
 }

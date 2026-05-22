@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
 import { useAllocation } from "@features/allocations/queries";
 import { useProject } from "@features/projects/queries";
@@ -12,6 +13,7 @@ import { getAllocationUsages } from "@features/usage/api";
 import { AllocationDetailHeader } from "@features/allocations/components/AllocationDetailHeader";
 import { CreditsAndResources } from "@features/allocations/components/CreditsAndResources";
 import { MembersTab } from "@features/members/components/MembersTab";
+import { RequestExtensionDrawer } from "@features/change-requests/components/RequestExtensionDrawer";
 import { AuditTabContainer } from "./AuditTabContainer";
 import { TabsRouter } from "@/shared/ui/TabsRouter";
 
@@ -41,6 +43,10 @@ export function AllocationDetailContainer({ allocationId }: { allocationId: stri
 
   const used = usageQuery.data?.total_su_amount ?? 0;
   const piUserId = projectQuery.data?.project_pi_id;
+  const requesterId = useSession().data?.user?.id ?? "";
+
+  const [extensionOpen, setExtensionOpen] = React.useState(false);
+  const currentSuAmount = allocationQuery.data?.initial_su_amount ?? 0;
 
   return (
     <div className="space-y-6">
@@ -55,6 +61,7 @@ export function AllocationDetailContainer({ allocationId }: { allocationId: stri
               <CreditsAndResources
                 allocationId={allocationId}
                 usedByResource={usedByResource}
+                onRequestExtension={() => setExtensionOpen(true)}
               />
             ),
           },
@@ -69,6 +76,13 @@ export function AllocationDetailContainer({ allocationId }: { allocationId: stri
             content: <AuditTabContainer allocationId={allocationId} />,
           },
         ]}
+      />
+      <RequestExtensionDrawer
+        open={extensionOpen}
+        onOpenChange={setExtensionOpen}
+        allocationId={allocationId}
+        requesterId={requesterId}
+        currentSuAmount={currentSuAmount}
       />
     </div>
   );
