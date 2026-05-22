@@ -8,6 +8,7 @@ import { changeRequestHandlers } from "./change-requests";
 import { diffHandlers } from "./diffs";
 import { adminHandlers } from "./admin";
 import { proposalHandlers } from "./proposals";
+import { toolsHandlers } from "./tools";
 
 export const handlers: HttpHandler[] = [
   ...allocationHandlers,
@@ -19,4 +20,5 @@ export const handlers: HttpHandler[] = [
   ...diffHandlers,
   ...adminHandlers,
   ...proposalHandlers,
+  ...toolsHandlers,
 ];
