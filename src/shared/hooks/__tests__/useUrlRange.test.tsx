@@ -1,0 +1,81 @@
+import { act, renderHook } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { useUrlRange } from "../useUrlRange";
+
+const replace = vi.fn();
+let searchString = "";
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ replace }),
+  useSearchParams: () => new URLSearchParams(searchString),
+}));
+
+const FIXED_NOW = Date.parse("2026-05-01T00:00:00Z");
+const now = () => FIXED_NOW;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+beforeEach(() => {
+  replace.mockReset();
+  searchString = "";
+});
+
+describe("useUrlRange", () => {
+  it("defaults to last 30 days when no params are present", () => {
+    const { result } = renderHook(() => useUrlRange({ now }));
+    expect(result.current.range.preset).toBe("30d");
+    expect(result.current.range.to.getTime()).toBe(FIXED_NOW);
+    expect(result.current.range.from.getTime()).toBe(FIXED_NOW - 30 * DAY_MS);
+  });
+
+  it("parses a known preset from the URL", () => {
+    searchString = "preset=7d";
+    const { result } = renderHook(() => useUrlRange({ now }));
+    expect(result.current.range.preset).toBe("7d");
+    expect(result.current.range.from.getTime()).toBe(FIXED_NOW - 7 * DAY_MS);
+  });
+
+  it("parses a custom from/to when both ISO timestamps validate", () => {
+    const from = new Date(FIXED_NOW - 10 * DAY_MS).toISOString();
+    const to = new Date(FIXED_NOW - 1 * DAY_MS).toISOString();
+    searchString = `preset=custom&from=${from}&to=${to}`;
+    const { result } = renderHook(() => useUrlRange({ now }));
+    expect(result.current.range.preset).toBe("custom");
+    expect(result.current.range.from.toISOString()).toBe(from);
+    expect(result.current.range.to.toISOString()).toBe(to);
+  });
+
+  it("falls back to default when custom range is missing endpoints", () => {
+    searchString = "preset=custom&from=invalid";
+    const { result } = renderHook(() => useUrlRange({ now }));
+    expect(result.current.range.preset).toBe("30d");
+  });
+
+  it("setRange to preset clears from/to and routes via replace", () => {
+    const { result } = renderHook(() => useUrlRange({ now }));
+    act(() => {
+      result.current.setRange({
+        from: new Date(FIXED_NOW - 7 * DAY_MS),
+        to: new Date(FIXED_NOW),
+        preset: "7d",
+      });
+    });
+    expect(replace).toHaveBeenCalledTimes(1);
+    const args = replace.mock.calls[0] as [string, { scroll: boolean }];
+    expect(args[0]).toContain("preset=7d");
+    expect(args[0]).not.toContain("from=");
+    expect(args[1]).toEqual({ scroll: false });
+  });
+
+  it("setRange to custom writes from and to ISO strings", () => {
+    const { result } = renderHook(() => useUrlRange({ now }));
+    const from = new Date(FIXED_NOW - 5 * DAY_MS);
+    const to = new Date(FIXED_NOW);
+    act(() => {
+      result.current.setRange({ from, to, preset: "custom" });
+    });
+    const url = replace.mock.calls[0]?.[0] as string;
+    expect(url).toContain("preset=custom");
+    expect(url).toContain(`from=${encodeURIComponent(from.toISOString())}`);
+    expect(url).toContain(`to=${encodeURIComponent(to.toISOString())}`);
+  });
+});
