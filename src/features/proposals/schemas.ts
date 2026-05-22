@@ -58,8 +58,23 @@ export const createProposalPayloadSchema = z.object({
 
 export type CreateProposalPayload = z.infer<typeof createProposalPayloadSchema>;
 
-export const updateProposalPayloadSchema = createProposalPayloadSchema
-  .partial()
+// Refine against the raw input keys so defaults from the create schema don't
+// silently make an empty object look populated.
+export const updateProposalPayloadSchema = z
+  .object({
+    project_id: z.string().min(1).optional(),
+    project_title: z.string().min(1).optional(),
+    requester_id: z.string().min(1).optional(),
+    title: z.string().min(3).max(160).optional(),
+    abstract: z.string().min(40).max(1200).optional(),
+    justification: z.string().min(500).max(2000).optional(),
+    start_date: z.string().min(1).optional(),
+    end_date: z.string().min(1).optional(),
+    resources: z.array(proposalResourceRequestSchema).min(1).optional(),
+    cascade_to_sub_projects: z.boolean().optional(),
+    child_allocations: z.array(proposalChildAllocationRequestSchema).optional(),
+    status: z.enum(["DRAFT", "SUBMITTED", "WITHDRAWN"]).optional(),
+  })
   .refine((v) => Object.keys(v).length > 0, { message: "patch is empty" });
 
 export type UpdateProposalPayload = z.infer<typeof updateProposalPayloadSchema>;

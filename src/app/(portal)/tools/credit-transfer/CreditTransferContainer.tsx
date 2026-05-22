@@ -70,8 +70,8 @@ export function CreditTransferContainer() {
       <ErrorState
         message={(queryError as Error).message ?? "Failed to load allocations"}
         onRetry={() => {
-          usageQueries.forEach((q) => q.refetch());
-          resourceQueries.forEach((q) => q.refetch());
+          for (const q of usageQueries) q.refetch();
+          for (const q of resourceQueries) q.refetch();
         }}
       />
     );
@@ -90,13 +90,15 @@ export function CreditTransferContainer() {
   });
 
   const resourcesByAllocation: Record<string, CreditTransferResource[]> = {};
-  allocations.forEach((a, i) => {
+  for (let i = 0; i < allocations.length; i += 1) {
+    const a = allocations[i];
+    if (!a) continue;
     resourcesByAllocation[a.id] = (resourceQueries[i]?.data ?? []).map((r) => ({
       id: r.id,
       name: r.name,
       resource_type: r.resource_type,
     }));
-  });
+  }
 
   return (
     <CreditTransferWizard

@@ -124,8 +124,6 @@ export function ToolsLanding() {
             <div
               key={tool.id}
               aria-disabled
-              role="link"
-              tabIndex={-1}
               title="Available after Phase 7 ships"
             >
               {inner}

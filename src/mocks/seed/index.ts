@@ -447,13 +447,14 @@ export function buildSeed(): Seed {
         requester_id: project.project_pi_id,
         title: `Proposal: ${project.title} — Phase ${proposalSeq}`,
         abstract: `Extension proposal for ${project.title}. Targets a downstream milestone with quantitative deliverables across ${proposalResources.length} resource pool(s).`,
-        justification:
-          `Project ${project.title} (origination ${project.origination}) is approaching a critical milestone that requires additional compute capacity. ` +
-          "We have characterized the workload, profiled hot paths, and validated scaling on existing nodes. " +
-          "This proposal requests sustained capacity for the next quarter to complete the planned set of experiments, integrate downstream collaborators, and publish results. " +
-          "The plan includes regular check-ins with the allocation manager and quarterly reporting on burn rate and outcomes. " +
-          "Without this allocation the team would be forced to defer the publication window by at least one cycle, which materially affects funder commitments. " +
+        justification: [
+          `Project ${project.title} (origination ${project.origination}) is approaching a critical milestone that requires additional compute capacity.`,
+          "We have characterized the workload, profiled hot paths, and validated scaling on existing nodes.",
+          "This proposal requests sustained capacity for the next quarter to complete the planned set of experiments, integrate downstream collaborators, and publish results.",
+          "The plan includes regular check-ins with the allocation manager and quarterly reporting on burn rate and outcomes.",
+          "Without this allocation the team would be forced to defer the publication window by at least one cycle, which materially affects funder commitments.",
           "We commit to releasing reproducible artifacts at the end of the cycle.",
+        ].join(" "),
         start_date: daysFromNow(startOffset).toISOString(),
         end_date: daysFromNow(startOffset + lengthDays).toISOString(),
         resources: proposalResources,
