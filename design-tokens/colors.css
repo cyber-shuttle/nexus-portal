@@ -75,7 +75,9 @@
   --secondary: var(--nexus-gray-100);
   --secondary-foreground: var(--nexus-gray-900);
   --muted: var(--nexus-gray-100);
-  --muted-foreground: var(--nexus-gray-500);
+  /* Pinned to gray-600 (#4b5563) — gray-500 (#6b7280) on bg-muted (#f1f1f1) is
+     4.28:1 and fails WCAG AA. gray-600 clears 4.5:1 by a healthy margin. */
+  --muted-foreground: var(--nexus-gray-600);
   --accent: var(--nexus-blue-50);
   --accent-foreground: var(--nexus-blue-700);
   --destructive: var(--nexus-red-600);
