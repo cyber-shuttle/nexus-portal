@@ -9,7 +9,7 @@ type Props = {
 export function PlaceholderPage({ title, phase, description }: Props) {
   return (
     <div className="mx-auto flex max-w-2xl flex-col items-center gap-4 py-24 text-center">
-      <span className="rounded-full bg-nexus-blue-50 px-4 py-1 text-xs font-semibold uppercase tracking-wide text-nexus-blue-700">
+      <span className="rounded-full bg-brand-tint px-4 py-1 text-xs font-semibold uppercase tracking-wide text-brand">
         Phase {phase}
       </span>
       <h1 className="font-display text-3xl font-bold tracking-tight">{title}</h1>

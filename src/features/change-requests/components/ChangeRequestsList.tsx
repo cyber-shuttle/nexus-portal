@@ -141,7 +141,7 @@ export function ChangeRequestsList({
       cell: (row) => (
         <Link
           href={`/allocations/${row.compute_allocation_id}`}
-          className="text-sm font-medium text-nexus-blue-700 hover:underline"
+          className="text-sm font-medium text-brand hover:underline"
         >
           {row.compute_allocation_id}
         </Link>

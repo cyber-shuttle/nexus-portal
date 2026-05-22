@@ -38,7 +38,7 @@ export function ChangeRequestDetailDrawer({
               />
               <Link
                 href={`/allocations/${request.compute_allocation_id}`}
-                className="text-sm text-nexus-blue-700 hover:underline"
+                className="text-sm text-brand hover:underline"
               >
                 View allocation
               </Link>

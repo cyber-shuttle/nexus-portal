@@ -60,7 +60,7 @@ export function ProposalsList({ rows, isLoading, error, canCreate, onRetry }: Pr
       cell: (row) => (
         <Link
           href={`/proposals/${row.id}`}
-          className="font-medium text-nexus-blue-700 hover:underline"
+          className="font-medium text-brand hover:underline"
         >
           {row.title}
         </Link>

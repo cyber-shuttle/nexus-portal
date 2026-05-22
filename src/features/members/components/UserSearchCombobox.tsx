@@ -40,7 +40,7 @@ export function UserSearchCombobox({
           </div>
           <button
             type="button"
-            className="text-xs text-nexus-blue-700 hover:underline"
+            className="text-xs text-brand hover:underline"
             onClick={() => {
               onChange(null);
               setQuery("");
