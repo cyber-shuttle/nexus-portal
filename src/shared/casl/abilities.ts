@@ -22,7 +22,9 @@ export function defineAbilityForRole(role: Role, ctx: AbilityContext = {}): AppA
   if (role === "user" || role === "pi" || role === "co_pi" || role === "allocation_manager") {
     can("read", "Allocation");
     can("read", "Usage");
-    can("read", "Certificate");
+    can("read", "Certificate", { username: ctx.userId ?? "__none__" });
+    can("read", "Client", { owner_user_id: ctx.userId ?? "__none__" });
+    can("manage", "Client", { owner_user_id: ctx.userId ?? "__none__" });
     can("create", "ChangeRequest");
   }
 
@@ -38,6 +40,9 @@ export function defineAbilityForRole(role: Role, ctx: AbilityContext = {}): AppA
     can("transfer", "Allocation", {
       id: { $in: ctx.myPiAllocations ?? [] },
     });
+    can("read", "Client", { allocation_id: { $in: ctx.myPiAllocations ?? [] } });
+    can("create", "Client");
+    can("manage", "Client", { allocation_id: { $in: ctx.myPiAllocations ?? [] } });
   }
 
   if (role === "allocation_manager") {

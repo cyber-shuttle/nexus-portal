@@ -24,6 +24,7 @@ import type {
   ComputeAllocationDiff,
 } from "@shared/api/domain";
 import type { Proposal } from "@features/proposals/types";
+import type { Certificate } from "@features/signer/types";
 import { daysFromNow, hoursFromNow, makeRng, pick, rangeInt } from "./random";
 
 const FIRST_NAMES = [
@@ -98,6 +99,7 @@ export type Seed = {
   changeRequestEvents: ComputeAllocationChangeRequestEvent[];
   diffs: ComputeAllocationDiff[];
   proposals: Proposal[];
+  certificates: Certificate[];
 };
 
 function statusFor(rng: () => number): AllocationStatus {
@@ -477,6 +479,70 @@ export function buildSeed(): Seed {
     }
   }
 
+  const certificates: Certificate[] = [];
+  const STATUS_PLAN = [
+    { count: 50, kind: "active" as const },
+    { count: 18, kind: "expired" as const },
+    { count: 12, kind: "revoked" as const },
+  ];
+  let certSerial = 1000;
+  const nowSeconds = Math.floor(Date.now() / 1000);
+  for (const plan of STATUS_PLAN) {
+    for (let i = 0; i < plan.count; i += 1) {
+      const owningUser = pick(rng, users.slice(0, 14));
+      const memberAllocations = memberships
+        .filter((m) => m.user_id === owningUser.id)
+        .map((m) => allocations.find((a) => a.id === m.compute_allocation_id))
+        .filter((a): a is NonNullable<typeof a> => Boolean(a));
+      const cluster =
+        memberAllocations.length > 0
+          ? memberAllocations[certSerial % memberAllocations.length]
+          : allocations[certSerial % allocations.length];
+      if (!cluster) continue;
+      const lifetimeSeconds = rangeInt(rng, 3600, 8 * 3600);
+      const issuedAt =
+        plan.kind === "expired"
+          ? nowSeconds - rangeInt(rng, lifetimeSeconds + 60, 30 * 24 * 3600)
+          : nowSeconds - rangeInt(rng, 60, 6 * 3600);
+      const validAfter = issuedAt;
+      const validBefore =
+        plan.kind === "expired"
+          ? issuedAt + lifetimeSeconds
+          : nowSeconds + rangeInt(rng, 60, lifetimeSeconds);
+      const revoked = plan.kind === "revoked";
+      const revokedAt = revoked
+        ? Math.max(issuedAt + 60, nowSeconds - rangeInt(rng, 60, 7 * 24 * 3600))
+        : undefined;
+      certificates.push({
+        serial_number: certSerial,
+        allocation_id: cluster.id,
+        allocation_name: cluster.name,
+        key_id: `nexus-key-${certSerial}`,
+        principal: owningUser.email.split("@")[0] ?? owningUser.id,
+        username: owningUser.email,
+        public_key_fingerprint: `SHA256:${certSerial.toString(16).padStart(8, "0")}${"abcdef".repeat(4)}`,
+        ca_fingerprint: `SHA256:ca-${certSerial.toString(16).padStart(4, "0")}`,
+        valid_after: validAfter,
+        valid_before: validBefore,
+        issued_at: issuedAt,
+        source_ip: `10.${rangeInt(rng, 0, 255)}.${rangeInt(rng, 0, 255)}.${rangeInt(rng, 1, 254)}`,
+        granted_extensions: ["permit-pty", ...(rng() < 0.5 ? ["permit-agent-forwarding"] : [])],
+        force_command: rng() < 0.1 ? "/usr/local/bin/nexus-shell" : null,
+        revoked,
+        revoked_at: revokedAt,
+        revocation_reason: revoked
+          ? pick(rng, [
+              "User requested revocation",
+              "Suspected key compromise",
+              "Allocation ended",
+              "Account deactivated",
+            ])
+          : undefined,
+      });
+      certSerial += 1;
+    }
+  }
+
   return {
     clusters,
     organizations,
@@ -495,6 +561,7 @@ export function buildSeed(): Seed {
     changeRequestEvents,
     diffs,
     proposals,
+    certificates,
   };
 }
 
