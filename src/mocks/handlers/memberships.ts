@@ -1,10 +1,24 @@
 import { HttpResponse, http } from "msw";
+import { z } from "zod";
 import { seed } from "../seed";
 import { path, paginate } from "./_utils";
 import type {
   ComputeAllocationMembership,
   ComputeAllocationMembershipResourceOverride,
 } from "@features/members/schemas";
+import {
+  createMembershipPayloadSchema,
+  overridePayloadSchema,
+  updateMembershipPayloadSchema,
+} from "@features/members/api";
+
+const statusUpdateSchema = z.object({
+  membership_status: z.enum(["ACTIVE", "INACTIVE", "DELETED"]),
+});
+
+const overridePatchSchema = overridePayloadSchema
+  .partial()
+  .refine((v) => Object.keys(v).length > 0, { message: "patch is empty" });
 
 function newId(prefix: string): string {
   const rand = globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2);
@@ -42,10 +56,14 @@ export const membershipHandlers = [
   ),
 
   http.post(path("/compute-allocation-memberships"), async ({ request }) => {
-    const body = (await request.json()) as Partial<ComputeAllocationMembership>;
-    if (!body.compute_allocation_id || !body.user_id) {
-      return HttpResponse.json({ error: "invalid_request" }, { status: 400 });
+    const parsed = createMembershipPayloadSchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return HttpResponse.json(
+        { error: "invalid_request", issues: parsed.error.flatten() },
+        { status: 400 },
+      );
     }
+    const body = parsed.data;
     const allocation = seed.allocations.find((a) => a.id === body.compute_allocation_id);
     const start = body.start_time ?? allocation?.start_time ?? new Date().toISOString();
     const end = body.end_time ?? allocation?.end_time ?? new Date().toISOString();
@@ -64,19 +82,28 @@ export const membershipHandlers = [
   http.put(path("/compute-allocation-memberships/:id/status"), async ({ params, request }) => {
     const existing = seed.memberships.find((m) => m.id === params.id);
     if (!existing) return HttpResponse.json({ error: "not_found" }, { status: 404 });
-    const body = (await request.json()) as { membership_status?: "ACTIVE" | "INACTIVE" | "DELETED" };
-    if (!body.membership_status) {
-      return HttpResponse.json({ error: "invalid_request" }, { status: 400 });
+    const parsed = statusUpdateSchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return HttpResponse.json(
+        { error: "invalid_request", issues: parsed.error.flatten() },
+        { status: 400 },
+      );
     }
-    existing.membership_status = body.membership_status;
+    existing.membership_status = parsed.data.membership_status;
     return HttpResponse.json(existing);
   }),
 
   http.put(path("/compute-allocation-memberships/:id"), async ({ params, request }) => {
     const existing = seed.memberships.find((m) => m.id === params.id);
     if (!existing) return HttpResponse.json({ error: "not_found" }, { status: 404 });
-    const patch = (await request.json()) as Partial<ComputeAllocationMembership>;
-    Object.assign(existing, patch);
+    const parsed = updateMembershipPayloadSchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return HttpResponse.json(
+        { error: "invalid_request", issues: parsed.error.flatten() },
+        { status: 400 },
+      );
+    }
+    Object.assign(existing, parsed.data);
     return HttpResponse.json(existing);
   }),
 
@@ -88,16 +115,20 @@ export const membershipHandlers = [
   }),
 
   http.post(path("/compute-allocation-membership-resource-overrides"), async ({ request }) => {
-    const body = (await request.json()) as Partial<ComputeAllocationMembershipResourceOverride>;
-    if (!body.compute_allocation_membership_id || !body.compute_allocation_resource_id) {
-      return HttpResponse.json({ error: "invalid_request" }, { status: 400 });
+    const parsed = overridePayloadSchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return HttpResponse.json(
+        { error: "invalid_request", issues: parsed.error.flatten() },
+        { status: 400 },
+      );
     }
+    const body = parsed.data;
     const created: ComputeAllocationMembershipResourceOverride = {
       id: newId("override"),
       compute_allocation_membership_id: body.compute_allocation_membership_id,
       compute_allocation_resource_id: body.compute_allocation_resource_id,
-      override_resource_amount: body.override_resource_amount ?? 0,
-      override_resource_time: body.override_resource_time ?? 0,
+      override_resource_amount: body.override_resource_amount,
+      override_resource_time: body.override_resource_time,
     };
     seed.overrides.push(created);
     return HttpResponse.json(created, { status: 201 });
@@ -108,8 +139,14 @@ export const membershipHandlers = [
     async ({ params, request }) => {
       const existing = seed.overrides.find((o) => o.id === params.id);
       if (!existing) return HttpResponse.json({ error: "not_found" }, { status: 404 });
-      const patch = (await request.json()) as Partial<ComputeAllocationMembershipResourceOverride>;
-      Object.assign(existing, patch);
+      const parsed = overridePatchSchema.safeParse(await request.json());
+      if (!parsed.success) {
+        return HttpResponse.json(
+          { error: "invalid_request", issues: parsed.error.flatten() },
+          { status: 400 },
+        );
+      }
+      Object.assign(existing, parsed.data);
       return HttpResponse.json(existing);
     },
   ),

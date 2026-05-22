@@ -5,6 +5,10 @@ import type {
   ChangeRequestStatus,
   ComputeAllocationChangeRequest,
 } from "@shared/api/domain";
+import {
+  createChangeRequestPayloadSchema,
+  updateChangeRequestPayloadSchema,
+} from "@features/change-requests/api";
 
 function newId(prefix: string): string {
   const rand = globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2);
@@ -55,36 +59,52 @@ export const changeRequestHandlers = [
   }),
 
   http.post(path("/compute-allocation-change-requests"), async ({ request }) => {
-    const body = (await request.json()) as Partial<ComputeAllocationChangeRequest>;
-    if (!body.compute_allocation_id || !body.requester_id) {
-      return HttpResponse.json({ error: "invalid_request" }, { status: 400 });
+    const parsed = createChangeRequestPayloadSchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return HttpResponse.json(
+        { error: "invalid_request", issues: parsed.error.flatten() },
+        { status: 400 },
+      );
     }
+    const body = parsed.data;
     const created: ComputeAllocationChangeRequest = {
       id: newId("cr"),
       compute_allocation_id: body.compute_allocation_id,
-      requested_su_amount: body.requested_su_amount ?? 0,
-      requested_status: body.requested_status ?? "ACTIVE",
-      reason: body.reason ?? "",
+      requested_su_amount: body.requested_su_amount,
+      requested_status: body.requested_status,
+      reason: body.reason,
       change_status: "PENDING",
       requester_id: body.requester_id,
       timestamp: new Date().toISOString(),
     };
     seed.changeRequests.push(created);
-    appendEvent(created.id, "CREATED", "Change request created");
+    appendEvent(
+      created.id,
+      "CREATED",
+      `Change request created by ${body.requester_id}`,
+    );
     return HttpResponse.json(created, { status: 201 });
   }),
 
   http.put(path("/compute-allocation-change-requests/:id"), async ({ params, request }) => {
     const existing = seed.changeRequests.find((c) => c.id === params.id);
     if (!existing) return HttpResponse.json({ error: "not_found" }, { status: 404 });
-    const patch = (await request.json()) as Partial<ComputeAllocationChangeRequest>;
+    const parsed = updateChangeRequestPayloadSchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return HttpResponse.json(
+        { error: "invalid_request", issues: parsed.error.flatten() },
+        { status: 400 },
+      );
+    }
+    const patch = parsed.data;
     const prevStatus = existing.change_status;
     Object.assign(existing, patch);
     if (patch.change_status && patch.change_status !== prevStatus) {
+      const actor = patch.approver_id ?? "system";
       appendEvent(
         existing.id,
         patch.change_status as ChangeRequestStatus,
-        `Change request ${(patch.change_status as string).toLowerCase()}`,
+        `Change request ${(patch.change_status as string).toLowerCase()} by ${actor}`,
       );
     }
     return HttpResponse.json(existing);
