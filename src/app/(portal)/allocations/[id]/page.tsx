@@ -1,5 +1,6 @@
 import { AllocationDetailHeader } from "@features/allocations/components/AllocationDetailHeader";
 import { CreditsAndResources } from "@features/allocations/components/CreditsAndResources";
+import { MembersTab } from "@features/members/components/MembersTab";
 import { TabsRouter } from "@/shared/ui/TabsRouter";
 
 export default async function AllocationDetailPage(props: { params: Promise<{ id: string }> }) {
@@ -14,6 +15,11 @@ export default async function AllocationDetailPage(props: { params: Promise<{ id
             value: "credits",
             label: "Credits & Resources",
             content: <CreditsAndResources allocationId={id} />,
+          },
+          {
+            value: "users",
+            label: "Users & Roles",
+            content: <MembersTab allocationId={id} />,
           },
         ]}
       />
