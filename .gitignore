@@ -1,10 +1,24 @@
+# dependencies
 node_modules/
+.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# next.js
 .next/
 out/
-dist/
 build/
-coverage/
+dist/
+
+# turbo
 .turbo/
+
+# coverage
+coverage/
 
 # env
 .env
@@ -14,6 +28,8 @@ coverage/
 # logs
 *.log
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 pnpm-debug.log*
 
 # editor
@@ -21,11 +37,17 @@ pnpm-debug.log*
 .idea/
 .DS_Store
 
-# test
+# testing
 playwright-report/
 test-results/
 .playwright/
 
-# build artifacts
+# vercel
+.vercel
+
+# typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# misc
+*.pem
