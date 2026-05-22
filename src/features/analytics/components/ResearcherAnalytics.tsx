@@ -46,8 +46,10 @@ export type ResearcherAnalyticsProps = {
   onRefetch?: () => void;
   range: DateRangeValue;
   onRangeChange: (next: DateRangeValue) => void;
-  groupBy: string;
-  onGroupByChange: (next: string) => void;
+  groupByResource: string;
+  onGroupByResourceChange: (next: string) => void;
+  groupByProject: string;
+  onGroupByProjectChange: (next: string) => void;
   kpis: ResearcherKpiBundle;
   forecastBundle: ResearcherForecastBundle;
   daily: { rows: DailyResourceBucket[]; seriesKeys: string[] };
@@ -56,9 +58,16 @@ export type ResearcherAnalyticsProps = {
   recentJobs: Job[];
 };
 
-const GROUP_BY_OPTIONS = [
-  { value: "resource", label: "Resource" },
-  { value: "project", label: "Project" },
+// Multi-chip GroupBy pattern (A1 carry-over 0b). Each dimension owns one
+// chip whose `onChange` is spliced into the URL `?gb=` list at its slot.
+const RESOURCE_OPTIONS = [
+  { value: "all", label: "All resources" },
+  { value: "resource", label: "By resource" },
+];
+
+const PROJECT_OPTIONS = [
+  { value: "all", label: "All projects" },
+  { value: "project", label: "By project" },
 ];
 
 function fmtWaitSeconds(seconds: number): string {
@@ -110,8 +119,10 @@ export function ResearcherAnalytics(props: ResearcherAnalyticsProps) {
     onRefetch,
     range,
     onRangeChange,
-    groupBy,
-    onGroupByChange,
+    groupByResource,
+    onGroupByResourceChange,
+    groupByProject,
+    onGroupByProjectChange,
     kpis,
     forecastBundle,
     daily,
@@ -164,10 +175,16 @@ export function ResearcherAnalytics(props: ResearcherAnalyticsProps) {
           <DateRangePicker value={range} onChange={onRangeChange} />
           <GroupByChipGroup>
             <GroupByChip
-              label="Group by"
-              value={groupBy}
-              options={GROUP_BY_OPTIONS}
-              onChange={onGroupByChange}
+              label="Resource"
+              value={groupByResource}
+              options={RESOURCE_OPTIONS}
+              onChange={onGroupByResourceChange}
+            />
+            <GroupByChip
+              label="Project"
+              value={groupByProject}
+              options={PROJECT_OPTIONS}
+              onChange={onGroupByProjectChange}
             />
           </GroupByChipGroup>
           {/* Saved views land in A4. */}
@@ -235,7 +252,10 @@ export function ResearcherAnalytics(props: ResearcherAnalyticsProps) {
         </p>
       </AnalyticsCard>
 
-      <AnalyticsCard title="Daily SU consumption" subtitle={`by ${groupBy}`}>
+      <AnalyticsCard
+        title="Daily SU consumption"
+        subtitle={groupByResource === "resource" ? "by resource" : "all resources"}
+      >
         {daily.rows.length === 0 || daily.seriesKeys.length === 0 ? (
           <p className="text-sm text-muted-foreground">No usage in this window.</p>
         ) : (

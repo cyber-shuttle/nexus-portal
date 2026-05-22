@@ -40,8 +40,10 @@ export type ResearcherAnalyticsContainerProps = {
 export function ResearcherAnalyticsContainer({ userId }: ResearcherAnalyticsContainerProps) {
   const ability = useAbility();
   const { range, setRange } = useUrlRange();
+  // Multi-chip GroupBy slots (A1 carry-over 0b): slot 0 = resource, slot 1 = project.
   const { groupBy, setGroupBy } = useUrlGroupBy();
-  const groupByValue = groupBy[0] ?? "resource";
+  const groupByResource = groupBy[0] ?? "resource";
+  const groupByProject = groupBy[1] ?? "all";
 
   const membershipsQuery = useMembershipsForUser(userId);
   const memberships = membershipsQuery.data ?? [];
@@ -189,8 +191,10 @@ export function ResearcherAnalyticsContainer({ userId }: ResearcherAnalyticsCont
       }}
       range={dateRangeValue}
       onRangeChange={(next) => setRange({ from: next.from, to: next.to, preset: next.preset ?? "custom" })}
-      groupBy={groupByValue}
-      onGroupByChange={(next) => setGroupBy([next])}
+      groupByResource={groupByResource}
+      onGroupByResourceChange={(next) => setGroupBy([next, groupByProject])}
+      groupByProject={groupByProject}
+      onGroupByProjectChange={(next) => setGroupBy([groupByResource, next])}
       kpis={kpis}
       forecastBundle={forecastBundle}
       daily={daily}

@@ -9,11 +9,12 @@ test.describe("researcher analytics page", () => {
     await expect(page.getByTestId("analytics-title")).toHaveText("Analytics");
     await expect(page.getByTestId("analytics-viewing-as")).toHaveText("Researcher");
 
-    // Toolbar primitives — LastSyncedBadge, DateRangePicker trigger,
-    // GroupByChip, Save view (disabled in A1).
+    // Toolbar primitives — LastSyncedBadge, DateRangePicker trigger, the two
+    // GroupByChips (Resource + Project — multi-chip canonical pattern), Save view.
     await expect(page.getByTestId("analytics-toolbar")).toBeVisible();
     await expect(page.getByRole("button", { name: /Range:/i })).toBeVisible();
-    await expect(page.getByRole("button", { name: /Group by:/i })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Resource:/i })).toBeVisible();
+    await expect(page.getByRole("button", { name: /^Project:/i })).toBeVisible();
     await expect(page.getByRole("button", { name: /\+ Save view/i })).toBeDisabled();
 
     // KPI strip — 5 KpiCards.
