@@ -1,5 +1,5 @@
 import { HttpResponse, http } from "msw";
-import { seed } from "../seed";
+import { persistSeed, seed } from "../seed";
 import { path } from "./_utils";
 import { creditTransferPayloadSchema } from "@features/tools/schemas";
 
@@ -56,9 +56,13 @@ export const toolsHandlers = [
       );
     }
     const now = new Date().toISOString();
+    const sourceBefore = source.initial_su_amount;
+    const destBefore = destination.initial_su_amount;
     source.initial_su_amount -= body.su_amount;
     destination.initial_su_amount += body.su_amount;
     const transferId = newId("xfer");
+    // Paired diff rows: same transfer_id links the OUT and IN. Audit log queries
+    // can rejoin a transfer by transfer_id without scanning descriptions.
     seed.diffs.push({
       id: `${source.id}-diff-${transferId}-out`,
       compute_allocation_id: source.id,
@@ -67,6 +71,10 @@ export const toolsHandlers = [
       status: source.status,
       timestamp: now,
       description: `Transferred ${body.su_amount.toLocaleString()} SU to ${destination.id} by ${body.transferred_by}${body.note ? ` — ${body.note}` : ""}`,
+      field: "initial_su_amount",
+      old_value: sourceBefore,
+      new_value: source.initial_su_amount,
+      transfer_id: transferId,
     });
     seed.diffs.push({
       id: `${destination.id}-diff-${transferId}-in`,
@@ -76,7 +84,12 @@ export const toolsHandlers = [
       status: destination.status,
       timestamp: now,
       description: `Received ${body.su_amount.toLocaleString()} SU from ${source.id} by ${body.transferred_by}${body.note ? ` — ${body.note}` : ""}`,
+      field: "initial_su_amount",
+      old_value: destBefore,
+      new_value: destination.initial_su_amount,
+      transfer_id: transferId,
     });
+    persistSeed();
     return HttpResponse.json(
       {
         transfer_id: transferId,

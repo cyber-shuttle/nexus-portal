@@ -72,5 +72,13 @@ export const computeAllocationDiffSchema = z.object({
   status: allocationStatusSchema,
   timestamp: z.string(),
   description: z.string().optional(),
+  // Optional fields used by structured diffs like credit transfers.
+  // `field` names the column that changed; `old_value`/`new_value` are
+  // serialized at the producer's discretion; `transfer_id` pairs the
+  // matching out/in diffs from a single transfer.
+  field: z.string().optional(),
+  old_value: z.union([z.string(), z.number(), z.boolean(), z.null()]).optional(),
+  new_value: z.union([z.string(), z.number(), z.boolean(), z.null()]).optional(),
+  transfer_id: z.string().optional(),
 });
 export type ComputeAllocationDiff = z.infer<typeof computeAllocationDiffSchema>;
