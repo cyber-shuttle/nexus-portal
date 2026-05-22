@@ -145,16 +145,25 @@ export function buildSeed(): Seed {
   ];
 
   const users: User[] = [...personaUsers];
-  for (let i = 0; i < 50; i += 1) {
+  // Pool dedup by derived email: two random user-NNN ids would collide on the same
+  // (first_name, last_name) -> email otherwise, producing visual duplicates.
+  const takenEmails = new Set(personaUsers.map((u) => u.email));
+  let userSeq = 0;
+  let userAttempts = 0;
+  while (userSeq < 50 && userAttempts < 200) {
+    userAttempts += 1;
     const first = pick(rng, FIRST_NAMES);
     const last = pick(rng, LAST_NAMES);
-    const id = `user-${String(i + 1).padStart(3, "0")}`;
+    const email = `${first.toLowerCase()}.${last.toLowerCase()}@nexus.local`;
+    if (takenEmails.has(email)) continue;
+    takenEmails.add(email);
+    userSeq += 1;
     users.push({
-      id,
+      id: `user-${String(userSeq).padStart(3, "0")}`,
       organization_id: pick(rng, organizations).id,
       first_name: first,
       last_name: last,
-      email: `${first.toLowerCase()}.${last.toLowerCase()}@nexus.local`,
+      email,
       status: "ACTIVE",
     });
   }
