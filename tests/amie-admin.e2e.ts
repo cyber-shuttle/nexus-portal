@@ -51,8 +51,10 @@ test.describe("AMIE admin console", () => {
     const amieIdCell = firstRow.locator("td").nth(0);
     const amieId = (await amieIdCell.innerText()).trim();
 
-    // Fill the entity id and link.
-    await firstRow.getByRole("textbox", { name: /Entity id for /i }).fill("BIO130001");
+    // Search for a project and pick the first autocomplete result.
+    const combo = firstRow.getByRole("combobox", { name: /Search projects to link/i });
+    await combo.fill("BIO130001");
+    await firstRow.getByRole("option").first().click();
     await firstRow.getByRole("button", { name: /^Link$/ }).click();
 
     // Toast surfaces success and the row disappears from the queue.
