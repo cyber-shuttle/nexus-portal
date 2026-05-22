@@ -28,8 +28,6 @@ type TextProps = CommonProps & {
   sub?: ReactNode;
   /** @deprecated use `sub` */
   sublabel?: ReactNode;
-  /** @deprecated trend pill is no longer in spec; will be removed in S5 */
-  trend?: { direction: "up" | "down" | "flat"; label?: string };
 };
 
 type ProgressProps = CommonProps & {
@@ -59,7 +57,7 @@ export function StatCard(props: StatCardProps) {
     );
   }
 
-  const { icon, title, value, sub, sublabel, trend, className } = props;
+  const { icon, title, value, sub, sublabel, className } = props;
   const subLine = sub ?? sublabel;
   return (
     <div className={cn(cardChrome, className)}>
@@ -68,23 +66,6 @@ export function StatCard(props: StatCardProps) {
         {value}
       </div>
       {subLine ? <div className="mt-2 text-xs text-muted-foreground">{subLine}</div> : null}
-      {trend ? (
-        <div
-          className={cn(
-            "mt-3 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
-            trend.direction === "up" &&
-              "bg-[color:var(--nexus-green-50)] text-[color:var(--nexus-green-700)]",
-            trend.direction === "down" &&
-              "bg-[color:var(--nexus-red-50)] text-[color:var(--nexus-red-700)]",
-            trend.direction === "flat" && "bg-muted text-muted-foreground",
-          )}
-        >
-          <span aria-hidden="true">
-            {trend.direction === "up" ? "▲" : trend.direction === "down" ? "▼" : "■"}
-          </span>
-          <span>{trend.label}</span>
-        </div>
-      ) : null}
     </div>
   );
 }
