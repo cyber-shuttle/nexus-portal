@@ -498,7 +498,15 @@ export function buildSeed(): Seed {
   };
 }
 
-export const seed: Seed = buildSeed();
+// Singleton: MSW mutations live on this seed in-memory. We pin it to globalThis
+// so a full-page reload (sign-out + sign-in) or HMR re-evaluation reuses the
+// same dataset instead of regenerating and losing user-submitted rows.
+type SeedHolder = { __nexusSeed?: Seed };
+const holder = globalThis as unknown as SeedHolder;
+if (!holder.__nexusSeed) {
+  holder.__nexusSeed = buildSeed();
+}
+export const seed: Seed = holder.__nexusSeed;
 
 export function getAllocationUsageTotalRow(allocId: string): ComputeAllocationUsageTotal {
   const total = seed.usages
