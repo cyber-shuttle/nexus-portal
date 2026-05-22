@@ -10,7 +10,10 @@ test.describe("seed persistence", () => {
 
     await loginAs(page, "pi");
     await page.goto("/allocations/alloc-001");
-    await expect(page.getByRole("tab", { name: /Credits & Resources/i })).toBeVisible({
+    // Request extension lives in the Credits & Resources tab right slot now —
+    // switch to that tab before clicking it.
+    await page.getByRole("tab", { name: /Credits & Resources/i }).click();
+    await expect(page.getByRole("button", { name: /Request extension/i })).toBeVisible({
       timeout: 20_000,
     });
     await page.getByRole("button", { name: /Request extension/i }).click();
