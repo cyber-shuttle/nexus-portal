@@ -3,8 +3,10 @@
 import * as React from "react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
+import { subject } from "@casl/ability";
 import type { ComputeAllocationChangeRequest } from "@shared/api/domain";
 import { ApiError } from "@shared/api/client";
+import { useAbility } from "@shared/casl/AbilityProvider";
 import {
   useApproveChangeRequest,
   useChangeRequestsForUser,
@@ -38,6 +40,7 @@ function personaFromRole(role: string | undefined): Persona {
 
 export function ChangeRequestsListContainer() {
   const { data: session } = useSession();
+  const ability = useAbility();
   const persona = personaFromRole(session?.user?.role);
   const userId = session?.user?.id ?? "";
 
@@ -50,6 +53,8 @@ export function ChangeRequestsListContainer() {
     persona === "pi" || persona === "allocation_manager" ? userId : undefined,
   );
 
+  // CASL ability already knows myPiAllocations/assignedAllocations from session context;
+  // we still need allocation ids here to scope the merged data feed (read-side filter).
   const myPiAllocations = React.useMemo(
     () => new Set(session?.user?.myPiAllocations ?? []),
     [session?.user?.myPiAllocations],
@@ -137,13 +142,12 @@ export function ChangeRequestsListContainer() {
   ]);
 
   const canActOn = React.useCallback(
-    (row: ComputeAllocationChangeRequest) => {
-      if (persona === "admin") return true;
-      if (persona === "pi") return myPiAllocations.has(row.compute_allocation_id);
-      if (persona === "allocation_manager") return assignedAllocations.has(row.compute_allocation_id);
-      return false;
-    },
-    [persona, myPiAllocations, assignedAllocations],
+    (row: ComputeAllocationChangeRequest) =>
+      ability.can(
+        "approve",
+        subject("ChangeRequest", { allocationId: row.compute_allocation_id }),
+      ),
+    [ability],
   );
 
   const approveMutation = useApproveChangeRequest();
@@ -210,7 +214,7 @@ export function ChangeRequestsListContainer() {
     setConfirm({ kind: "deny", ids });
   }
 
-  const bulkActionsEnabled = persona === "admin" || persona === "allocation_manager";
+  const bulkActionsEnabled = ability.can("approve", "ChangeRequest");
 
   return (
     <>

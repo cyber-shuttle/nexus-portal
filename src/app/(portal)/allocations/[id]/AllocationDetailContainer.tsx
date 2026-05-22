@@ -3,6 +3,8 @@
 import * as React from "react";
 import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
+import { subject } from "@casl/ability";
+import { useAbility } from "@shared/casl/AbilityProvider";
 import { useAllocation, useAllocationResources } from "@features/allocations/queries";
 import { useProject } from "@features/projects/queries";
 import {
@@ -45,11 +47,11 @@ export function AllocationDetailContainer({ allocationId }: { allocationId: stri
   const piUserId = projectQuery.data?.project_pi_id;
   const session = useSession().data;
   const requesterId = session?.user?.id ?? "";
-  const role = session?.user?.role;
-  const myPiAllocations = session?.user?.myPiAllocations ?? [];
-  const canManageMembers =
-    role === "admin" ||
-    ((role === "pi" || role === "co_pi") && myPiAllocations.includes(allocationId));
+  const ability = useAbility();
+  const canManageMembers = ability.can(
+    "manage",
+    subject("Membership", { allocationId }),
+  );
 
   const resourcesQuery = useAllocationResources(allocationId);
   const resourceList = React.useMemo(

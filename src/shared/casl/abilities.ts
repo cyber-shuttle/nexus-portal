@@ -30,11 +30,17 @@ export function defineAbilityForRole(role: Role, ctx: AbilityContext = {}): AppA
     can("manage", "Membership", {
       allocationId: { $in: ctx.myPiAllocations ?? [] },
     });
+    can("approve", "ChangeRequest", {
+      allocationId: { $in: ctx.myPiAllocations ?? [] },
+    });
     can("create", "Proposal");
   }
 
   if (role === "allocation_manager") {
     can("approve", "ChangeRequest", {
+      allocationId: { $in: ctx.assignedAllocations ?? [] },
+    });
+    can("manage", "Membership", {
       allocationId: { $in: ctx.assignedAllocations ?? [] },
     });
     can("read", "Membership");
