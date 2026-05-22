@@ -29,18 +29,16 @@
   --nexus-green-700: #15803d;
   --nexus-green-800: #166534;
 
-  /* Gray scale derived around observed text colors (#191C1E, #515F74) since the
-     gray-scale section was not fetched from Figma before the rate limit hit. */
   --nexus-gray-50: #f4f5f7;
-  --nexus-gray-100: #e5e7eb;
-  --nexus-gray-200: #cbd0d8;
-  --nexus-gray-300: #9aa1ae;
-  --nexus-gray-400: #6b7280;
-  --nexus-gray-500: #515f74;
-  --nexus-gray-600: #3d4658;
-  --nexus-gray-700: #2a3142;
-  --nexus-gray-800: #1a1f2b;
-  --nexus-gray-900: #191c1e;
+  --nexus-gray-100: #f1f1f1;
+  --nexus-gray-200: #e5e7eb;
+  --nexus-gray-300: #d4d4d4;
+  --nexus-gray-400: #9aa1ae;
+  --nexus-gray-500: #6b7280;
+  --nexus-gray-600: #4b5563;
+  --nexus-gray-700: #404040;
+  --nexus-gray-800: #262626;
+  --nexus-gray-900: #111111;
 
   --nexus-amber-50: #fef3c7;
   --nexus-amber-100: #fde68a;
@@ -57,6 +55,12 @@
   --nexus-error: var(--nexus-red-600);
   --nexus-success: var(--nexus-green-600);
   --nexus-warning: #f59e0b;
+
+  /* Brand semantic — distinct from --primary; reserved for active states,
+     links, brand wordmark, progress bar default fill. */
+  --brand: var(--nexus-blue-500);
+  --brand-foreground: #ffffff;
+  --brand-tint: var(--nexus-blue-50);
 
   --background: var(--nexus-white);
   --foreground: var(--nexus-gray-900);
@@ -125,4 +129,8 @@
   --sidebar-accent-foreground: var(--nexus-gray-50);
   --sidebar-border: var(--nexus-gray-700);
   --sidebar-ring: var(--nexus-blue-400);
+
+  --brand: var(--nexus-blue-400);
+  --brand-foreground: #ffffff;
+  --brand-tint: rgba(35, 97, 184, 0.15);
 }
