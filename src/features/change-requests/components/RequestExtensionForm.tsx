@@ -20,14 +20,31 @@ import { useCreateChangeRequest } from "../queries";
 
 const REASON_MIN = 20;
 
-const requestExtensionSchema = z.object({
-  requested_change_type: z.enum(["EXTEND_END_DATE", "INCREASE_CREDITS", "OTHER"]),
-  requested_amount: z.number().int().positive().optional(),
-  requested_end_date: z.string().optional(),
-  reason: z.string().min(REASON_MIN, `Reason must be at least ${REASON_MIN} characters`),
-});
+const reasonField = z
+  .string()
+  .min(REASON_MIN, `Reason must be at least ${REASON_MIN} characters`);
+
+const requestExtensionSchema = z.discriminatedUnion("requested_change_type", [
+  z.object({
+    requested_change_type: z.literal("INCREASE_CREDITS"),
+    requested_amount: z.number().int().positive({
+      message: "Additional SUs must be a positive integer",
+    }),
+    reason: reasonField,
+  }),
+  z.object({
+    requested_change_type: z.literal("EXTEND_END_DATE"),
+    requested_end_date: z.string().min(1, "Requested end date is required"),
+    reason: reasonField,
+  }),
+  z.object({
+    requested_change_type: z.literal("OTHER"),
+    reason: reasonField,
+  }),
+]);
 
 type FormValues = z.infer<typeof requestExtensionSchema>;
+type ChangeType = FormValues["requested_change_type"];
 
 export type RequestExtensionFormProps = {
   allocationId: string;
@@ -62,11 +79,11 @@ export function RequestExtensionForm({
     // portal-level "change type" is captured by which numeric field the user filled in.
     const requestedSuAmount =
       values.requested_change_type === "INCREASE_CREDITS"
-        ? currentSuAmount + (values.requested_amount ?? 0)
+        ? currentSuAmount + values.requested_amount
         : currentSuAmount;
 
     const reasonWithMeta =
-      values.requested_change_type === "EXTEND_END_DATE" && values.requested_end_date
+      values.requested_change_type === "EXTEND_END_DATE"
         ? `[EXTEND_END_DATE → ${values.requested_end_date}] ${values.reason}`
         : values.requested_change_type === "OTHER"
           ? `[OTHER] ${values.reason}`
@@ -90,17 +107,40 @@ export function RequestExtensionForm({
     }
   });
 
+  // Switching change type rebuilds the discriminated-union shape; reset cleanly so
+  // stale fields don't trip Zod validation under the old union member.
+  function onChangeTypeChange(next: ChangeType) {
+    if (next === "INCREASE_CREDITS") {
+      form.reset({
+        requested_change_type: "INCREASE_CREDITS",
+        reason: form.getValues("reason") ?? "",
+        requested_amount: undefined as unknown as number,
+      });
+    } else if (next === "EXTEND_END_DATE") {
+      form.reset({
+        requested_change_type: "EXTEND_END_DATE",
+        reason: form.getValues("reason") ?? "",
+        requested_end_date: "",
+      });
+    } else {
+      form.reset({
+        requested_change_type: "OTHER",
+        reason: form.getValues("reason") ?? "",
+      });
+    }
+  }
+
+  const errors = form.formState.errors as Record<string, { message?: string } | undefined>;
+  const amountError = errors.requested_amount?.message;
+  const endDateError = errors.requested_end_date?.message;
+
   return (
     <form onSubmit={onSubmit} className="space-y-4" aria-label="Request extension form">
       <div className="space-y-2">
         <Label htmlFor="cr-type">Change type</Label>
         <Select
           value={changeType}
-          onValueChange={(v) =>
-            form.setValue("requested_change_type", v as FormValues["requested_change_type"], {
-              shouldValidate: true,
-            })
-          }
+          onValueChange={(v) => onChangeTypeChange(v as ChangeType)}
         >
           <SelectTrigger id="cr-type" aria-label="Change type">
             <SelectValue />
@@ -123,10 +163,8 @@ export function RequestExtensionForm({
             placeholder="e.g. 10000"
             {...form.register("requested_amount", { valueAsNumber: true })}
           />
-          {form.formState.errors.requested_amount ? (
-            <p className="text-xs text-destructive">
-              {form.formState.errors.requested_amount.message}
-            </p>
+          {amountError ? (
+            <p className="text-xs text-destructive">{amountError}</p>
           ) : null}
         </div>
       ) : null}
@@ -135,6 +173,9 @@ export function RequestExtensionForm({
         <div className="space-y-2">
           <Label htmlFor="cr-end">Requested new end date</Label>
           <Input id="cr-end" type="date" {...form.register("requested_end_date")} />
+          {endDateError ? (
+            <p className="text-xs text-destructive">{endDateError}</p>
+          ) : null}
         </div>
       ) : null}
 
