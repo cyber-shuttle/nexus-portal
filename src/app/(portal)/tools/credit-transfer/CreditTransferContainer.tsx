@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useQueries } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
+import { useAbility } from "@shared/casl/AbilityProvider";
 import { CenteredSpinner } from "@/shared/ui/Loading";
 import { ErrorState } from "@/shared/ui/ErrorState";
 import { EmptyState } from "@/shared/ui/EmptyState";
@@ -16,12 +17,14 @@ import {
 
 export function CreditTransferContainer() {
   const { data: session } = useSession();
+  const ability = useAbility();
   const userId = session?.user?.id ?? "";
+  const allowed = ability.can("transfer", "Allocation");
 
   // Phase 4 scope: PI's own allocations. The full member view comes in Phase 7.
   const allocationIds = React.useMemo(
-    () => session?.user?.myPiAllocations ?? [],
-    [session?.user?.myPiAllocations],
+    () => (allowed ? (session?.user?.myPiAllocations ?? []) : []),
+    [allowed, session?.user?.myPiAllocations],
   );
   const allocationsQuery = useAllocations(allocationIds);
   const allocations = allocationsQuery.data ?? [];
@@ -45,6 +48,15 @@ export function CreditTransferContainer() {
       enabled: Boolean(a.id),
     })),
   });
+
+  if (!allowed) {
+    return (
+      <ErrorState
+        heading="Not permitted"
+        message="Only PIs and admins can transfer credits between allocations."
+      />
+    );
+  }
 
   if (allocationIds.length === 0) {
     return (

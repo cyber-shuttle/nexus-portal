@@ -34,6 +34,10 @@ export function defineAbilityForRole(role: Role, ctx: AbilityContext = {}): AppA
       allocationId: { $in: ctx.myPiAllocations ?? [] },
     });
     can("create", "Proposal");
+    can("read", "Proposal", { requester_id: ctx.userId ?? "__none__" });
+    can("transfer", "Allocation", {
+      id: { $in: ctx.myPiAllocations ?? [] },
+    });
   }
 
   if (role === "allocation_manager") {
