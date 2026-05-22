@@ -14,4 +14,16 @@ export const userHandlers = [
     if (!project) return HttpResponse.json({ error: "not_found" }, { status: 404 });
     return HttpResponse.json(project);
   }),
+
+  // Phase 2 portal-only convenience until the backend exposes a "projects
+  // where I am PI" endpoint. Documented in docs/backend-contracts/users.md.
+  http.get(path("/users/:id/projects-as-pi"), ({ params }) => {
+    const projects = seed.projects.filter((p) => p.project_pi_id === params.id);
+    return HttpResponse.json(projects);
+  }),
+
+  http.get(path("/projects/:id/compute-allocations"), ({ params }) => {
+    const allocations = seed.allocations.filter((a) => a.project_id === params.id);
+    return HttpResponse.json(allocations);
+  }),
 ];

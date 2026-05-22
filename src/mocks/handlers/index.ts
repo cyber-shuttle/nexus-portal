@@ -6,6 +6,7 @@ import { userHandlers } from "./users";
 import { identityHandlers } from "./identities";
 import { changeRequestHandlers } from "./change-requests";
 import { diffHandlers } from "./diffs";
+import { adminHandlers } from "./admin";
 
 export const handlers: HttpHandler[] = [
   ...allocationHandlers,
@@ -15,4 +16,5 @@ export const handlers: HttpHandler[] = [
   ...identityHandlers,
   ...changeRequestHandlers,
   ...diffHandlers,
+  ...adminHandlers,
 ];
