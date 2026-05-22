@@ -1,23 +1,31 @@
+import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { auth } from "@/shared/auth/auth";
+import { Breadcrumbs } from "@/shared/ui/Breadcrumbs";
+import { HomePersonaSwitch, type HomePersona } from "./HomePersonaSwitch";
+
+export const metadata: Metadata = {
+  title: "Home · Nexus Portal",
+};
+
+function personaFromRole(role: string | undefined): HomePersona {
+  if (role === "admin") return "admin";
+  if (role === "pi" || role === "co_pi" || role === "allocation_manager") return "pi";
+  return "researcher";
+}
 
 export default async function HomePage() {
   const session = await auth();
+  const userId = session?.user?.id ?? session?.user?.email ?? null;
+  if (!userId) redirect("/sign-in");
+
   const firstName = session?.user?.name?.split(" ")[0] ?? "there";
+  const persona = personaFromRole(session?.user?.role);
 
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-6 py-8">
-      <div className="flex flex-col gap-2">
-        <h1 className="font-display text-3xl font-bold tracking-tight">Welcome, {firstName}</h1>
-        <p className="text-base text-muted-foreground">
-          Allocation dashboards, change requests, and the rest of the portal land in phase 2.
-          The shell, design tokens, and auth are wired.
-        </p>
-      </div>
-      <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-sm text-muted-foreground">
-        Phase 0 home placeholder. Persona{" "}
-        <span className="font-medium text-foreground">{session?.user?.role ?? "guest"}</span>{" "}
-        signed in.
-      </div>
+    <div className="space-y-6">
+      <Breadcrumbs items={[{ label: "Home" }]} />
+      <HomePersonaSwitch persona={persona} userId={userId} firstName={firstName} />
     </div>
   );
 }

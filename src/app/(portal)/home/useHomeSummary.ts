@@ -1,15 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { useQueries, useQuery } from "@tanstack/react-query";
-import { useMembershipsForUser, memberKeys } from "@features/members/queries";
+import { useQueries } from "@tanstack/react-query";
+import { useMembershipsForUser } from "@features/members/queries";
 import { allocationKeys } from "@features/allocations/queries";
 import { getAllocation } from "@features/allocations/api";
 import { usageKeys } from "@features/usage/queries";
 import { getAllocationUsages } from "@features/usage/api";
-import {
-  useChangeRequestsForUser,
-} from "@features/change-requests/queries";
+import { useChangeRequestsForUser } from "@features/change-requests/queries";
 import { auditKeys } from "@features/audit/queries";
 import { getAllocationDiffs } from "@features/audit/api";
 import { aggregateHomeSummary } from "@features/home/aggregator";
@@ -17,11 +15,14 @@ import type { HomeSummary } from "@features/home/types";
 
 const HOME_USAGE_LIMIT = 1000;
 
-export function useHomeSummary(userId: string | undefined): {
+export type HomeSummaryResult = {
   data: HomeSummary | undefined;
+  usedByAllocation: Map<string, number>;
   isLoading: boolean;
   error: Error | null;
-} {
+};
+
+export function useHomeSummary(userId: string | undefined): HomeSummaryResult {
   const membershipsQuery = useMembershipsForUser(userId);
   const memberships = membershipsQuery.data ?? [];
   const allocationIds = React.useMemo(
@@ -47,6 +48,7 @@ export function useHomeSummary(userId: string | undefined): {
       enabled: true,
     })),
   });
+
   const diffQueries = useQueries({
     queries: allocationIds.map((id) => ({
       queryKey: auditKeys.diffs(id),
@@ -57,11 +59,18 @@ export function useHomeSummary(userId: string | undefined): {
 
   const changeRequestsQuery = useChangeRequestsForUser(userId);
 
-  // touch keys for biome — they're referenced for cache key normalization upstream
-  void memberKeys;
+  const usedByAllocation = React.useMemo(() => {
+    const map = new Map<string, number>();
+    allocationIds.forEach((id, i) => {
+      const usages = usagesQueries[i]?.data ?? [];
+      const total = usages.reduce((acc, u) => acc + u.used_su_amount, 0);
+      map.set(id, total);
+    });
+    return map;
+  }, [allocationIds, usagesQueries]);
 
   const data = React.useMemo<HomeSummary | undefined>(() => {
-    if (allocations.length === 0 && allocationIds.length > 0) return undefined;
+    if (allocationIds.length > 0 && allocations.length === 0) return undefined;
     const usagesByAllocation = new Map<string, Array<{
       compute_allocation_id: string;
       compute_allocation_resource_id: string;
@@ -95,5 +104,5 @@ export function useHomeSummary(userId: string | undefined): {
     (changeRequestsQuery.error as Error | null) ??
     null;
 
-  return { data, isLoading, error };
+  return { data, usedByAllocation, isLoading, error };
 }
