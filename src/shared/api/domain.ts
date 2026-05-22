@@ -17,6 +17,29 @@ export type MembershipStatus = AllocationStatus;
 export const changeRequestStatusSchema = z.enum(["PENDING", "APPROVED", "REJECTED"]);
 export type ChangeRequestStatus = z.infer<typeof changeRequestStatusSchema>;
 
+export const computeAllocationSchema = z.object({
+  id: z.string(),
+  project_id: z.string(),
+  name: z.string(),
+  status: allocationStatusSchema,
+  compute_cluster_id: z.string(),
+  initial_su_amount: z.number().int(),
+  start_time: z.string(),
+  end_time: z.string(),
+});
+export type ComputeAllocation = z.infer<typeof computeAllocationSchema>;
+
+export const projectSchema = z.object({
+  id: z.string(),
+  originated_id: z.string(),
+  title: z.string(),
+  origination: z.string(),
+  project_pi_id: z.string(),
+  status: projectStatusSchema,
+  created_time: z.string(),
+});
+export type Project = z.infer<typeof projectSchema>;
+
 export const computeAllocationChangeRequestSchema = z.object({
   id: z.string(),
   compute_allocation_id: z.string(),
