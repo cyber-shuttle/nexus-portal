@@ -5,6 +5,51 @@ import NextAuth, { type NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { z } from "zod";
 
+const ROLE_VALUES: Role[] = ["guest", "user", "pi", "co_pi", "allocation_manager", "admin"];
+
+function deriveRoleFromClaims(profile: Record<string, unknown> | undefined): Role | null {
+  if (!profile || typeof profile !== "object") return null;
+  if (profile["nexus_admin"] === true || profile["nexus_admin"] === "true") return "admin";
+  const claim = profile["nexus_role"];
+  if (typeof claim === "string" && ROLE_VALUES.includes(claim as Role)) {
+    return claim as Role;
+  }
+  const realmRoles = (profile as { realm_access?: { roles?: unknown[] } }).realm_access?.roles;
+  if (Array.isArray(realmRoles) && realmRoles.includes("nexus_admin")) return "admin";
+  return null;
+}
+
+async function fetchScopesFallback(
+  accessToken: string,
+): Promise<{ role: Role; myPiAllocations: string[]; assignedAllocations: string[] } | null> {
+  try {
+    const base = serverEnv.CORE_API_BASE_URL?.replace(/\/+$/, "") ?? "";
+    if (!base) return null;
+    const res = await fetch(`${base}/me/scopes`, {
+      headers: { authorization: `Bearer ${accessToken}` },
+    });
+    if (!res.ok) return null;
+    const parsed = await res.json();
+    if (!parsed || typeof parsed !== "object") return null;
+    const role = ROLE_VALUES.includes((parsed as { role?: string }).role as Role)
+      ? ((parsed as { role: Role }).role as Role)
+      : "user";
+    return {
+      role,
+      myPiAllocations: Array.isArray((parsed as { myPiAllocations?: unknown }).myPiAllocations)
+        ? ((parsed as { myPiAllocations: string[] }).myPiAllocations as string[])
+        : [],
+      assignedAllocations: Array.isArray(
+        (parsed as { assignedAllocations?: unknown }).assignedAllocations,
+      )
+        ? ((parsed as { assignedAllocations: string[] }).assignedAllocations as string[])
+        : [],
+    };
+  } catch {
+    return null;
+  }
+}
+
 const devPersonas: Record<string, { name: string; role: Role }> = {
   "researcher@nexus.local": { name: "Riya Researcher", role: "user" },
   "pi@nexus.local": { name: "Pat PI", role: "pi" },
@@ -74,7 +119,7 @@ export const authConfig: NextAuthConfig = {
   pages: { signIn: "/sign-in" },
   providers,
   callbacks: {
-    async jwt({ token, user, account }) {
+    async jwt({ token, user, account, profile }) {
       if (user) {
         token.role = user.role;
         token.personId = user.personId;
@@ -85,6 +130,28 @@ export const authConfig: NextAuthConfig = {
         token.accessToken = account.access_token;
       } else if (!token.accessToken && !oidcEnabled) {
         token.accessToken = "dev-token";
+      }
+      // OIDC sign-in: derive role from claims first; if the IdP doesn't include
+      // a role claim, fall back to /me/scopes against the core API. Both paths
+      // are tolerant — a missing role degrades to `user`.
+      if (oidcEnabled && account?.provider === "oidc") {
+        const claimRole = deriveRoleFromClaims(
+          (profile ?? undefined) as Record<string, unknown> | undefined,
+        );
+        if (claimRole) {
+          token.role = claimRole;
+          token.myPiAllocations = [];
+          token.assignedAllocations = [];
+        } else if (typeof token.accessToken === "string") {
+          const fallback = await fetchScopesFallback(token.accessToken);
+          if (fallback) {
+            token.role = fallback.role;
+            token.myPiAllocations = fallback.myPiAllocations;
+            token.assignedAllocations = fallback.assignedAllocations;
+          } else if (!token.role) {
+            token.role = "user";
+          }
+        }
       }
       return token;
     },

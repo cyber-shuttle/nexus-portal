@@ -1,8 +1,25 @@
 import { http, HttpResponse } from "msw";
+import { derivePersonaScopes } from "@/shared/auth/personaScopes";
 import { seed } from "../seed";
 import { path } from "./_utils";
 
 export const userHandlers = [
+  // Phase 7 portal-only fallback for OIDC scope mapping; documented in
+  // docs/backend-contracts/auth.md. The portal hits /me/scopes if the OIDC
+  // token didn't carry a `nexus_role` or `nexus_admin` claim.
+  http.get(path("/me/scopes"), ({ request }) => {
+    const url = new URL(request.url);
+    const userId = url.searchParams.get("user") ?? "researcher@nexus.local";
+    const scopes = derivePersonaScopes(userId);
+    const isAdmin = userId === "admin@nexus.local";
+    const isPi = userId === "pi@nexus.local";
+    return HttpResponse.json({
+      role: isAdmin ? "admin" : isPi ? "pi" : "user",
+      myPiAllocations: scopes.myPiAllocations,
+      assignedAllocations: scopes.assignedAllocations,
+    });
+  }),
+
   // Phase 3 portal-only autocomplete; documented in docs/backend-contracts/users.md.
   // Must come before /users/:id so the "search" route doesn't get captured by :id.
   http.get(path("/users"), ({ request }) => {
