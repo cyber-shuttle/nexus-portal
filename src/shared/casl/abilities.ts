@@ -7,6 +7,7 @@ export type AppAbility = MongoAbility;
 export type AbilityContext = {
   userId?: string;
   myPiAllocations?: string[];
+  myPiProjects?: string[];
   assignedAllocations?: string[];
 };
 
@@ -26,6 +27,7 @@ export function defineAbilityForRole(role: Role, ctx: AbilityContext = {}): AppA
     can("read", "Client", { owner_user_id: ctx.userId ?? "__none__" });
     can("manage", "Client", { owner_user_id: ctx.userId ?? "__none__" });
     can("create", "ChangeRequest");
+    can("read", "AnalyticsResearcher", { userId: ctx.userId ?? "__none__" });
   }
 
   if (role === "pi" || role === "co_pi") {
@@ -43,6 +45,7 @@ export function defineAbilityForRole(role: Role, ctx: AbilityContext = {}): AppA
     can("read", "Client", { allocation_id: { $in: ctx.myPiAllocations ?? [] } });
     can("create", "Client");
     can("manage", "Client", { allocation_id: { $in: ctx.myPiAllocations ?? [] } });
+    can("read", "AnalyticsPI", { projectId: { $in: ctx.myPiProjects ?? [] } });
   }
 
   if (role === "allocation_manager") {

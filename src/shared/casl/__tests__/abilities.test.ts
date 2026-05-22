@@ -45,4 +45,29 @@ describe("defineAbilityForRole", () => {
     expect(ability.can("read", "Allocation")).toBe(false);
     expect(ability.can("manage", "all")).toBe(false);
   });
+
+  it("researcher can read own analytics subject only", () => {
+    const ability = defineAbilityForRole("user", { userId: "u-1" });
+    expect(ability.can("read", subject("AnalyticsResearcher", { userId: "u-1" }))).toBe(true);
+    expect(ability.can("read", subject("AnalyticsResearcher", { userId: "u-2" }))).toBe(false);
+    expect(ability.can("read", "AnalyticsPI")).toBe(false);
+  });
+
+  it("pi can read AnalyticsPI for own projects and AnalyticsResearcher for self", () => {
+    const ability = defineAbilityForRole("pi", {
+      userId: "u-pi",
+      myPiAllocations: ["alloc-1"],
+      myPiProjects: ["proj-1"],
+    });
+    expect(ability.can("read", subject("AnalyticsPI", { projectId: "proj-1" }))).toBe(true);
+    expect(ability.can("read", subject("AnalyticsPI", { projectId: "proj-other" }))).toBe(false);
+    expect(ability.can("read", subject("AnalyticsResearcher", { userId: "u-pi" }))).toBe(true);
+  });
+
+  it("admin can manage Analytics across all subjects", () => {
+    const ability = defineAbilityForRole("admin");
+    expect(ability.can("read", "AnalyticsAdmin")).toBe(true);
+    expect(ability.can("read", "AnalyticsPI")).toBe(true);
+    expect(ability.can("read", "AnalyticsResearcher")).toBe(true);
+  });
 });
