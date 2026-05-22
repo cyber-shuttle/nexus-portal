@@ -179,7 +179,9 @@ export function FailedQueue({
       {failedOver24h > 0 ? (
         <div
           role="alert"
-          className="sticky top-0 z-10 flex items-center gap-3 rounded-md border border-destructive/40 bg-destructive/5 px-4 py-2 text-sm text-destructive"
+          // Tokenized soft-destructive surface chrome (spec §7.5 alt form) — red-700 on
+          // red-50 keeps WCAG AA; bg-destructive/5 + text-destructive measures 4.46.
+          className="sticky top-0 z-10 flex items-center gap-3 rounded-md border border-[color:var(--nexus-red-200)] bg-[color:var(--nexus-red-50)] px-4 py-2 text-sm text-[color:var(--nexus-red-700)]"
         >
           <TriangleAlertIcon className="size-4" aria-hidden />
           <span>

@@ -113,7 +113,9 @@ function OverviewTab({ packet }: { packet: Packet }) {
         <dd className="tabular-nums">{formatDate(packet.updated_at)}</dd>
       </dl>
       {packet.last_error ? (
-        <div className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
+        // Tokenized soft-destructive surface chrome (spec §7.5 alt form) — red-700 on
+        // red-50 keeps WCAG AA; bg-destructive/5 + text-destructive measures 4.46.
+        <div className="rounded-md border border-[color:var(--nexus-red-200)] bg-[color:var(--nexus-red-50)] p-3 text-sm text-[color:var(--nexus-red-700)]">
           <strong>Last error:</strong> {packet.last_error}
         </div>
       ) : null}
