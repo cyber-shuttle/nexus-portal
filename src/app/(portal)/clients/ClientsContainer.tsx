@@ -59,7 +59,18 @@ export function ClientsContainer() {
   const piAllocations = useAllocations(piAllocationIds);
   const allocationOptions = (piAllocations.data ?? []).map((a) => ({ id: a.id, name: a.name }));
   const canCreate = ability.can("create", "Client") && allocationOptions.length > 0;
-  const canManage = ability.can("manage", "Client");
+  // Recompute per row: a PI may manage clients on their allocation but not on
+  // someone else's; an admin manages all; a researcher only their own owner_user_id.
+  const canManageClient = React.useCallback(
+    (c: { owner_user_id: string; allocation_id: string } | undefined) => {
+      if (!c) return false;
+      return ability.can(
+        "manage",
+        subject("Client", { owner_user_id: c.owner_user_id, allocation_id: c.allocation_id }),
+      );
+    },
+    [ability],
+  );
 
   return (
     <>
@@ -67,7 +78,7 @@ export function ClientsContainer() {
         rows={rows}
         total={total}
         isLoading={clientsQuery.isLoading}
-        error={clientsQuery.error as Error | null}
+        error={clientsQuery.error}
         page={page}
         pageSize={pageSize}
         statusFilter={statusFilter}
@@ -107,8 +118,8 @@ export function ClientsContainer() {
         }}
         client={selectedQuery.data}
         isLoading={selectedQuery.isLoading}
-        error={selectedQuery.error as Error | null}
-        canManage={canManage}
+        error={selectedQuery.error}
+        canManage={canManageClient(selectedQuery.data)}
         currentUserId={userId}
         onRetry={() => selectedQuery.refetch()}
       />

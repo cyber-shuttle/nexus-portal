@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useSession } from "next-auth/react";
+import { subject } from "@casl/ability";
 import { useAbility } from "@shared/casl/AbilityProvider";
 import { CertificateList } from "@features/signer/components/CertificateList";
 import { CertificateDetailDrawer } from "@features/signer/components/CertificateDetailDrawer";
@@ -64,7 +65,7 @@ export function CertificatesContainer() {
         rows={certificates}
         total={total}
         isLoading={certificatesQuery.isLoading}
-        error={certificatesQuery.error as Error | null}
+        error={certificatesQuery.error}
         page={page}
         pageSize={pageSize}
         statusFilter={statusFilter}
@@ -99,8 +100,21 @@ export function CertificatesContainer() {
         }}
         cert={selectedQuery.data}
         isLoading={selectedQuery.isLoading}
-        error={selectedQuery.error as Error | null}
-        canRevoke={ability.can("revoke", "Certificate")}
+        error={selectedQuery.error}
+        canRevoke={
+          // Per-row check: a future CASL rule may scope revoke to allocation
+          // PI or owning username; compute against the selected cert's subject
+          // rather than asking subjectless "can the actor ever revoke?".
+          selectedQuery.data
+            ? ability.can(
+                "revoke",
+                subject("Certificate", {
+                  username: selectedQuery.data.username,
+                  allocation_id: selectedQuery.data.allocation_id,
+                }),
+              )
+            : false
+        }
         onRetry={() => selectedQuery.refetch()}
       />
     </>
