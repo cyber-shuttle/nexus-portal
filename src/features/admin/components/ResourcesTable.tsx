@@ -83,17 +83,23 @@ export function ResourcesTable({
     {
       key: "usage",
       header: "Used %",
-      cell: (r) => (
-        <div className="w-40">
-          <UsageBar
-            value={r.total_used_su}
-            max={Math.max(1, r.total_allocated_su)}
-            label={`${r.used_pct.toFixed(1)}%`}
-            ariaLabel={`${r.name} usage`}
-            size="sm"
-          />
-        </div>
-      ),
+      cell: (r) => {
+        const isOver = r.used_pct > 100;
+        const tooltip = isOver
+          ? `Over-utilized: ${r.used_pct.toFixed(1)}% (accounting lag — bar clips at 100%)`
+          : `${r.used_pct.toFixed(1)}% used`;
+        return (
+          <div className="w-40" title={tooltip}>
+            <UsageBar
+              value={r.total_used_su}
+              max={Math.max(1, r.total_allocated_su)}
+              label={`${r.used_pct.toFixed(1)}%`}
+              ariaLabel={`${r.name} usage ${r.used_pct.toFixed(1)} percent`}
+              size="sm"
+            />
+          </div>
+        );
+      },
     },
     {
       key: "rates",

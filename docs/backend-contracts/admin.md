@@ -76,6 +76,13 @@ The portal will eventually replace the client-side aggregation with
 `GET /compute-allocation-resources/{id}/usages/total` (see
 `usage.md`).
 
+`used_pct` is the raw `(used / allocated) * 100`. Values **above 100
+indicate over-utilization** — accounting can lag, or a soft cap may
+have been exceeded mid-cycle before the next reconciliation. The
+portal accepts `0 ≤ used_pct ≤ 500` so transient spikes do not crash
+the table; the `UsageBar` clips the rendered fill at 100 % while the
+numeric label / tooltip shows the unclamped figure.
+
 ## GET /admin/resources/{id}/usage-trend
 
 30-day daily usage series for one resource.

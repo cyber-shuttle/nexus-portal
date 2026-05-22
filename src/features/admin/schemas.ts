@@ -27,7 +27,11 @@ export const adminResourceRowSchema = z.object({
   allocation_count: z.number().int().nonnegative(),
   total_allocated_su: z.number().int().nonnegative(),
   total_used_su: z.number().int().nonnegative(),
-  used_pct: z.number().min(0).max(200),
+  // Accounting can lag and report used_pct > 100 transiently; back-end values
+  // are not pre-clamped. The UI clips the UsageBar visually but surfaces the
+  // raw figure in the tooltip. Cap at 500 to still reject obviously-broken
+  // data (e.g. negative SUs producing absurd ratios).
+  used_pct: z.number().min(0).max(500),
   rate_count: z.number().int().nonnegative(),
   status: z.enum(["ACTIVE", "INACTIVE"]),
 });
