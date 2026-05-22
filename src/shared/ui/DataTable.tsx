@@ -9,6 +9,10 @@ export type DataTableColumn<T> = {
   cell: (row: T, index: number) => React.ReactNode;
   width?: string;
   align?: "left" | "right" | "center";
+  // Set true when the cell already renders its own interactive control (a
+  // checkbox, a button, a link). The DataTable will then skip wrapping the cell
+  // in its keyboard-activation <button>, which would otherwise nest controls.
+  interactive?: boolean;
 };
 
 export type DataTablePagination = {
@@ -78,31 +82,45 @@ export function DataTable<T>({
                     onRowClick && "cursor-pointer transition-colors hover:bg-muted/40",
                   )}
                   onClick={onRowClick ? () => onRowClick(row) : undefined}
-                  onKeyDown={
-                    onRowClick
-                      ? (e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            onRowClick(row);
-                          }
-                        }
-                      : undefined
-                  }
-                  tabIndex={onRowClick ? 0 : undefined}
-                  role={onRowClick ? "button" : undefined}
                 >
-                  {columns.map((col) => (
-                    <td
-                      key={col.key}
-                      className={cn(
-                        "px-4 py-3 align-middle",
-                        col.align === "right" && "text-right",
-                        col.align === "center" && "text-center",
-                      )}
-                    >
-                      {col.cell(row, index)}
-                    </td>
-                  ))}
+                  {(() => {
+                    const firstWrappable = onRowClick
+                      ? columns.findIndex((c) => !c.interactive)
+                      : -1;
+                    return columns.map((col, ci) => {
+                      const wrap = ci === firstWrappable;
+                      const content = col.cell(row, index);
+                      return (
+                        <td
+                          key={col.key}
+                          className={cn(
+                            "px-4 py-3 align-middle",
+                            col.align === "right" && "text-right",
+                            col.align === "center" && "text-center",
+                          )}
+                        >
+                          {wrap ? (
+                            // Keyboard-accessible target for row-level
+                            // activation: a real <button> avoids the
+                            // nested-interactive a11y warning that
+                            // `role="button"` on the <tr> caused.
+                            <button
+                              type="button"
+                              className="-mx-1 inline-flex items-center rounded-sm bg-transparent px-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onRowClick?.(row);
+                              }}
+                            >
+                              {content}
+                            </button>
+                          ) : (
+                            content
+                          )}
+                        </td>
+                      );
+                    });
+                  })()}
                 </tr>
               ))
             )}

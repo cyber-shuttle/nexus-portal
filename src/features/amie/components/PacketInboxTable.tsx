@@ -89,6 +89,7 @@ export function PacketInboxTable({
         />
       ),
       width: "32px",
+      interactive: true,
       cell: (row) => (
         <input
           type="checkbox"
@@ -155,6 +156,7 @@ export function PacketInboxTable({
       key: "view",
       header: "",
       align: "right",
+      interactive: true,
       cell: (row) => (
         <Button
           type="button"

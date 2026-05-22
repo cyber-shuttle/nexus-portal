@@ -62,6 +62,7 @@ export function FailedQueue({
         <input type="checkbox" aria-label="Select all" checked={allSelected} onChange={toggleAll} />
       ),
       width: "32px",
+      interactive: true,
       cell: (row) => (
         <input
           type="checkbox"
@@ -132,6 +133,7 @@ export function FailedQueue({
       key: "actions",
       header: "Actions",
       align: "right",
+      interactive: true,
       cell: (row) => (
         <span className="flex justify-end gap-2">
           <Button
