@@ -1,7 +1,6 @@
 "use client";
 
 import { useAllocation } from "../queries";
-import { useAllocationUsageTotal } from "@features/usage/queries";
 import { StatusBadge, statusBadgeVariantFromAllocationStatus } from "@/shared/ui/StatusBadge";
 import { UsageBar } from "@/shared/ui/UsageBar";
 import { CardSkeleton } from "@/shared/ui/Loading";
@@ -23,9 +22,13 @@ function formatSU(n: number): string {
   return new Intl.NumberFormat().format(n);
 }
 
-export function AllocationDetailHeader({ allocationId }: { allocationId: string }) {
+export type AllocationDetailHeaderProps = {
+  allocationId: string;
+  used: number;
+};
+
+export function AllocationDetailHeader({ allocationId, used }: AllocationDetailHeaderProps) {
   const allocationQuery = useAllocation(allocationId);
-  const totalQuery = useAllocationUsageTotal(allocationId);
 
   if (allocationQuery.isLoading) return <CardSkeleton />;
   if (allocationQuery.error) {
@@ -39,7 +42,6 @@ export function AllocationDetailHeader({ allocationId }: { allocationId: string 
   const allocation = allocationQuery.data;
   if (!allocation) return null;
 
-  const used = totalQuery.data?.total_su_amount ?? 0;
   const remaining = Math.max(0, allocation.initial_su_amount - used);
   const now = new Date();
   const endTime = new Date(allocation.end_time);

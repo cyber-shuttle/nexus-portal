@@ -12,7 +12,7 @@ export type UsageBarProps = {
 
 function thresholdColor(ratio: number): string {
   if (ratio >= 0.9) return "bg-[color:var(--nexus-red-500)]";
-  if (ratio >= 0.75) return "bg-[color:var(--nexus-amber-500,#F59E0B)]";
+  if (ratio >= 0.75) return "bg-[color:var(--nexus-amber-500)]";
   return "bg-[color:var(--nexus-blue-500)]";
 }
 

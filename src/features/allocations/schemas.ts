@@ -1,8 +1,13 @@
 import { z } from "zod";
+import {
+  allocationStatusSchema,
+  projectStatusSchema,
+  type AllocationStatus,
+  type ProjectStatus,
+} from "@shared/api/domain";
 
-export const allocationStatusSchema = z.enum(["ACTIVE", "INACTIVE", "DELETED"]);
-
-export const projectStatusSchema = z.enum(["ACTIVE", "INACTIVE", "DELETED"]);
+export { allocationStatusSchema, projectStatusSchema };
+export type { AllocationStatus, ProjectStatus };
 
 export const computeAllocationSchema = z.object({
   id: z.string(),
@@ -53,8 +58,6 @@ export const computeClusterSchema = z.object({
   name: z.string(),
 });
 
-export type AllocationStatus = z.infer<typeof allocationStatusSchema>;
-export type ProjectStatus = z.infer<typeof projectStatusSchema>;
 export type ComputeAllocation = z.infer<typeof computeAllocationSchema>;
 export type ComputeAllocationResource = z.infer<typeof computeAllocationResourceSchema>;
 export type ComputeAllocationResourceMapping = z.infer<typeof computeAllocationResourceMappingSchema>;

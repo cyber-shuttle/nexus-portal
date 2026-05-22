@@ -9,15 +9,16 @@ import {
   computeAllocationSchema,
   projectSchema,
 } from "./schemas";
-import {
-  type ComputeAllocationMembership,
-  computeAllocationMembershipSchema,
-} from "@features/members/schemas";
 import { z } from "zod";
 
 export async function getAllocation(id: string): Promise<ComputeAllocation> {
   const raw = await apiFetch(`/compute-allocations/${id}`);
   return computeAllocationSchema.parse(raw);
+}
+
+export async function getAllocations(ids: string[]): Promise<ComputeAllocation[]> {
+  const uniqueIds = Array.from(new Set(ids));
+  return Promise.all(uniqueIds.map((id) => getAllocation(id)));
 }
 
 export async function getAllocationResources(allocId: string): Promise<ComputeAllocationResource[]> {
@@ -32,21 +33,7 @@ export async function getResourceRatesEffective(
   return computeAllocationResourceRateSchema.parse(raw);
 }
 
-export async function getMembershipsForUser(
-  userId: string,
-): Promise<ComputeAllocationMembership[]> {
-  const raw = await apiFetch(`/users/${userId}/compute-allocation-memberships`);
-  return z.array(computeAllocationMembershipSchema).parse(raw ?? []);
-}
-
 export async function getProject(id: string): Promise<Project> {
   const raw = await apiFetch(`/projects/${id}`);
   return projectSchema.parse(raw);
-}
-
-export async function getAllocationsForUser(userId: string): Promise<ComputeAllocation[]> {
-  const memberships = await getMembershipsForUser(userId);
-  const uniqueIds = Array.from(new Set(memberships.map((m) => m.compute_allocation_id)));
-  const allocations = await Promise.all(uniqueIds.map((id) => getAllocation(id)));
-  return allocations;
 }

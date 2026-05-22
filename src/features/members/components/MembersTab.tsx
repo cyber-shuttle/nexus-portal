@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { useAllocation, useProject } from "@features/allocations/queries";
 import { useAllocationMembers, type AllocationMemberRow } from "../queries";
 import { DataTable, type DataTableColumn } from "@/shared/ui/DataTable";
 import { TableSkeleton } from "@/shared/ui/Loading";
@@ -10,6 +9,7 @@ import { EmptyState } from "@/shared/ui/EmptyState";
 import { StatusBadge, statusBadgeVariantFromAllocationStatus } from "@/shared/ui/StatusBadge";
 import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
 import { Button } from "@/shared/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/ui/tooltip";
 import { MemberDetailDrawer } from "./MemberDetailDrawer";
 
 function initials(row: AllocationMemberRow): string {
@@ -33,15 +33,16 @@ function roleFor(row: AllocationMemberRow, piUserId: string | undefined): string
   return "User";
 }
 
-export function MembersTab({ allocationId }: { allocationId: string }) {
-  const allocationQuery = useAllocation(allocationId);
-  const projectQuery = useProject(allocationQuery.data?.project_id);
+export type MembersTabProps = {
+  allocationId: string;
+  piUserId: string | undefined;
+};
+
+export function MembersTab({ allocationId, piUserId }: MembersTabProps) {
   const { data: rows, isLoading, error, refetch } = useAllocationMembers(allocationId);
 
   const [activeMember, setActiveMember] = React.useState<AllocationMemberRow | null>(null);
   const [drawerOpen, setDrawerOpen] = React.useState(false);
-
-  const piId = projectQuery.data?.project_pi_id;
 
   const columns: Array<DataTableColumn<AllocationMemberRow>> = [
     {
@@ -65,7 +66,7 @@ export function MembersTab({ allocationId }: { allocationId: string }) {
       key: "role",
       header: "Role",
       cell: (row) => {
-        const role = roleFor(row, piId);
+        const role = roleFor(row, piUserId);
         return (
           <span
             className={
@@ -112,9 +113,22 @@ export function MembersTab({ allocationId }: { allocationId: string }) {
             Roles: PI, Co-PI, Allocation Manager, User
           </span>
         </div>
-        <Button variant="outline" disabled title="Phase 3">
-          Manage members
-        </Button>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                variant="outline"
+                aria-disabled
+                aria-label="Manage members (available in Phase 3)"
+                className="opacity-50 cursor-not-allowed"
+                onClick={(e) => e.preventDefault()}
+              >
+                Manage members
+              </Button>
+            }
+          />
+          <TooltipContent>Available in Phase 3</TooltipContent>
+        </Tooltip>
       </div>
       {isLoading ? (
         <TableSkeleton rows={5} columns={4} />

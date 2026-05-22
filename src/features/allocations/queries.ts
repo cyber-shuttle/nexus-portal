@@ -1,10 +1,9 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQueries, useQuery } from "@tanstack/react-query";
 import {
   getAllocation,
   getAllocationResources,
-  getAllocationsForUser,
   getProject,
   getResourceRatesEffective,
 } from "./api";
@@ -16,9 +15,8 @@ export const allocationKeys = {
   detail: (id: string) => [...allocationKeys.all, "detail", id] as const,
   resources: (id: string) => [...allocationKeys.detail(id), "resources"] as const,
   resourceRate: (resourceId: string) =>
-    ["compute-allocation-resources", resourceId, "rates", "effective"] as const,
-  forUser: (userId: string) => [...allocationKeys.all, "for-user", userId] as const,
-  project: (projectId: string) => ["projects", projectId] as const,
+    [...allocationKeys.all, "resource-rate", resourceId] as const,
+  project: (projectId: string) => [...allocationKeys.all, "project", projectId] as const,
 };
 
 export function useAllocation(id: string | undefined) {
@@ -27,6 +25,24 @@ export function useAllocation(id: string | undefined) {
     queryFn: () => getAllocation(id as string),
     enabled: Boolean(id),
   });
+}
+
+export function useAllocations(ids: string[]) {
+  const queries = useQueries({
+    queries: ids.map((id) => ({
+      queryKey: allocationKeys.detail(id),
+      queryFn: () => getAllocation(id),
+      enabled: Boolean(id),
+    })),
+  });
+  const data = queries
+    .map((q) => q.data)
+    .filter((a): a is NonNullable<typeof a> => Boolean(a));
+  return {
+    data,
+    isLoading: queries.some((q) => q.isLoading),
+    error: (queries.find((q) => q.error)?.error as Error | undefined) ?? null,
+  };
 }
 
 export function useAllocationResources(id: string | undefined) {
@@ -50,13 +66,5 @@ export function useProject(projectId: string | undefined) {
     queryKey: projectId ? allocationKeys.project(projectId) : ["projects", "none"],
     queryFn: () => getProject(projectId as string),
     enabled: Boolean(projectId),
-  });
-}
-
-export function useAllocationsForUser(userId: string | undefined) {
-  return useQuery({
-    queryKey: userId ? allocationKeys.forUser(userId) : ["allocations", "for-user", "none"],
-    queryFn: () => getAllocationsForUser(userId as string),
-    enabled: Boolean(userId),
   });
 }

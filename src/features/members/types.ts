@@ -1,4 +1,5 @@
 export type {
+  MembershipStatus,
   UserStatus,
   User,
   UserIdentity,

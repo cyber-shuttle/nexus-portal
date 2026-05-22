@@ -17,11 +17,11 @@ import type {
   ComputeAllocationUsage,
   ComputeAllocationUsageTotal,
 } from "@features/usage/schemas";
+import type { ComputeAllocationDiff } from "@features/audit/schemas";
 import type {
   ComputeAllocationChangeRequest,
   ComputeAllocationChangeRequestEvent,
-  ComputeAllocationDiff,
-} from "@features/audit/schemas";
+} from "@features/change-requests/schemas";
 import { daysFromNow, hoursFromNow, makeRng, pick, rangeInt } from "./random";
 
 const FIRST_NAMES = [

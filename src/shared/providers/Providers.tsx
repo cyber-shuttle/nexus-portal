@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { SessionProvider } from "next-auth/react";
 import { AbilityProvider } from "@/shared/casl/AbilityProvider";
+import { TooltipProvider } from "@/shared/ui/tooltip";
 import { MswProvider } from "./MswProvider";
 import { QueryProvider } from "./QueryProvider";
 
@@ -11,7 +12,9 @@ export function Providers({ children }: { children: ReactNode }) {
     <SessionProvider>
       <MswProvider>
         <QueryProvider>
-          <AbilityProvider>{children}</AbilityProvider>
+          <AbilityProvider>
+            <TooltipProvider>{children}</TooltipProvider>
+          </AbilityProvider>
         </QueryProvider>
       </MswProvider>
     </SessionProvider>

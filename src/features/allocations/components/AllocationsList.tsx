@@ -2,11 +2,6 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useQueries } from "@tanstack/react-query";
-import { useAllocationsForUser, allocationKeys } from "../queries";
-import { getAllocationResources } from "../api";
-import { getMembershipsForAllocation } from "@features/members/api";
-import { getAllocationUsageTotal } from "@features/usage/api";
 import type { AllocationStatus, ComputeAllocation } from "../schemas";
 import { DataTable, type DataTableColumn } from "@/shared/ui/DataTable";
 import { EmptyState } from "@/shared/ui/EmptyState";
@@ -16,9 +11,10 @@ import { StatusBadge, statusBadgeVariantFromAllocationStatus } from "@/shared/ui
 import { UsageBar } from "@/shared/ui/UsageBar";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/ui/tooltip";
 import { AllocationStatusFilter } from "./AllocationStatusFilter";
 
-type Row = {
+export type AllocationRow = {
   allocation: ComputeAllocation;
   used: number;
   members: number;
@@ -42,55 +38,13 @@ function formatSU(n: number): string {
 }
 
 export type AllocationsListProps = {
-  userId: string;
+  rows: AllocationRow[];
+  isLoading: boolean;
+  error: Error | null;
+  onRetry?: () => void;
 };
 
-export function AllocationsList({ userId }: AllocationsListProps) {
-  const allocationsQuery = useAllocationsForUser(userId);
-  const allocations = React.useMemo(
-    () => allocationsQuery.data ?? [],
-    [allocationsQuery.data],
-  );
-
-  const auxQueries = useQueries({
-    queries: allocations.flatMap((a) => [
-      {
-        queryKey: [...allocationKeys.detail(a.id), "usages-total"],
-        queryFn: () => getAllocationUsageTotal(a.id),
-        enabled: true,
-      },
-      {
-        queryKey: [...allocationKeys.detail(a.id), "memberships"],
-        queryFn: () => getMembershipsForAllocation(a.id),
-        enabled: true,
-      },
-      {
-        queryKey: [...allocationKeys.resources(a.id)],
-        queryFn: () => getAllocationResources(a.id),
-        enabled: true,
-      },
-    ]),
-  });
-
-  const rows: Row[] = allocations.map((allocation, i) => {
-    const baseIndex = i * 3;
-    const total = auxQueries[baseIndex]?.data as { total_su_amount?: number } | undefined;
-    const memberships = (auxQueries[baseIndex + 1]?.data ?? []) as Array<unknown>;
-    const resources = (auxQueries[baseIndex + 2]?.data ?? []) as Array<{
-      name: string;
-      resource_type: string;
-    }>;
-    const resourceSummary = resources.length
-      ? resources.map((r) => `${r.name} (${r.resource_type})`).join(", ")
-      : "—";
-    return {
-      allocation,
-      used: total?.total_su_amount ?? 0,
-      members: memberships.length,
-      resourceSummary,
-    };
-  });
-
+export function AllocationsList({ rows, isLoading, error, onRetry }: AllocationsListProps) {
   const [statusFilter, setStatusFilter] = React.useState<AllocationStatus[]>(["ACTIVE"]);
   const [projectQuery, setProjectQuery] = React.useState("");
 
@@ -115,7 +69,7 @@ export function AllocationsList({ userId }: AllocationsListProps) {
     setPage(1);
   }, [filterKey]);
 
-  const columns: Array<DataTableColumn<Row>> = [
+  const columns: Array<DataTableColumn<AllocationRow>> = [
     {
       key: "name",
       header: "Allocation",
@@ -195,9 +149,21 @@ export function AllocationsList({ userId }: AllocationsListProps) {
             Compute resources granted to you across projects.
           </p>
         </div>
-        <Button disabled aria-disabled title="Available in Phase 4">
-          Add Compute Resources
-        </Button>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                aria-disabled
+                aria-label="Add Compute Resources (available in Phase 4)"
+                className="opacity-50 cursor-not-allowed"
+                onClick={(e) => e.preventDefault()}
+              >
+                Add Compute Resources
+              </Button>
+            }
+          />
+          <TooltipContent>Available in Phase 4</TooltipContent>
+        </Tooltip>
       </div>
 
       <div className="flex flex-col gap-3 rounded-md border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -212,13 +178,10 @@ export function AllocationsList({ userId }: AllocationsListProps) {
         />
       </div>
 
-      {allocationsQuery.isLoading ? (
+      {isLoading ? (
         <TableSkeleton rows={6} columns={7} />
-      ) : allocationsQuery.error ? (
-        <ErrorState
-          message={(allocationsQuery.error as Error).message}
-          onRetry={() => allocationsQuery.refetch()}
-        />
+      ) : error ? (
+        <ErrorState message={error.message} onRetry={onRetry} />
       ) : filtered.length === 0 ? (
         <EmptyState
           heading="No allocations yet"

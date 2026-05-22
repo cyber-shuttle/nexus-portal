@@ -5,12 +5,19 @@ import {
   type ComputeAllocationChangeRequestEvent,
   computeAllocationChangeRequestEventSchema,
   computeAllocationChangeRequestSchema,
-} from "@features/audit/schemas";
+} from "./schemas";
 
 export async function getChangeRequestsForAllocation(
   allocId: string,
 ): Promise<ComputeAllocationChangeRequest[]> {
   const raw = await apiFetch(`/compute-allocations/${allocId}/change-requests`);
+  return z.array(computeAllocationChangeRequestSchema).parse(raw ?? []);
+}
+
+export async function getChangeRequestsForUser(
+  userId: string,
+): Promise<ComputeAllocationChangeRequest[]> {
+  const raw = await apiFetch(`/users/${userId}/change-requests`);
   return z.array(computeAllocationChangeRequestSchema).parse(raw ?? []);
 }
 

@@ -26,7 +26,7 @@ const variantStyles: Record<StatusBadgeVariant, string> = {
   expired:
     "bg-[color:var(--nexus-gray-100)] text-[color:var(--nexus-gray-700)] ring-1 ring-inset ring-[color:var(--nexus-gray-300)]",
   warning:
-    "bg-[color:var(--nexus-amber-50,#FEF3C7)] text-[color:var(--nexus-amber-700,#B45309)] ring-1 ring-inset ring-[color:var(--nexus-amber-200,#FDE68A)]",
+    "bg-[color:var(--nexus-amber-50)] text-[color:var(--nexus-amber-700)] ring-1 ring-inset ring-[color:var(--nexus-amber-200)]",
 };
 
 const labels: Record<StatusBadgeVariant, string> = {

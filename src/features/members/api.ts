@@ -18,6 +18,13 @@ export async function getMembershipsForAllocation(
   return z.array(computeAllocationMembershipSchema).parse(raw ?? []);
 }
 
+export async function getMembershipsForUser(
+  userId: string,
+): Promise<ComputeAllocationMembership[]> {
+  const raw = await apiFetch(`/users/${userId}/compute-allocation-memberships`);
+  return z.array(computeAllocationMembershipSchema).parse(raw ?? []);
+}
+
 export async function getMembershipOverrides(
   membershipId: string,
 ): Promise<ComputeAllocationMembershipResourceOverride[]> {

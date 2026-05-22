@@ -1,7 +1,13 @@
 import { z } from "zod";
-import { allocationStatusSchema } from "@features/allocations/schemas";
+import {
+  membershipStatusSchema,
+  userStatusSchema,
+  type MembershipStatus,
+  type UserStatus,
+} from "@shared/api/domain";
 
-export const userStatusSchema = z.enum(["ACTIVE", "INACTIVE", "SUSPENDED", "MERGED"]);
+export { membershipStatusSchema, userStatusSchema };
+export type { MembershipStatus, UserStatus };
 
 export const userSchema = z.object({
   id: z.string(),
@@ -30,7 +36,7 @@ export const computeAllocationMembershipSchema = z.object({
   user_id: z.string(),
   start_time: z.string(),
   end_time: z.string(),
-  membership_status: allocationStatusSchema,
+  membership_status: membershipStatusSchema,
 });
 
 export const computeAllocationMembershipResourceOverrideSchema = z.object({
@@ -41,7 +47,6 @@ export const computeAllocationMembershipResourceOverrideSchema = z.object({
   override_resource_time: z.number().int(),
 });
 
-export type UserStatus = z.infer<typeof userStatusSchema>;
 export type User = z.infer<typeof userSchema>;
 export type UserIdentity = z.infer<typeof userIdentitySchema>;
 export type ComputeAllocationMembership = z.infer<typeof computeAllocationMembershipSchema>;

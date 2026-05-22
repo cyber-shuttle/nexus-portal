@@ -2,10 +2,10 @@ export {
   changeRequestStatusSchema,
   computeAllocationChangeRequestSchema,
   computeAllocationChangeRequestEventSchema,
-} from "@features/audit/schemas";
+} from "@shared/api/domain";
 
 export type {
   ChangeRequestStatus,
   ComputeAllocationChangeRequest,
   ComputeAllocationChangeRequestEvent,
-} from "@features/audit/schemas";
+} from "@shared/api/domain";

@@ -4,6 +4,7 @@ import { useQueries, useQuery } from "@tanstack/react-query";
 import {
   getMembershipOverrides,
   getMembershipsForAllocation,
+  getMembershipsForUser,
   getUserById,
   getUserIdentities,
 } from "./api";
@@ -16,6 +17,7 @@ import type {
 export const memberKeys = {
   all: ["members"] as const,
   forAllocation: (allocId: string) => [...memberKeys.all, "allocation", allocId] as const,
+  forUser: (userId: string) => [...memberKeys.all, "for-user", userId] as const,
   overrides: (membershipId: string) =>
     [...memberKeys.all, "membership", membershipId, "overrides"] as const,
   user: (userId: string) => [...memberKeys.all, "user", userId] as const,
@@ -27,6 +29,14 @@ export function useMembershipsForAllocation(allocId: string | undefined) {
     queryKey: allocId ? memberKeys.forAllocation(allocId) : ["members", "allocation", "none"],
     queryFn: () => getMembershipsForAllocation(allocId as string),
     enabled: Boolean(allocId),
+  });
+}
+
+export function useMembershipsForUser(userId: string | undefined) {
+  return useQuery({
+    queryKey: userId ? memberKeys.forUser(userId) : ["members", "for-user", "none"],
+    queryFn: () => getMembershipsForUser(userId as string),
+    enabled: Boolean(userId),
   });
 }
 

@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { buildAuditTimeline } from "../api";
+import { buildAuditTimeline } from "@shared/api/audit-orchestrator";
 import type {
   ComputeAllocationChangeRequest,
   ComputeAllocationChangeRequestEvent,
   ComputeAllocationDiff,
-} from "../schemas";
+} from "@shared/api/domain";
 
 const diff: ComputeAllocationDiff = {
   id: "diff-1",
@@ -52,7 +52,11 @@ describe("buildAuditTimeline", () => {
   });
 
   it("keeps events stably ordered by timestamp descending", () => {
-    const olderDiff: ComputeAllocationDiff = { ...diff, id: "diff-2", timestamp: "2026-01-01T00:00:00Z" };
+    const olderDiff: ComputeAllocationDiff = {
+      ...diff,
+      id: "diff-2",
+      timestamp: "2026-01-01T00:00:00Z",
+    };
     const timeline = buildAuditTimeline([diff, olderDiff], []);
     expect(timeline[0]?.timestamp).toBe(diff.timestamp);
     expect(timeline[1]?.timestamp).toBe(olderDiff.timestamp);

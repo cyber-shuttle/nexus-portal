@@ -1,8 +1,9 @@
 export type {
-  ChangeRequestStatus,
   ComputeAllocationDiff,
-  ComputeAllocationChangeRequest,
-  ComputeAllocationChangeRequestEvent,
+} from "./schemas";
+
+export type {
   AuditEvent,
   AuditEventKind,
-} from "./schemas";
+  RequestWithEvents,
+} from "@shared/api/audit-orchestrator";

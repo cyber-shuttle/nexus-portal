@@ -7,8 +7,7 @@ import {
   TriangleAlertIcon,
   UsersIcon,
 } from "lucide-react";
-import { useAllocationAudit } from "../queries";
-import type { AuditEvent } from "../schemas";
+import type { AuditEvent } from "@shared/api/audit-orchestrator";
 import { CenteredSpinner } from "@/shared/ui/Loading";
 import { ErrorState } from "@/shared/ui/ErrorState";
 import { EmptyState } from "@/shared/ui/EmptyState";
@@ -68,9 +67,14 @@ function eventIcon(event: AuditEvent) {
   return <UsersIcon className={cn(className, "text-[color:var(--nexus-gray-600)]")} aria-hidden />;
 }
 
-export function AuditTab({ allocationId }: { allocationId: string }) {
-  const { data, isLoading, error, refetch } = useAllocationAudit(allocationId);
+export type AuditTabProps = {
+  events: AuditEvent[];
+  isLoading?: boolean;
+  error?: Error | null;
+  onRetry?: () => void;
+};
 
+export function AuditTab({ events, isLoading, error, onRetry }: AuditTabProps) {
   const [types, setTypes] = React.useState<FilterTypes>({
     diff: true,
     change_request: true,
@@ -79,7 +83,7 @@ export function AuditTab({ allocationId }: { allocationId: string }) {
   const [actor, setActor] = React.useState("");
   const [range, setRange] = React.useState<RangeOption>("all");
 
-  const filtered = (data ?? []).filter((event) => {
+  const filtered = events.filter((event) => {
     if (!types[event.kind]) return false;
     if (actor) {
       const summary = `${eventActor(event) ?? ""} ${JSON.stringify(event.data)}`.toLowerCase();
@@ -94,7 +98,7 @@ export function AuditTab({ allocationId }: { allocationId: string }) {
   });
 
   if (isLoading) return <CenteredSpinner label="Loading audit log" />;
-  if (error) return <ErrorState message={(error as Error).message} onRetry={() => refetch()} />;
+  if (error) return <ErrorState message={error.message} onRetry={onRetry} />;
 
   return (
     <div className="space-y-6">
