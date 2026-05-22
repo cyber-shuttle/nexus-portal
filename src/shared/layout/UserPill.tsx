@@ -40,7 +40,7 @@ export function UserPill() {
           )}
         />
         <DropdownMenuContent align="end" className="w-40">
-          <DropdownMenuItem onSelect={() => void signOut({ callbackUrl: "/sign-in" })}>
+          <DropdownMenuItem onClick={() => void signOut({ callbackUrl: "/sign-in" })}>
             <LogOut className="mr-2 h-4 w-4" />
             Sign out
           </DropdownMenuItem>

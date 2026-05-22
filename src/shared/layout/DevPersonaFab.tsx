@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
 import { UserCog } from "lucide-react";
-import { signIn, signOut, useSession } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 
 const personas = [
   { id: "researcher", email: "researcher@nexus.local", label: "Researcher" },
@@ -25,8 +25,12 @@ export function DevPersonaFab() {
   const authMode = process.env.NEXT_PUBLIC_PORTAL_AUTH_MODE ?? "dev";
   if (authMode !== "dev") return null;
 
+  // Re-sign-in on the same credentials provider replaces the session; the
+  // previous signOut→signIn sequence raced the redirect and left the second
+  // call dangling. Drive the redirect through NextAuth's own callback URL —
+  // this issues the credentials POST then hard-navigates the browser, which
+  // forces SessionProvider + CASL to re-derive from the fresh cookie.
   const switchTo = async (email: string) => {
-    await signOut({ redirect: false });
     await signIn("credentials", { email, password: "dev", callbackUrl: "/home" });
   };
 
@@ -52,7 +56,7 @@ export function DevPersonaFab() {
             {personas.map((p) => (
               <DropdownMenuItem
                 key={p.id}
-                onSelect={() => void switchTo(p.email)}
+                onClick={() => void switchTo(p.email)}
                 disabled={session?.user?.email === p.email}
               >
                 <div className="flex flex-col">
