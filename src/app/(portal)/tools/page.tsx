@@ -11,7 +11,7 @@ export default function ToolsPage() {
     <div className="space-y-6">
       <Breadcrumbs items={[{ label: "Tools" }]} />
       <header>
-        <h1 className="font-heading text-2xl font-semibold">Tools</h1>
+        <h1 className="font-display text-[28px] font-bold leading-tight">Tools</h1>
         <p className="text-sm text-muted-foreground">
           Operate your allocations: move credits, watch jobs, audit usage.
         </p>

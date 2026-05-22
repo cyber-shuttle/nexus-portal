@@ -118,7 +118,7 @@ export function ClientList({
     <section className="space-y-4" aria-label="Clients list">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="font-heading text-2xl font-semibold">Clients</h1>
+          <h1 className="font-display text-[28px] font-bold leading-tight">Clients</h1>
           <p className="text-sm text-muted-foreground">
             Workload identities (CI pipelines, agents, automation) that authenticate against
             allocations. Rotate or deactivate secrets when a key is suspected to have leaked.
@@ -127,7 +127,7 @@ export function ClientList({
         {canCreate ? <Button onClick={onCreate}>New client</Button> : null}
       </header>
 
-      <div className="grid gap-3 rounded-md border bg-card p-4 md:grid-cols-4">
+      <div className="grid gap-3 rounded-lg border border-border bg-card p-4 md:grid-cols-4">
         <div className="space-y-1.5">
           <Label htmlFor="client-status">Status</Label>
           <select

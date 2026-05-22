@@ -7,7 +7,7 @@ export default function AmieReconcilePage() {
     <AmiePermissionGate>
       <div className="space-y-4">
         <header className="space-y-1">
-          <h1 className="font-heading text-2xl font-semibold">Reconciliation queue</h1>
+          <h1 className="font-display text-[28px] font-bold leading-tight">Reconciliation queue</h1>
           <p className="text-sm text-muted-foreground">
             Decoded packets that couldn't be mapped to a domain entity. Link to an existing project
             / account / person, or skip with a reason.

@@ -11,7 +11,7 @@ export default function CreditTransferPage() {
     <div className="space-y-6">
       <Breadcrumbs items={[{ label: "Tools", href: "/tools" }, { label: "Credit transfer" }]} />
       <header>
-        <h1 className="font-heading text-2xl font-semibold">Credit transfer</h1>
+        <h1 className="font-display text-[28px] font-bold leading-tight">Credit transfer</h1>
         <p className="text-sm text-muted-foreground">
           Atomically move SUs between two of your ACTIVE allocations. Both sides reflect the change
           in the audit log.

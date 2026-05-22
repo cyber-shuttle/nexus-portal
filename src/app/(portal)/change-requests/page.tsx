@@ -11,7 +11,7 @@ export default function ChangeRequestsPage() {
     <div className="space-y-6">
       <Breadcrumbs items={[{ label: "Change requests" }]} />
       <header>
-        <h1 className="font-heading text-2xl font-semibold">Change requests</h1>
+        <h1 className="font-display text-[28px] font-bold leading-tight">Change requests</h1>
         <p className="text-sm text-muted-foreground">
           Review, approve, or deny credit-extension and status-change requests.
         </p>

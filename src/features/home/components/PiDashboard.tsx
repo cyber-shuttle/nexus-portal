@@ -33,7 +33,7 @@ export function PiDashboard({ firstName, summary, isLoading, error }: PiDashboar
   return (
     <div className="space-y-8" data-testid="pi-dashboard">
       <section className="flex flex-wrap items-center gap-3">
-        <h1 className="font-heading text-3xl font-semibold text-foreground">
+        <h1 className="font-display text-[28px] font-bold leading-tight text-foreground">
           Welcome, {firstName}
         </h1>
         <PersonaPill label="PI" tone="pi" />

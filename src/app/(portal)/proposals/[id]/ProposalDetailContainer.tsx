@@ -104,7 +104,7 @@ export function ProposalDetailContainer({ proposalId }: { proposalId: string }) 
     <div className="space-y-6">
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="font-heading text-2xl font-semibold">{proposal.title}</h1>
+          <h1 className="font-display text-[28px] font-bold leading-tight">{proposal.title}</h1>
           <p className="text-sm text-muted-foreground">
             {proposal.project_title} · submitted {new Date(proposal.created_at).toLocaleString()} by{" "}
             {proposal.requester_id}

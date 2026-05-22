@@ -31,7 +31,7 @@ export function AdjustmentsContainer() {
   return (
     <div className="space-y-6">
       <header className="space-y-1">
-        <h1 className="font-display text-2xl font-bold tracking-tight">Adjustments</h1>
+        <h1 className="font-display text-[28px] font-bold leading-tight">Adjustments</h1>
         <p className="text-sm text-muted-foreground">
           Manual SU credits, debits, and expirations against allocations. All entries are
           irreversible — record a reason for the audit trail.

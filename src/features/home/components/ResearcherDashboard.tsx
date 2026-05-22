@@ -55,7 +55,7 @@ export function ResearcherDashboard({
         <section className="rounded-2xl border bg-card p-8 lg:p-10">
           <div className="flex flex-col gap-3">
             <PersonaPill label="Researcher" />
-            <h1 className="font-heading text-3xl font-semibold text-foreground">
+            <h1 className="font-display text-[28px] font-bold leading-tight text-foreground">
               Nexus — Getting Started
             </h1>
             <p className="max-w-2xl text-base text-muted-foreground">
@@ -95,7 +95,7 @@ export function ResearcherDashboard({
   return (
     <div className="space-y-8" data-testid="researcher-dashboard-active">
       <section className="flex flex-wrap items-center gap-3">
-        <h1 className="font-heading text-3xl font-semibold text-foreground">
+        <h1 className="font-display text-[28px] font-bold leading-tight text-foreground">
           Welcome, {firstName}
         </h1>
         <PersonaPill label="Researcher" />

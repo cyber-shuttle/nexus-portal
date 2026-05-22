@@ -64,7 +64,7 @@ export function SettingsPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-8 py-2">
       <header className="space-y-1">
-        <h1 className="font-display text-2xl font-bold tracking-tight">Settings</h1>
+        <h1 className="font-display text-[28px] font-bold leading-tight">Settings</h1>
         <p className="text-sm text-muted-foreground">
           Manage your profile, connected identities, theme, and notification preferences.
         </p>

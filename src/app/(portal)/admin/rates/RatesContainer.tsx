@@ -41,7 +41,7 @@ export function RatesContainer() {
   return (
     <div className="space-y-6">
       <header className="space-y-1">
-        <h1 className="font-display text-2xl font-bold tracking-tight">Resource rates</h1>
+        <h1 className="font-display text-[28px] font-bold leading-tight">Resource rates</h1>
         <p className="text-sm text-muted-foreground">
           Versioned SU/unit rates per resource. New rates supersede the active one; deactivating
           ends the validity window at <em>now</em>.

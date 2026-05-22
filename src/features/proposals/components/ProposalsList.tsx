@@ -116,7 +116,7 @@ export function ProposalsList({ rows, isLoading, error, canCreate, onRetry }: Pr
   return (
     <section className="space-y-4" aria-label="Proposals list">
       <header className="flex flex-wrap items-end justify-between gap-3">
-        <h1 className="font-heading text-2xl font-semibold">Proposals</h1>
+        <h1 className="font-display text-[28px] font-bold leading-tight">Proposals</h1>
         {canCreate ? (
           <Link href="/proposals/new" className={buttonVariants()}>
             New proposal
@@ -124,7 +124,7 @@ export function ProposalsList({ rows, isLoading, error, canCreate, onRetry }: Pr
         ) : null}
       </header>
 
-      <div className="grid gap-3 rounded-md border bg-card p-4 md:grid-cols-4">
+      <div className="grid gap-3 rounded-lg border border-border bg-card p-4 md:grid-cols-4">
         <div className="space-y-1.5">
           <Label htmlFor="prop-status">Status</Label>
           <select

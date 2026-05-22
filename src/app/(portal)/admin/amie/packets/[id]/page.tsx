@@ -12,7 +12,7 @@ export default async function AmiePacketDetailPage({
     <AmiePermissionGate>
       <div className="space-y-4">
         <header className="space-y-1">
-          <h1 className="font-heading text-2xl font-semibold">AMIE packet inbox</h1>
+          <h1 className="font-display text-[28px] font-bold leading-tight">AMIE packet inbox</h1>
           <p className="text-sm text-muted-foreground">
             Deep link to packet <span className="font-mono">{id}</span>.
           </p>

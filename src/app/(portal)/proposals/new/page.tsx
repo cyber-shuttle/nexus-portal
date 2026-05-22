@@ -11,7 +11,7 @@ export default function NewProposalPage() {
     <div className="space-y-6">
       <Breadcrumbs items={[{ label: "Proposals", href: "/proposals" }, { label: "New" }]} />
       <header>
-        <h1 className="font-heading text-2xl font-semibold">New proposal</h1>
+        <h1 className="font-display text-[28px] font-bold leading-tight">New proposal</h1>
         <p className="text-sm text-muted-foreground">
           Step through the wizard to submit an allocation proposal.
         </p>

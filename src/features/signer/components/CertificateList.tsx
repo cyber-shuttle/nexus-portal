@@ -140,14 +140,14 @@ export function CertificateList({
   return (
     <section className="space-y-4" aria-label="Certificate list">
       <header className="space-y-2">
-        <h1 className="font-heading text-2xl font-semibold">SSH Certificates</h1>
+        <h1 className="font-display text-[28px] font-bold leading-tight">SSH Certificates</h1>
         <p className="max-w-3xl text-sm text-muted-foreground">
           Track every short-lived SSH certificate the signer has issued. Filter by status,
           allocation, or username; open a row for details or to revoke.
         </p>
       </header>
 
-      <div className="grid gap-3 rounded-md border bg-card p-4 md:grid-cols-5">
+      <div className="grid gap-3 rounded-lg border border-border bg-card p-4 md:grid-cols-5">
         <div className="space-y-1.5">
           <Label htmlFor="cert-status">Status</Label>
           <select

@@ -33,7 +33,7 @@ export function UnmappedJobsContainer() {
   return (
     <div className="space-y-6">
       <header className="space-y-1">
-        <h1 className="font-display text-2xl font-bold tracking-tight">Unmapped jobs</h1>
+        <h1 className="font-display text-[28px] font-bold leading-tight">Unmapped jobs</h1>
         <p className="text-sm text-muted-foreground">
           SLURM accounting records that couldn't be matched to a known allocation. Link to the
           right allocation or discard with a reason.
