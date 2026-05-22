@@ -25,7 +25,7 @@ test.describe("allocations", () => {
     await expect(page.getByRole("tab", { name: /Audit log/i })).toBeVisible();
 
     await page.getByRole("tab", { name: /Users & Roles/i }).click();
-    await expect(page.getByRole("button", { name: /Manage members/i })).toBeVisible();
+    await expect(page.getByText(/Roles: PI, Co-PI/i)).toBeVisible();
 
     await page.getByRole("tab", { name: /Audit log/i }).click();
     await expect(page.getByRole("combobox", { name: /date range/i })).toBeVisible();

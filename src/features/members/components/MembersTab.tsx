@@ -163,70 +163,78 @@ export function MembersTab({
       header: "",
       align: "right",
       cell: (row) => {
-        if (!canManage || row.membership.user_id === piUserId) return null;
         const label = fullName(row);
         const status = row.membership.membership_status;
+        const isPi = row.membership.user_id === piUserId;
         return (
           <div className="flex justify-end gap-1.5">
             <Button
               variant="ghost"
               size="sm"
-              data-testid={`overrides-${row.membership.id}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                setOverridesFor(row);
+              onClick={() => {
+                setActiveMember(row);
+                setDrawerOpen(true);
               }}
             >
-              Overrides
+              Details
             </Button>
-            {status === "ACTIVE" ? (
-              <Button
-                variant="outline"
-                size="sm"
-                data-testid={`deactivate-${row.membership.id}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setConfirm({
-                    kind: "deactivate",
-                    membershipId: row.membership.id,
-                    userLabel: label,
-                  });
-                }}
-              >
-                Deactivate
-              </Button>
-            ) : (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setConfirm({
-                    kind: "activate",
-                    membershipId: row.membership.id,
-                    userLabel: label,
-                  });
-                }}
-              >
-                Activate
-              </Button>
-            )}
-            <Button
-              variant="ghost"
-              size="sm"
-              data-testid={`remove-${row.membership.id}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                setConfirm({
-                  kind: "remove",
-                  membershipId: row.membership.id,
-                  userId: row.membership.user_id,
-                  userLabel: label,
-                });
-              }}
-            >
-              Remove
-            </Button>
+            {canManage && !isPi ? (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  data-testid={`overrides-${row.membership.id}`}
+                  onClick={() => setOverridesFor(row)}
+                >
+                  Overrides
+                </Button>
+                {status === "ACTIVE" ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    data-testid={`deactivate-${row.membership.id}`}
+                    onClick={() =>
+                      setConfirm({
+                        kind: "deactivate",
+                        membershipId: row.membership.id,
+                        userLabel: label,
+                      })
+                    }
+                  >
+                    Deactivate
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setConfirm({
+                        kind: "activate",
+                        membershipId: row.membership.id,
+                        userLabel: label,
+                      })
+                    }
+                  >
+                    Activate
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  data-testid={`remove-${row.membership.id}`}
+                  onClick={() =>
+                    setConfirm({
+                      kind: "remove",
+                      membershipId: row.membership.id,
+                      userId: row.membership.user_id,
+                      userLabel: label,
+                    })
+                  }
+                >
+                  Remove
+                </Button>
+              </>
+            ) : null}
           </div>
         );
       },
@@ -272,10 +280,6 @@ export function MembersTab({
           columns={columns}
           rows={rows}
           rowKey={(row) => row.membership.id}
-          onRowClick={(row) => {
-            setActiveMember(row);
-            setDrawerOpen(true);
-          }}
         />
       )}
       <MemberDetailDrawer open={drawerOpen} onOpenChange={setDrawerOpen} member={activeMember} />

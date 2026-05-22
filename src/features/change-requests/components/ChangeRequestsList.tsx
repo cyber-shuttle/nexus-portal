@@ -252,7 +252,7 @@ export function ChangeRequestsList({
                 onChange={(e) =>
                   setFilters((prev) => ({
                     ...prev,
-                    status: { ...prev.status, [s]: e.currentTarget.checked },
+                    status: { ...prev.status, [s]: e.target.checked },
                   }))
                 }
               />
@@ -272,7 +272,7 @@ export function ChangeRequestsList({
                 onChange={(e) =>
                   setFilters((prev) => ({
                     ...prev,
-                    changeType: { ...prev.changeType, [t]: e.currentTarget.checked },
+                    changeType: { ...prev.changeType, [t]: e.target.checked },
                   }))
                 }
               />
@@ -286,14 +286,14 @@ export function ChangeRequestsList({
             id="cr-from"
             type="date"
             value={filters.from}
-            onChange={(e) => setFilters((prev) => ({ ...prev, from: e.currentTarget.value }))}
+            onChange={(e) => setFilters((prev) => ({ ...prev, from: e.target.value }))}
           />
           <Label htmlFor="cr-to">To</Label>
           <Input
             id="cr-to"
             type="date"
             value={filters.to}
-            onChange={(e) => setFilters((prev) => ({ ...prev, to: e.currentTarget.value }))}
+            onChange={(e) => setFilters((prev) => ({ ...prev, to: e.target.value }))}
           />
         </div>
         <div className="space-y-1">
@@ -304,16 +304,15 @@ export function ChangeRequestsList({
             placeholder="Search…"
             value={filters.search}
             onChange={(e) =>
-              setFilters((prev) => ({ ...prev, search: e.currentTarget.value }))
+              setFilters((prev) => ({ ...prev, search: e.target.value }))
             }
           />
         </div>
       </section>
 
       {bulkActionsEnabled && selected.size > 0 ? (
-        <div
+        <section
           className="flex items-center justify-between rounded-md border bg-muted/30 px-3 py-2"
-          role="region"
           aria-label="Bulk actions"
         >
           <span className="text-sm">{selected.size} selected</span>
@@ -329,7 +328,7 @@ export function ChangeRequestsList({
               Bulk approve
             </Button>
           </div>
-        </div>
+        </section>
       ) : null}
 
       {isLoading ? (

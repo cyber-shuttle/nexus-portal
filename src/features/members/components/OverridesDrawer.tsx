@@ -138,26 +138,32 @@ export function OverridesDrawer({
                     </Button>
                   </div>
                   <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
-                    <label className="space-y-1">
-                      <span className="text-xs text-muted-foreground">Amount</span>
+                    <div className="space-y-1">
+                      <Label htmlFor={`amount-${o.id}`} className="text-xs text-muted-foreground">
+                        Amount
+                      </Label>
                       <Input
+                        id={`amount-${o.id}`}
                         type="number"
                         defaultValue={o.override_resource_amount}
                         onBlur={(e) =>
                           onUpdate(o.id, { amount: Number(e.currentTarget.value) })
                         }
                       />
-                    </label>
-                    <label className="space-y-1">
-                      <span className="text-xs text-muted-foreground">Time (min)</span>
+                    </div>
+                    <div className="space-y-1">
+                      <Label htmlFor={`time-${o.id}`} className="text-xs text-muted-foreground">
+                        Time (min)
+                      </Label>
                       <Input
+                        id={`time-${o.id}`}
                         type="number"
                         defaultValue={o.override_resource_time}
                         onBlur={(e) =>
                           onUpdate(o.id, { time: Number(e.currentTarget.value) })
                         }
                       />
-                    </label>
+                    </div>
                   </div>
                 </li>
               ))}
@@ -168,9 +174,12 @@ export function OverridesDrawer({
         <section className="space-y-3 rounded-md border bg-muted/30 p-3">
           <h3 className="text-xs uppercase tracking-wide text-muted-foreground">Add override</h3>
           <div className="grid grid-cols-3 gap-2">
-            <label className="space-y-1">
-              <span className="text-xs text-muted-foreground">Resource</span>
+            <div className="space-y-1">
+              <Label htmlFor="override-resource" className="text-xs text-muted-foreground">
+                Resource
+              </Label>
               <select
+                id="override-resource"
                 className="h-8 w-full rounded-lg border border-input bg-transparent px-2 text-sm"
                 value={draft.resourceId}
                 onChange={(e) =>
@@ -183,25 +192,31 @@ export function OverridesDrawer({
                   </option>
                 ))}
               </select>
-            </label>
-            <label className="space-y-1">
-              <span className="text-xs text-muted-foreground">Amount</span>
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="override-amount" className="text-xs text-muted-foreground">
+                Amount
+              </Label>
               <Input
+                id="override-amount"
                 type="number"
                 min={0}
                 value={draft.amount}
                 onChange={(e) => setDraft((prev) => ({ ...prev, amount: e.currentTarget.value }))}
               />
-            </label>
-            <label className="space-y-1">
-              <span className="text-xs text-muted-foreground">Time (min)</span>
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="override-time" className="text-xs text-muted-foreground">
+                Time (min)
+              </Label>
               <Input
+                id="override-time"
                 type="number"
                 min={0}
                 value={draft.time}
                 onChange={(e) => setDraft((prev) => ({ ...prev, time: e.currentTarget.value }))}
               />
-            </label>
+            </div>
           </div>
           <div className="flex justify-end">
             <Button onClick={onCreate} disabled={createMutation.isPending}>

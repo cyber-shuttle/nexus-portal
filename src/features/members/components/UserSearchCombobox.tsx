@@ -75,7 +75,7 @@ export function UserSearchCombobox({
                   <button
                     key={u.id}
                     type="button"
-                    role="option"
+                    data-testid="user-option"
                     className="flex w-full flex-col items-start rounded px-2 py-1.5 text-left text-sm hover:bg-muted"
                     onMouseDown={(e) => {
                       e.preventDefault();
