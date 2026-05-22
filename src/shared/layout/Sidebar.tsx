@@ -54,7 +54,9 @@ export function Sidebar() {
         })}
       </nav>
 
-      <NeedHelpCard />
+      <div className="mt-auto">
+        <NeedHelpCard />
+      </div>
     </aside>
   );
 }

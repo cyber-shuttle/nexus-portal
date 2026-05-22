@@ -3,7 +3,7 @@ import { Headset } from "lucide-react";
 
 export function NeedHelpCard() {
   return (
-    <div className="mx-4 mb-4 mt-auto rounded-xl border border-border bg-muted/30 p-4">
+    <div className="mx-4 mb-4 rounded-xl border border-border bg-muted/30 p-4">
       <div className="flex h-8 w-8 items-center justify-center rounded-md bg-background">
         <Headset className="h-5 w-5 stroke-[1.75]" />
       </div>
