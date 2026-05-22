@@ -214,6 +214,9 @@ export function ChangeRequestsListContainer() {
     setConfirm({ kind: "deny", ids });
   }
 
+  // Subjectless `can` returns true if any conditional rule could match — it
+  // gates whether to render the bulk-action UI at all. Per-row authz is
+  // enforced by `canActOn` below before any mutation fires.
   const bulkActionsEnabled = ability.can("approve", "ChangeRequest");
 
   return (

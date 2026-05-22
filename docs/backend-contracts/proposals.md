@@ -107,3 +107,16 @@ When `cascade_to_sub_projects` is `true`, the backend should fan out child
 allocations on approval — one per `child_allocations` entry, with SU amounts
 sliced by `su_split_percent`. The portal validates the split sums to 100% in
 the wizard before submission.
+
+### Synthetic sub-projects (portal-only stop-gap)
+
+The current `Project` resource has no `parent_project_id` / `child_projects`
+relation, so the wizard cannot enumerate real sub-projects. As a stop-gap the
+portal generates two placeholder entries per parent — `${parent_id}-sub-a` and
+`${parent_id}-sub-b` — and surfaces them in the cascade step so the UX is
+exercised end-to-end. The backend must replace this with the real hierarchy
+once `parent_project_id` ships; the portal then drops the synthetic IDs and
+reads the child set from the project record itself. Until then, an approval
+with a synthetic `child_allocations` entry is **not** safe to fan out — the
+backend should reject `cascade_to_sub_projects=true` with `unknown_subproject`
+when a referenced child does not exist.

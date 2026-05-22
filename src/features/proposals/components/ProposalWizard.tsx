@@ -12,30 +12,17 @@ import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { Card } from "@/shared/ui/card";
 import { useCreateProposal } from "../queries";
-import {
-  proposalChildAllocationRequestSchema,
-  proposalResourceRequestSchema,
-} from "../schemas";
+import { createProposalPayloadSchema } from "../schemas";
 import type { CreateProposalPayload } from "../schemas";
 import { ProposalWizardStepper } from "./ProposalWizardStepper";
 
-const wizardSchema = z.object({
-  project_id: z.string().min(1, "Pick a project"),
-  project_title: z.string().min(1),
-  title: z.string().min(3, "Title must be at least 3 characters").max(160),
-  abstract: z.string().min(40, "Abstract must be at least 40 characters").max(1200),
-  resources: z
-    .array(proposalResourceRequestSchema)
-    .min(1, "Add at least one resource request"),
-  start_date: z.string().min(1, "Pick a start date"),
-  end_date: z.string().min(1, "Pick an end date"),
-  justification: z
-    .string()
-    .min(500, "Justification must be at least 500 characters")
-    .max(2000),
-  cascade_to_sub_projects: z.boolean(),
-  child_allocations: z.array(proposalChildAllocationRequestSchema),
-});
+// Derive from the wire schema so wizard validation never drifts from what the
+// API ultimately re-validates. `requester_id` is injected by the container and
+// `status` is stamped on submit, so the wizard form itself only handles the
+// remaining authored fields.
+const wizardSchema = createProposalPayloadSchema
+  .omit({ requester_id: true, status: true })
+  .required({ cascade_to_sub_projects: true, child_allocations: true });
 
 export type ProposalWizardValues = z.infer<typeof wizardSchema>;
 
