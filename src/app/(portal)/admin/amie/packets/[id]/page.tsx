@@ -1,0 +1,25 @@
+import { AmieNav } from "../../AmieNav";
+import { AmiePermissionGate } from "../../PermissionGate";
+import { PacketInboxContainer } from "../PacketInboxContainer";
+
+export default async function AmiePacketDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  return (
+    <AmiePermissionGate>
+      <div className="space-y-4">
+        <header className="space-y-1">
+          <h1 className="font-heading text-2xl font-semibold">AMIE packet inbox</h1>
+          <p className="text-sm text-muted-foreground">
+            Deep link to packet <span className="font-mono">{id}</span>.
+          </p>
+        </header>
+        <AmieNav />
+        <PacketInboxContainer initialPacketId={id} />
+      </div>
+    </AmiePermissionGate>
+  );
+}

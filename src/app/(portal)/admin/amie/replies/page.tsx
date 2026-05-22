@@ -1,20 +1,20 @@
 import { AmieNav } from "../AmieNav";
 import { AmiePermissionGate } from "../PermissionGate";
-import { PacketInboxContainer } from "./PacketInboxContainer";
+import { ReplyTrackerContainer } from "./ReplyTrackerContainer";
 
-export default function AmiePacketsPage() {
+export default function AmieRepliesPage() {
   return (
     <AmiePermissionGate>
       <div className="space-y-4">
         <header className="space-y-1">
-          <h1 className="font-heading text-2xl font-semibold">AMIE packet inbox</h1>
+          <h1 className="font-heading text-2xl font-semibold">Reply tracker</h1>
           <p className="text-sm text-muted-foreground">
-            All packets flowing through the AMIE connector. Filter, drill into a packet, retry, or
-            mark as processed.
+            Outgoing inform_* packets we send back to ACCESS. Retry any that failed or are stuck
+            PENDING.
           </p>
         </header>
         <AmieNav />
-        <PacketInboxContainer />
+        <ReplyTrackerContainer />
       </div>
     </AmiePermissionGate>
   );
