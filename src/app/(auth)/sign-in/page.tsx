@@ -1,0 +1,27 @@
+import { Suspense } from "react";
+import { SignInForm } from "./SignInForm";
+
+export const metadata = {
+  title: "Sign in · Nexus Portal",
+};
+
+export default function SignInPage() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-nexus-gray-50 px-6 py-12">
+      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-sm">
+        <div className="mb-6 flex flex-col items-start gap-1">
+          <span className="font-display text-2xl font-extrabold uppercase tracking-tight text-nexus-blue-700">
+            Nexus
+          </span>
+          <h1 className="text-xl font-semibold tracking-tight">Sign in</h1>
+          <p className="text-sm text-muted-foreground">
+            Pick a dev persona or enter any cluster email to continue.
+          </p>
+        </div>
+        <Suspense fallback={null}>
+          <SignInForm />
+        </Suspense>
+      </div>
+    </div>
+  );
+}
