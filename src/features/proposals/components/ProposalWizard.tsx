@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useForm, useFieldArray, type UseFormReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import type { z } from "zod";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { ApiError } from "@shared/api/client";

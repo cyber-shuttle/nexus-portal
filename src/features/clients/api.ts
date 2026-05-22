@@ -36,7 +36,7 @@ export async function getClient(id: string): Promise<Client> {
 
 export async function createClient(payload: CreateClientPayload): Promise<Client> {
   const parsed = createClientPayloadSchema.parse(payload);
-  const raw = await apiFetch(`/clients`, { method: "POST", body: parsed });
+  const raw = await apiFetch("/clients", { method: "POST", body: parsed });
   return clientSchema.parse(raw);
 }
 

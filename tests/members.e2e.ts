@@ -4,7 +4,9 @@ import { loginAs } from "./fixtures/personas";
 test.describe("members", () => {
   test("pi adds a member, deactivates them, and removes them", async ({ page }) => {
     await loginAs(page, "pi");
-    await page.goto("/allocations/alloc-001");
+    // alloc-024 is one of Pat PI's seeded allocations after persona scopes
+    // moved from a hardcoded ["alloc-001"] to seed-derived in Phase 5.
+    await page.goto("/allocations/alloc-024");
     await page.getByRole("tab", { name: /Users & Roles/i }).click();
     await expect(page.getByTestId("add-member")).toBeVisible({ timeout: 20_000 });
     await expect(page.locator("tbody tr").first()).toBeVisible({ timeout: 20_000 });

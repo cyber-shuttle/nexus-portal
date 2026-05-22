@@ -24,7 +24,7 @@ export function ClientsContainer() {
   const [allocationFilter, setAllocationFilter] = React.useState("");
   const [ownerFilter, setOwnerFilter] = React.useState(isAdmin ? "" : userId);
   const [selectedId, setSelectedId] = React.useState<string | undefined>();
-  const [createOpenKey, setCreateOpenKey] = React.useState(0);
+  const [createOpenKey, setCreateOpenKey] = React.useState<number | null>(null);
 
   React.useEffect(() => {
     if (!isAdmin && userId) setOwnerFilter(userId);
@@ -87,12 +87,12 @@ export function ClientsContainer() {
           setOwnerFilter(o);
           setPage(1);
         }}
-        onCreate={() => setCreateOpenKey((k) => k + 1)}
+        onCreate={() => setCreateOpenKey((k) => (k ?? 0) + 1)}
         onRowClick={(c) => setSelectedId(c.id)}
         onRetry={() => clientsQuery.refetch()}
       />
 
-      {canCreate && (
+      {canCreate && createOpenKey != null && (
         <CreateClientDialogPortal
           key={createOpenKey}
           allocationOptions={allocationOptions}
@@ -132,7 +132,7 @@ function CreateClientDialogPortal({
   }, []);
   return (
     <CreateClientDialog
-      trigger={<button ref={triggerRef} type="button" className="hidden" aria-hidden="true" />}
+      trigger={<button ref={triggerRef} type="button" className="sr-only" tabIndex={-1} />}
       allocationOptions={allocationOptions}
       defaultOwnerUserId={defaultOwnerUserId}
     />

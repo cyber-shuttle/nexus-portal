@@ -20,7 +20,8 @@ test.describe("phase 3 — axe sweep", () => {
 
   test("allocation users tab has no serious or critical violations", async ({ page }) => {
     await loginAs(page, "pi");
-    await page.goto("/allocations/alloc-001");
+    // Use a real PI allocation (see members.e2e for the same Phase 5 carry-over).
+    await page.goto("/allocations/alloc-024");
     await page.getByRole("tab", { name: /Users & Roles/i }).click();
     await expect(page.getByTestId("add-member")).toBeVisible({ timeout: 20_000 });
     await page.waitForLoadState("networkidle");

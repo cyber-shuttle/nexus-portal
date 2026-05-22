@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import type * as React from "react";
 import { SideDrawer } from "@/shared/ui/SideDrawer";
 import { Button } from "@/shared/ui/button";
 import { StatusBadge, type StatusBadgeVariant } from "@/shared/ui/StatusBadge";
@@ -109,13 +109,16 @@ function CertificateDetailBody({ cert, canRevoke }: { cert: Certificate; canRevo
       </Section>
 
       {cert.granted_extensions.length > 0 && (
-        <Section title="Granted extensions">
+        <section className="space-y-2">
+          <h2 className="font-heading text-base font-semibold text-foreground">
+            Granted extensions
+          </h2>
           <ul className="list-disc space-y-1 pl-5 text-sm text-foreground">
             {cert.granted_extensions.map((ext) => (
               <li key={ext}>{ext}</li>
             ))}
           </ul>
-        </Section>
+        </section>
       )}
 
       {status === "revoked" && (
