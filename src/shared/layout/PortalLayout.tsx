@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { DevPersonaFab } from "./DevPersonaFab";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 
@@ -18,6 +19,7 @@ export function PortalLayout({ children }: { children: ReactNode }) {
           {children}
         </main>
       </div>
+      <DevPersonaFab />
     </div>
   );
 }
