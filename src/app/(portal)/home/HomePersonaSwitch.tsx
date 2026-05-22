@@ -1,11 +1,19 @@
 "use client";
 
-import { AdminDashboard } from "@features/home/components/AdminDashboard";
 import { PiDashboard } from "@features/home/components/PiDashboard";
 import { ResearcherDashboard } from "@features/home/components/ResearcherDashboard";
+import { CenteredSpinner } from "@/shared/ui/Loading";
+import dynamic from "next/dynamic";
 import { useAdminHomeSummary } from "./useAdminHomeSummary";
 import { useHomeSummary } from "./useHomeSummary";
 import { usePiHomeSummary } from "./usePiHomeSummary";
+
+// AdminDashboard pulls Recharts; researchers and PIs never hit it. Lazy so the
+// non-admin first paint isn't penalized for code only admins render.
+const AdminDashboard = dynamic(
+  () => import("@features/home/components/AdminDashboard").then((m) => m.AdminDashboard),
+  { ssr: false, loading: () => <CenteredSpinner label="Loading admin dashboard" /> },
+);
 
 export type HomePersona = "researcher" | "pi" | "admin";
 
