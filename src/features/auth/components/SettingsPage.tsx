@@ -6,7 +6,6 @@ import { Button } from "@/shared/ui/button";
 import { Card } from "@/shared/ui/card";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
-import { Separator } from "@/shared/ui/separator";
 import { useTheme } from "next-themes";
 import { useSession } from "next-auth/react";
 import * as React from "react";
@@ -74,8 +73,9 @@ export function SettingsPage() {
         <h2 id="profile-heading" className="font-heading text-lg font-semibold">
           Profile
         </h2>
-        <Card className="space-y-4 p-5">
-          <div className="grid gap-3 md:grid-cols-2">
+        {/* Card sections separated by border-b dividers per spec §9.2. */}
+        <Card className="gap-0 divide-y divide-border py-0">
+          <div className="grid gap-3 p-5 md:grid-cols-2">
             <div className="space-y-1">
               <Label htmlFor="profile-name">Name</Label>
               <Input id="profile-name" readOnly value={session?.user?.name ?? ""} />
@@ -85,18 +85,14 @@ export function SettingsPage() {
               <Input id="profile-email" readOnly value={session?.user?.email ?? ""} />
             </div>
           </div>
-          <Separator />
-          <div>
+          <div className="p-5">
             <p className="mb-2 text-sm font-medium">Connected identities</p>
             {identitiesQuery.isLoading ? (
               <p className="text-xs text-muted-foreground">Loading…</p>
             ) : identitiesQuery.data && identitiesQuery.data.length > 0 ? (
-              <ul className="space-y-2 text-sm">
+              <ul className="divide-y divide-border rounded-md border bg-muted/20 text-sm">
                 {identitiesQuery.data.map((id) => (
-                  <li
-                    key={id.id}
-                    className="flex items-center justify-between rounded-md border bg-muted/20 px-3 py-2"
-                  >
+                  <li key={id.id} className="flex items-center justify-between px-3 py-2">
                     <span>
                       <span className="font-medium">{id.source}</span> ·{" "}
                       <span className="font-mono text-xs">{id.external_id}</span>
@@ -118,8 +114,8 @@ export function SettingsPage() {
         <h2 id="prefs-heading" className="font-heading text-lg font-semibold">
           Preferences
         </h2>
-        <Card className="space-y-5 p-5">
-          <fieldset className="space-y-2">
+        <Card className="gap-0 divide-y divide-border py-0">
+          <fieldset className="space-y-2 p-5">
             <legend className="text-sm font-medium">Theme</legend>
             <div role="radiogroup" aria-label="Theme" className="flex flex-wrap gap-3">
               {(["light", "dark", "system"] as const).map((t) => (
@@ -143,7 +139,7 @@ export function SettingsPage() {
             </p>
           </fieldset>
 
-          <div className="space-y-1">
+          <div className="space-y-1 p-5">
             <Label htmlFor="prefs-tz">Timezone</Label>
             <select
               id="prefs-tz"
@@ -159,7 +155,7 @@ export function SettingsPage() {
             </select>
           </div>
 
-          <fieldset className="space-y-2">
+          <fieldset className="space-y-2 p-5">
             <legend className="text-sm font-medium">Email me when…</legend>
             <label className="flex items-center gap-2 text-sm">
               <input
@@ -179,7 +175,7 @@ export function SettingsPage() {
             </label>
           </fieldset>
 
-          <div className="flex justify-end pt-2">
+          <div className="flex justify-end p-5">
             <Button onClick={save} disabled={updatePrefs.isPending}>
               {updatePrefs.isPending ? "Saving…" : "Save settings"}
             </Button>
