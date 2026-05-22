@@ -1,10 +1,15 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  type CreateChangeRequestPayload,
+  type UpdateChangeRequestPayload,
+  createChangeRequest,
+  deleteChangeRequest,
   getChangeRequestEvents,
   getChangeRequestsForAllocation,
   getChangeRequestsForUser,
+  updateChangeRequest,
 } from "./api";
 
 export const changeRequestKeys = {
@@ -40,5 +45,57 @@ export function useChangeRequestEvents(reqId: string | undefined) {
     queryKey: reqId ? changeRequestKeys.events(reqId) : ["change-requests", "events", "none"],
     queryFn: () => getChangeRequestEvents(reqId as string),
     enabled: Boolean(reqId),
+  });
+}
+
+function invalidateChangeRequestRefs(
+  client: ReturnType<typeof useQueryClient>,
+  allocationId: string,
+) {
+  client.invalidateQueries({ queryKey: changeRequestKeys.all });
+  client.invalidateQueries({ queryKey: ["audit", "allocation", allocationId] });
+  client.invalidateQueries({ queryKey: ["admin", "change-requests"] });
+}
+
+export function useCreateChangeRequest() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: CreateChangeRequestPayload) => createChangeRequest(payload),
+    onSuccess: (created) => invalidateChangeRequestRefs(client, created.compute_allocation_id),
+  });
+}
+
+export function useApproveChangeRequest() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, approverId }: { id: string; approverId: string }) =>
+      updateChangeRequest(id, { change_status: "APPROVED", approver_id: approverId }),
+    onSuccess: (updated) => invalidateChangeRequestRefs(client, updated.compute_allocation_id),
+  });
+}
+
+export function useDenyChangeRequest() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, approverId }: { id: string; approverId: string }) =>
+      updateChangeRequest(id, { change_status: "REJECTED", approver_id: approverId }),
+    onSuccess: (updated) => invalidateChangeRequestRefs(client, updated.compute_allocation_id),
+  });
+}
+
+export function useUpdateChangeRequest() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, patch }: { id: string; patch: UpdateChangeRequestPayload }) =>
+      updateChangeRequest(id, patch),
+    onSuccess: (updated) => invalidateChangeRequestRefs(client, updated.compute_allocation_id),
+  });
+}
+
+export function useDeleteChangeRequest() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id }: { id: string; allocationId: string }) => deleteChangeRequest(id),
+    onSuccess: (_, vars) => invalidateChangeRequestRefs(client, vars.allocationId),
   });
 }

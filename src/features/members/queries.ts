@@ -1,12 +1,23 @@
 "use client";
 
-import { useQueries, useQuery } from "@tanstack/react-query";
+import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  type CreateMembershipPayload,
+  type OverridePayload,
+  type UpdateMembershipPayload,
+  createMembership,
+  createMembershipOverride,
+  deleteMembership,
+  deleteMembershipOverride,
   getMembershipOverrides,
   getMembershipsForAllocation,
   getMembershipsForUser,
   getUserById,
   getUserIdentities,
+  searchUsers,
+  setMembershipStatus,
+  updateMembership,
+  updateMembershipOverride,
 } from "./api";
 import type {
   ComputeAllocationMembership,
@@ -100,3 +111,89 @@ export function useAllocationMembers(allocId: string | undefined) {
 }
 
 export type MemberOverrideRow = ComputeAllocationMembershipResourceOverride;
+
+export function useSearchUsers(query: string, enabled = true) {
+  return useQuery({
+    queryKey: [...memberKeys.all, "search", query] as const,
+    queryFn: () => searchUsers(query),
+    enabled: enabled && query.trim().length >= 2,
+    staleTime: 30_000,
+  });
+}
+
+function invalidateMembership(
+  client: ReturnType<typeof useQueryClient>,
+  allocationId: string,
+  userId?: string,
+) {
+  client.invalidateQueries({ queryKey: memberKeys.forAllocation(allocationId) });
+  if (userId) client.invalidateQueries({ queryKey: memberKeys.forUser(userId) });
+}
+
+export function useCreateMembership() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: CreateMembershipPayload) => createMembership(payload),
+    onSuccess: (created) => invalidateMembership(client, created.compute_allocation_id, created.user_id),
+  });
+}
+
+export function useUpdateMembership() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, patch }: { id: string; patch: UpdateMembershipPayload }) =>
+      updateMembership(id, patch),
+    onSuccess: (updated) => invalidateMembership(client, updated.compute_allocation_id, updated.user_id),
+  });
+}
+
+export function useSetMembershipStatus() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, status }: { id: string; status: "ACTIVE" | "INACTIVE" | "DELETED" }) =>
+      setMembershipStatus(id, status),
+    onSuccess: (updated) => invalidateMembership(client, updated.compute_allocation_id, updated.user_id),
+  });
+}
+
+export function useDeleteMembership() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id }: { id: string; allocationId: string; userId?: string }) =>
+      deleteMembership(id),
+    onSuccess: (_, vars) => invalidateMembership(client, vars.allocationId, vars.userId),
+  });
+}
+
+function invalidateOverrides(
+  client: ReturnType<typeof useQueryClient>,
+  membershipId: string,
+) {
+  client.invalidateQueries({ queryKey: memberKeys.overrides(membershipId) });
+}
+
+export function useCreateMembershipOverride() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: OverridePayload) => createMembershipOverride(payload),
+    onSuccess: (created) => invalidateOverrides(client, created.compute_allocation_membership_id),
+  });
+}
+
+export function useUpdateMembershipOverride() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, patch }: { id: string; patch: Partial<OverridePayload> }) =>
+      updateMembershipOverride(id, patch),
+    onSuccess: (updated) => invalidateOverrides(client, updated.compute_allocation_membership_id),
+  });
+}
+
+export function useDeleteMembershipOverride() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id }: { id: string; membershipId: string }) =>
+      deleteMembershipOverride(id),
+    onSuccess: (_, vars) => invalidateOverrides(client, vars.membershipId),
+  });
+}
