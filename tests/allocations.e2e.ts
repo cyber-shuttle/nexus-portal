@@ -24,8 +24,12 @@ test.describe("allocations", () => {
     await expect(page.getByRole("tab", { name: /Users & Roles/i })).toBeVisible();
     await expect(page.getByRole("tab", { name: /Audit log/i })).toBeVisible();
 
-    await page.getByRole("tab", { name: /Users & Roles/i }).click();
+    // Users & Roles is now the default tab (Figma §8), so the legend renders
+    // without an extra click.
     await expect(page.getByText(/Roles: PI, Co-PI/i)).toBeVisible();
+
+    await page.getByRole("tab", { name: /Credits & Resources/i }).click();
+    await expect(page.getByRole("button", { name: /Request extension/i })).toBeVisible();
 
     await page.getByRole("tab", { name: /Audit log/i }).click();
     await expect(page.getByRole("combobox", { name: /date range/i })).toBeVisible();
