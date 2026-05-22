@@ -1,6 +1,6 @@
-import { jobListSchema, queueWaitTimeListSchema } from "@features/analytics/schemas";
 import { jobsHandlers } from "@mocks/handlers/jobs";
 import { describe, expect, it } from "vitest";
+import { jobListSchema, queueWaitTimeListSchema } from "../schemas";
 
 // Invoke each MSW handler's resolver directly so the test asserts the
 // response shape without booting setupServer + global fetch. Covers the spec

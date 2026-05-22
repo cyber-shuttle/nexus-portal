@@ -1,22 +1,18 @@
-import type { ComputeAllocationUsage } from "@features/usage/schemas";
 import { describe, expect, it } from "vitest";
 import {
   bucketUsageByDayResource,
   researcherKpisFromUsage,
   resourceMix,
+  type UsagePoint,
 } from "../aggregations";
 
 const day = 24 * 60 * 60 * 1000;
 
-function usage(overrides: Partial<ComputeAllocationUsage> = {}): ComputeAllocationUsage {
+function usage(overrides: Partial<UsagePoint> = {}): UsagePoint {
   return {
-    id: overrides.id ?? `u-${Math.random()}`,
     compute_allocation_id: "alloc-1",
-    used_raw_amount: 10,
     used_su_amount: 100,
     last_updated: "2026-05-15T12:00:00Z",
-    user_id: "u-1",
-    job_id: "job-1",
     compute_allocation_resource_id: "res-1",
     ...overrides,
   };
@@ -28,9 +24,9 @@ describe("bucketUsageByDayResource", () => {
     const to = new Date("2026-05-16T23:59:59Z");
     const rows = bucketUsageByDayResource(
       [
-        usage({ id: "a", last_updated: "2026-05-14T08:00:00Z", used_su_amount: 50, compute_allocation_resource_id: "res-1" }),
-        usage({ id: "b", last_updated: "2026-05-14T20:00:00Z", used_su_amount: 30, compute_allocation_resource_id: "res-2" }),
-        usage({ id: "c", last_updated: "2026-05-15T10:00:00Z", used_su_amount: 70, compute_allocation_resource_id: "res-1" }),
+        usage({ last_updated: "2026-05-14T08:00:00Z", used_su_amount: 50, compute_allocation_resource_id: "res-1" }),
+        usage({ last_updated: "2026-05-14T20:00:00Z", used_su_amount: 30, compute_allocation_resource_id: "res-2" }),
+        usage({ last_updated: "2026-05-15T10:00:00Z", used_su_amount: 70, compute_allocation_resource_id: "res-1" }),
       ],
       from,
       to,

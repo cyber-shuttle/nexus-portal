@@ -1,6 +1,13 @@
-import type { ComputeAllocationUsage } from "@features/usage/schemas";
-
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+// Structural usage point shape — keeps analytics independent of the `usage`
+// feature module so cross-feature isolation greps stay zero (spec §5.2).
+export type UsagePoint = {
+  compute_allocation_id: string;
+  compute_allocation_resource_id?: string;
+  used_su_amount: number;
+  last_updated: string;
+};
 
 export type DailyResourceBucket = {
   date: string;
@@ -11,7 +18,7 @@ export type DailyResourceBucket = {
 // the allocation id is used as the series key so the chart still renders a
 // meaningful stack.
 export function bucketUsageByDayResource(
-  usages: ComputeAllocationUsage[],
+  usages: UsagePoint[],
   from: Date,
   to: Date,
 ): { rows: DailyResourceBucket[]; seriesKeys: string[] } {
@@ -49,7 +56,7 @@ export function bucketUsageByDayResource(
 export type ResourceMixSlice = { resource_id: string; total: number };
 
 // Rolls a usage list up to one slice per resource for the donut chart.
-export function resourceMix(usages: ComputeAllocationUsage[]): ResourceMixSlice[] {
+export function resourceMix(usages: UsagePoint[]): ResourceMixSlice[] {
   const totals = new Map<string, number>();
   for (const u of usages) {
     const key = u.compute_allocation_resource_id || u.compute_allocation_id;
@@ -71,7 +78,7 @@ export type ResearcherKpis = {
 // active date range plus a remaining-balance figure. Burn = used / elapsed
 // days in window; spec §6.1 KPI strip definition.
 export function researcherKpisFromUsage(
-  usages: ComputeAllocationUsage[],
+  usages: UsagePoint[],
   totalAllocated: number,
   range: { from: Date; to: Date },
   daysLeftHint: number | null,
