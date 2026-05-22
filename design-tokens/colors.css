@@ -62,14 +62,16 @@
   --brand-foreground: #ffffff;
   --brand-tint: var(--nexus-blue-50);
 
-  --background: var(--nexus-white);
+  --background: #ffffff;
   --foreground: var(--nexus-gray-900);
-  --card: var(--nexus-white);
+  --card: #ffffff;
   --card-foreground: var(--nexus-gray-900);
   --popover: var(--nexus-white);
   --popover-foreground: var(--nexus-gray-900);
-  --primary: var(--nexus-blue-500);
-  --primary-foreground: var(--nexus-white);
+  /* Near-black primary matches the collaborator's portal + the Figma "Add user"
+     button; blue moves to --brand for active states and links. */
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
   --secondary: var(--nexus-gray-100);
   --secondary-foreground: var(--nexus-gray-900);
   --muted: var(--nexus-gray-100);
@@ -82,12 +84,12 @@
   --input: var(--nexus-gray-200);
   --ring: var(--nexus-blue-500);
 
-  --sidebar: var(--nexus-gray-50);
+  --sidebar: #ffffff;
   --sidebar-foreground: var(--nexus-gray-900);
   --sidebar-primary: var(--nexus-blue-500);
   --sidebar-primary-foreground: var(--nexus-white);
-  --sidebar-accent: var(--nexus-white);
-  --sidebar-accent-foreground: var(--nexus-gray-900);
+  --sidebar-accent: var(--brand-tint);
+  --sidebar-accent-foreground: var(--brand);
   --sidebar-border: var(--nexus-gray-200);
   --sidebar-ring: var(--nexus-blue-500);
 
