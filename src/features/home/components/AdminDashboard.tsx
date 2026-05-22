@@ -74,7 +74,10 @@ export function AdminDashboard({ firstName, summary, isLoading, error }: AdminDa
         </Link>
       </section>
 
-      <section className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
+      {/* Five KPIs need their own width breaks: stack on mobile, 3-up on md,
+          5-up on lg so mid breakpoints never cram cards. §9.2 carves dashboards
+          out of the strict 3-up StatCardRow. */}
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
         <StatCard title="Total projects" value={summary.total_projects} />
         <StatCard title="Active allocations" value={summary.active_allocations} />
         <StatCard
