@@ -50,18 +50,18 @@ function eventIcon(event: AuditEvent) {
   const className = "size-4";
   if (event.kind === "diff") {
     return (
-      <PencilIcon className={cn(className, "text-[color:var(--nexus-blue-600)]")} aria-hidden />
+      <PencilIcon className={cn(className, "text-brand")} aria-hidden />
     );
   }
   if (event.kind === "change_request") {
     return (
       <ClipboardListIcon
-        className={cn(className, "text-[color:var(--nexus-blue-600)]")}
+        className={cn(className, "text-brand")}
         aria-hidden
       />
     );
   }
-  return <UsersIcon className={cn(className, "text-[color:var(--nexus-gray-600)]")} aria-hidden />;
+  return <UsersIcon className={cn(className, "text-muted-foreground")} aria-hidden />;
 }
 
 export type AuditTabProps = {

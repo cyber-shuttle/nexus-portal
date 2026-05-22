@@ -91,6 +91,8 @@ export function SharedUsageBar({
         className="flex h-2.5 w-full overflow-hidden rounded-full bg-muted"
       >
         <div className="h-full bg-brand" style={{ width: `${minePct}%` }} />
+        {/* Lighter brand-blue hatch for rest-of-pool segment — no semantic token
+            exists for "brand tint between --brand-tint and --brand". */}
         <div
           className="h-full bg-[color:var(--nexus-blue-300)] bg-[image:repeating-linear-gradient(45deg,transparent_0_4px,rgba(255,255,255,0.45)_4px_8px)]"
           style={{ width: `${restPct}%` }}

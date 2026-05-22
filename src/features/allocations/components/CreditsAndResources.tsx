@@ -75,7 +75,7 @@ export function CreditsAndResources({ allocationId, usedByResource }: CreditsAnd
                     </p>
                   </div>
                   {typeof rate?.rate === "number" ? (
-                    <span className="rounded-full bg-[color:var(--nexus-blue-50)] px-2 py-1 text-xs font-medium text-[color:var(--nexus-blue-700)]">
+                    <span className="rounded-full bg-brand-tint px-2 py-1 text-xs font-medium text-brand">
                       {formatRate(rate.rate)} SU/unit
                     </span>
                   ) : null}

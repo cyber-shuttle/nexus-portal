@@ -26,7 +26,7 @@ export function AmieNav() {
                 className={cn(
                   "inline-flex items-center px-4 py-2 text-sm font-medium transition-colors",
                   active
-                    ? "border-b-2 border-[color:var(--nexus-blue-500)] text-foreground"
+                    ? "border-b-2 border-brand text-foreground"
                     : "border-b-2 border-transparent text-muted-foreground hover:text-foreground",
                 )}
               >

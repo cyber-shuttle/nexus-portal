@@ -40,7 +40,7 @@ export function AdminDashboard({ firstName, summary, isLoading, error }: AdminDa
         </div>
         <Link
           href={internalLinks.adminAllProjects}
-          className="text-sm text-[color:var(--nexus-blue-700)] hover:underline"
+          className="text-sm text-brand hover:underline"
         >
           View all projects
         </Link>
@@ -82,7 +82,7 @@ export function AdminDashboard({ firstName, summary, isLoading, error }: AdminDa
             <h2 className="font-heading text-base font-semibold">Pending change requests</h2>
             <Link
               href={internalLinks.changeRequests}
-              className="text-xs text-[color:var(--nexus-blue-700)] hover:underline"
+              className="text-xs text-brand hover:underline"
             >
               View queue
             </Link>

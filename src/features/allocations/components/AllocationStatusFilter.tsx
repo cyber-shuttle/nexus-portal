@@ -29,7 +29,7 @@ export function AllocationStatusFilter({ value, onChange }: StatusFilterProps) {
             className={cn(
               "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
               active
-                ? "border-[color:var(--nexus-blue-500)] bg-[color:var(--nexus-blue-50)] text-[color:var(--nexus-blue-700)]"
+                ? "border-brand bg-brand-tint text-brand"
                 : "border-border text-muted-foreground hover:text-foreground",
             )}
           >

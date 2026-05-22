@@ -128,7 +128,7 @@ export function MembersTab({
           <span
             className={
               role === "PI"
-                ? "inline-flex rounded-full bg-[color:var(--nexus-blue-50)] px-2 py-0.5 text-xs font-medium text-[color:var(--nexus-blue-700)]"
+                ? "inline-flex rounded-full bg-brand-tint px-2 py-0.5 text-xs font-medium text-brand"
                 : "inline-flex rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
             }
           >

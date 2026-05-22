@@ -70,7 +70,7 @@ function StateMachineBreadcrumb({ packet }: { packet: Packet }) {
               className={cn(
                 "rounded-md border px-2 py-1",
                 reached
-                  ? "border-[color:var(--nexus-blue-200)] bg-[color:var(--nexus-blue-50)]"
+                  ? "border-brand/30 bg-brand-tint"
                   : "border-border bg-muted/30 text-muted-foreground",
               )}
             >
@@ -220,7 +220,7 @@ function LinkedEntityTab({ packet }: { packet: Packet }) {
         </span>
       </p>
       {href ? (
-        <Link href={href} className="text-[color:var(--nexus-blue-700)] hover:underline">
+        <Link href={href} className="text-brand hover:underline">
           View in portal →
         </Link>
       ) : null}
@@ -290,7 +290,7 @@ export function PacketDetailDrawer({
                   className={cn(
                     "relative -mb-px inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-muted-foreground transition-colors",
                     "hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                    "data-[active]:border-b-2 data-[active]:border-[color:var(--nexus-blue-500)] data-[active]:text-foreground",
+                    "data-[active]:border-b-2 data-[active]:border-brand data-[active]:text-foreground",
                   )}
                 >
                   {t.label}
