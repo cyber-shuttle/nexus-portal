@@ -56,8 +56,12 @@ do this in a single transaction so both sides update or neither does.
 4. Append a `ComputeAllocationDiff` row on the destination with `diff_type =
    CREDIT_TRANSFER_IN`.
 5. Both diff rows must reference the same `transfer_id` so the audit timeline
-   can correlate them. (The portal does this via the `description` field
-   today; a real `transfer_id` FK would be cleaner.)
+   can correlate them. **Schema addition required:** add a nullable
+   `transfer_id` column on `compute_allocation_diffs` (UUID or string). The
+   portal's `ComputeAllocationDiff` Zod schema already accepts it as an
+   optional field, so adding it is forward-compatible. Once present, the
+   credit-transfer audit view will be able to deep-link `OUT → IN` instead
+   of fuzzy-matching by `description`.
 
 ### Authorization
 
