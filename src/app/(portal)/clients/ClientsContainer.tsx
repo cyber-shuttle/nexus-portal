@@ -1,0 +1,140 @@
+"use client";
+
+import * as React from "react";
+import { useSession } from "next-auth/react";
+import { subject } from "@casl/ability";
+import { useAbility } from "@shared/casl/AbilityProvider";
+import { ClientList } from "@features/clients/components/ClientList";
+import { ClientDetailDrawer } from "@features/clients/components/ClientDetailDrawer";
+import { CreateClientDialog } from "@features/clients/components/CreateClientDialog";
+import { useClient, useClients } from "@features/clients/queries";
+import { useAllocations } from "@features/allocations/queries";
+import type { ClientStatus } from "@features/clients/types";
+
+export function ClientsContainer() {
+  const { data: session } = useSession();
+  const ability = useAbility();
+  const userId = session?.user?.id ?? "";
+  const isAdmin = session?.user?.role === "admin";
+  const piAllocationIds = session?.user?.myPiAllocations ?? [];
+
+  const [page, setPage] = React.useState(1);
+  const [pageSize] = React.useState(10);
+  const [statusFilter, setStatusFilter] = React.useState<ClientStatus | "all">("all");
+  const [allocationFilter, setAllocationFilter] = React.useState("");
+  const [ownerFilter, setOwnerFilter] = React.useState(isAdmin ? "" : userId);
+  const [selectedId, setSelectedId] = React.useState<string | undefined>();
+  const [createOpenKey, setCreateOpenKey] = React.useState(0);
+
+  React.useEffect(() => {
+    if (!isAdmin && userId) setOwnerFilter(userId);
+  }, [isAdmin, userId]);
+
+  const clientsQuery = useClients({
+    status: statusFilter,
+    allocationId: allocationFilter || undefined,
+    ownerUserId: ownerFilter || undefined,
+    limit: pageSize,
+    offset: (page - 1) * pageSize,
+  });
+
+  const allRows = clientsQuery.data?.clients ?? [];
+  const rows = React.useMemo(
+    () =>
+      allRows.filter((c) =>
+        ability.can(
+          "read",
+          subject("Client", {
+            owner_user_id: c.owner_user_id,
+            allocation_id: c.allocation_id,
+          }),
+        ),
+      ),
+    [allRows, ability],
+  );
+  const total = clientsQuery.data?.total ?? rows.length;
+
+  const selectedQuery = useClient(selectedId);
+
+  const piAllocations = useAllocations(piAllocationIds);
+  const allocationOptions = (piAllocations.data ?? []).map((a) => ({ id: a.id, name: a.name }));
+  const canCreate = ability.can("create", "Client") && allocationOptions.length > 0;
+  const canManage = ability.can("manage", "Client");
+
+  return (
+    <>
+      <ClientList
+        rows={rows}
+        total={total}
+        isLoading={clientsQuery.isLoading}
+        error={clientsQuery.error as Error | null}
+        page={page}
+        pageSize={pageSize}
+        statusFilter={statusFilter}
+        allocationFilter={allocationFilter}
+        ownerFilter={ownerFilter}
+        canCreate={canCreate}
+        onPageChange={setPage}
+        onStatusChange={(s) => {
+          setStatusFilter(s);
+          setPage(1);
+        }}
+        onAllocationChange={(a) => {
+          setAllocationFilter(a);
+          setPage(1);
+        }}
+        onOwnerChange={(o) => {
+          setOwnerFilter(o);
+          setPage(1);
+        }}
+        onCreate={() => setCreateOpenKey((k) => k + 1)}
+        onRowClick={(c) => setSelectedId(c.id)}
+        onRetry={() => clientsQuery.refetch()}
+      />
+
+      {canCreate && (
+        <CreateClientDialogPortal
+          key={createOpenKey}
+          allocationOptions={allocationOptions}
+          defaultOwnerUserId={userId}
+        />
+      )}
+
+      <ClientDetailDrawer
+        open={selectedId != null}
+        onOpenChange={(open) => {
+          if (!open) setSelectedId(undefined);
+        }}
+        client={selectedQuery.data}
+        isLoading={selectedQuery.isLoading}
+        error={selectedQuery.error as Error | null}
+        canManage={canManage}
+        currentUserId={userId}
+        onRetry={() => selectedQuery.refetch()}
+      />
+    </>
+  );
+}
+
+// We mount the dialog with auto-open behavior keyed on a counter so the New
+// client button in the list opens it; the dialog still owns its own visible
+// state once interacted with.
+function CreateClientDialogPortal({
+  allocationOptions,
+  defaultOwnerUserId,
+}: {
+  allocationOptions: { id: string; name: string }[];
+  defaultOwnerUserId: string;
+}) {
+  const triggerRef = React.useRef<HTMLButtonElement>(null);
+  React.useEffect(() => {
+    triggerRef.current?.click();
+  }, []);
+  return (
+    <CreateClientDialog
+      trigger={<button ref={triggerRef} type="button" className="hidden" aria-hidden="true" />}
+      allocationOptions={allocationOptions}
+      defaultOwnerUserId={defaultOwnerUserId}
+    />
+  );
+}

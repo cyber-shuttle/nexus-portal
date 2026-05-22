@@ -25,6 +25,7 @@ import type {
 } from "@shared/api/domain";
 import type { Proposal } from "@features/proposals/types";
 import type { Certificate } from "@features/signer/types";
+import type { Client } from "@features/clients/types";
 import { daysFromNow, hoursFromNow, makeRng, pick, rangeInt } from "./random";
 
 const FIRST_NAMES = [
@@ -100,6 +101,7 @@ export type Seed = {
   diffs: ComputeAllocationDiff[];
   proposals: Proposal[];
   certificates: Certificate[];
+  clients: Client[];
 };
 
 function statusFor(rng: () => number): AllocationStatus {
@@ -479,6 +481,32 @@ export function buildSeed(): Seed {
     }
   }
 
+  const clients: Client[] = [];
+  for (let i = 0; i < 25; i += 1) {
+    const ownerUser = pick(rng, users.slice(0, 12));
+    const ownerMemberships = memberships.filter((m) => m.user_id === ownerUser.id);
+    const ownerAllocation =
+      ownerMemberships.length > 0
+        ? allocations.find((a) => a.id === ownerMemberships[0]?.compute_allocation_id) ??
+          allocations[i % allocations.length]
+        : allocations[i % allocations.length];
+    if (!ownerAllocation) continue;
+    const issuedAt = daysFromNow(-rangeInt(rng, 1, 200)).toISOString();
+    const rotated = rng() < 0.3 ? daysFromNow(-rangeInt(rng, 1, 60)).toISOString() : undefined;
+    clients.push({
+      id: `client-${String(i + 1).padStart(3, "0")}`,
+      name: `Pipeline ${i + 1}`,
+      allocation_id: ownerAllocation.id,
+      allocation_name: ownerAllocation.name,
+      owner_user_id: ownerUser.id,
+      client_id: `nexus-${ownerAllocation.id}-${i + 1}`,
+      client_secret_last4: String(rangeInt(rng, 1000, 9999)),
+      issued_at: issuedAt,
+      last_rotated_at: rotated,
+      status: rng() < 0.85 ? "active" : "deactivated",
+    });
+  }
+
   const certificates: Certificate[] = [];
   const STATUS_PLAN = [
     { count: 50, kind: "active" as const },
@@ -562,6 +590,7 @@ export function buildSeed(): Seed {
     diffs,
     proposals,
     certificates,
+    clients,
   };
 }
 

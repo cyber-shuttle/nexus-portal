@@ -10,6 +10,7 @@ import { adminHandlers } from "./admin";
 import { proposalHandlers } from "./proposals";
 import { toolsHandlers } from "./tools";
 import { signerHandlers } from "./signer";
+import { clientHandlers } from "./clients";
 
 export const handlers: HttpHandler[] = [
   ...allocationHandlers,
@@ -23,4 +24,5 @@ export const handlers: HttpHandler[] = [
   ...proposalHandlers,
   ...toolsHandlers,
   ...signerHandlers,
+  ...clientHandlers,
 ];
