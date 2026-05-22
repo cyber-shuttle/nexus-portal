@@ -190,14 +190,17 @@ export function pace(
   return { burn, expected, status };
 }
 
+export type ForecastMethod = "rolling-7d" | "insufficient-data";
+
 export type ForecastResult = {
   exhaustDate: Date | null;
   daysRemaining: number | null;
-  method: "rolling-7d";
+  method: ForecastMethod;
 };
 
 // `forecast` projects exhaust via a rolling-7d burn slope over `last_updated` points.
-// Needs a 7-day window of distinct daily data; otherwise returns nulls.
+// Needs a 7-day window of distinct daily data; otherwise returns `insufficient-data`
+// so callers can render a richer empty state than bare nulls.
 export function forecast(
   usages: UsagePoint[],
   allocation: Allocation,
@@ -213,12 +216,12 @@ export function forecast(
     inWindow.map((u) => new Date(u.last_updated).toISOString().slice(0, 10)),
   );
   if (distinctDays.size < 7) {
-    return { exhaustDate: null, daysRemaining: null, method: "rolling-7d" };
+    return { exhaustDate: null, daysRemaining: null, method: "insufficient-data" };
   }
   const totalUsedInWindow = inWindow.reduce((acc, u) => acc + u.used_su_amount, 0);
   const slopePerDay = totalUsedInWindow / 7;
   if (slopePerDay <= 0) {
-    return { exhaustDate: null, daysRemaining: null, method: "rolling-7d" };
+    return { exhaustDate: null, daysRemaining: null, method: "insufficient-data" };
   }
   const totalUsedAll = usages.reduce((acc, u) => acc + u.used_su_amount, 0);
   const remaining = Math.max(0, allocation.initial_su_amount - totalUsedAll);

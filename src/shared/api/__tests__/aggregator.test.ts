@@ -194,7 +194,7 @@ describe("forecast", () => {
     end_time: new Date(NOW + 90 * day).toISOString(),
   };
 
-  it("returns null fields when fewer than 7 distinct days of usages exist", () => {
+  it("flags insufficient-data when fewer than 7 distinct days of usages exist", () => {
     const usages = [
       { used_su_amount: 50, last_updated: new Date(NOW - 1 * day).toISOString() },
       { used_su_amount: 50, last_updated: new Date(NOW - 2 * day).toISOString() },
@@ -202,7 +202,7 @@ describe("forecast", () => {
     const result = forecast(usages, allocation, NOW);
     expect(result.exhaustDate).toBeNull();
     expect(result.daysRemaining).toBeNull();
-    expect(result.method).toBe("rolling-7d");
+    expect(result.method).toBe("insufficient-data");
   });
 
   it("projects exhaust from rolling-7d slope when window is full", () => {
@@ -214,14 +214,17 @@ describe("forecast", () => {
     expect(result.daysRemaining).not.toBeNull();
     expect(result.exhaustDate).toBeInstanceOf(Date);
     expect(result.daysRemaining as number).toBeCloseTo((1000 - 350) / 50, 5);
+    expect(result.method).toBe("rolling-7d");
   });
 
-  it("returns null when 7-day slope is zero", () => {
+  it("flags insufficient-data when 7-day slope is zero", () => {
     const usages = Array.from({ length: 7 }).map((_, i) => ({
       used_su_amount: 0,
       last_updated: new Date(NOW - (i + 1) * day).toISOString(),
     }));
-    expect(forecast(usages, allocation, NOW).exhaustDate).toBeNull();
+    const result = forecast(usages, allocation, NOW);
+    expect(result.exhaustDate).toBeNull();
+    expect(result.method).toBe("insufficient-data");
   });
 });
 
