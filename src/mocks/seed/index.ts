@@ -651,12 +651,6 @@ export function persistSeed(): void {
   }
 }
 
-export function resetSeed(): void {
-  const storage = getStorage();
-  if (storage) storage.removeItem(STORAGE_KEY);
-  holder.__nexusSeed = buildSeed();
-}
-
 if (!holder.__nexusSeed) {
   const hydrated = tryHydrate();
   const fresh = buildSeed();

@@ -9,10 +9,7 @@ import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import * as React from "react";
 import type { Packet } from "../types";
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleString();
-}
+import { formatDate } from "../utils";
 
 type Row = Packet & { _draftEntityId?: string; _draftEntityType?: string };
 

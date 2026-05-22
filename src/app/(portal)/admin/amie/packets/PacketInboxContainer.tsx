@@ -12,9 +12,20 @@ import {
   useRetryPacket,
 } from "@features/amie/queries";
 import type { Packet } from "@features/amie/types";
+import { pluralize } from "@features/amie/utils";
 import { useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
 import { toast } from "sonner";
+import { Button } from "@/shared/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/shared/ui/dialog";
+import { Label } from "@/shared/ui/label";
 
 const DEFAULT_PAGE_SIZE = 20;
 
@@ -34,6 +45,8 @@ export function PacketInboxContainer({ initialPacketId }: { initialPacketId?: st
   const [filters, setFilters] = React.useState<PacketFilters>(DEFAULT_FILTERS);
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [selectedId, setSelectedId] = React.useState<string | undefined>(drawerIdFromUrl);
+  const [markProcessedOpen, setMarkProcessedOpen] = React.useState(false);
+  const [markProcessedReason, setMarkProcessedReason] = React.useState("");
 
   React.useEffect(() => {
     setSelectedId(drawerIdFromUrl);
@@ -84,24 +97,34 @@ export function PacketInboxContainer({ initialPacketId }: { initialPacketId?: st
         // continue — surface aggregate result below
       }
     }
-    toast.success(`Queued ${queued} retry${queued === 1 ? "" : "s"}`);
+    toast.success(`Queued ${queued} ${pluralize("retry", queued, "retries")}`);
     setSelected(new Set());
   }
 
-  async function handleBulkMarkProcessed() {
+  function handleBulkMarkProcessedRequest() {
+    if (selected.size === 0) return;
+    setMarkProcessedReason("");
+    setMarkProcessedOpen(true);
+  }
+
+  async function handleBulkMarkProcessedConfirm() {
+    const reason = markProcessedReason.trim();
+    if (reason.length < 3) return;
     const ids = Array.from(selected);
     if (ids.length === 0) return;
     let resolved = 0;
     for (const id of ids) {
       try {
-        await resolveMutation.mutateAsync({ id, reason: "Bulk mark processed" });
+        await resolveMutation.mutateAsync({ id, reason });
         resolved += 1;
       } catch {
         // continue
       }
     }
-    toast.success(`Marked ${resolved} packet${resolved === 1 ? "" : "s"} processed`);
+    toast.success(`Marked ${resolved} ${pluralize("packet", resolved)} processed`);
     setSelected(new Set());
+    setMarkProcessedOpen(false);
+    setMarkProcessedReason("");
   }
 
   function handleBulkExport() {
@@ -156,10 +179,43 @@ export function PacketInboxContainer({ initialPacketId }: { initialPacketId?: st
         onPageChange={setPage}
         onRowClick={openDrawer}
         onBulkRetry={handleBulkRetry}
-        onBulkMarkProcessed={handleBulkMarkProcessed}
+        onBulkMarkProcessed={handleBulkMarkProcessedRequest}
         onBulkExport={handleBulkExport}
         onRetry={() => packetsQuery.refetch()}
       />
+
+      <Dialog open={markProcessedOpen} onOpenChange={setMarkProcessedOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Mark {selected.size} processed</DialogTitle>
+            <DialogDescription>
+              Surface a reason on the audit timeline of each packet. Minimum 3 characters.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="amie-bulk-reason">Reason</Label>
+            <textarea
+              id="amie-bulk-reason"
+              rows={3}
+              className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+              placeholder="e.g. Linked manually after ACCESS retry window expired"
+              value={markProcessedReason}
+              onChange={(e) => setMarkProcessedReason(e.currentTarget.value)}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setMarkProcessedOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleBulkMarkProcessedConfirm}
+              disabled={markProcessedReason.trim().length < 3}
+            >
+              Mark processed
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <PacketDetailDrawer
         open={selectedId != null}

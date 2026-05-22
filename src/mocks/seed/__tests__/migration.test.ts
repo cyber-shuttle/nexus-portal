@@ -16,7 +16,9 @@ describe("mergeHydrated", () => {
     delete (stale as Record<string, unknown>).amiePackets;
     delete (stale as Record<string, unknown>).amieEvents;
     // Pretend the user mutated proposals in a prior session.
-    const mutatedProposals = [fresh.proposals[0]].filter(Boolean);
+    const first = fresh.proposals[0];
+    if (!first) throw new Error("seed has no proposals");
+    const mutatedProposals = [first];
     (stale as { proposals?: typeof fresh.proposals }).proposals = mutatedProposals;
 
     const out = mergeHydrated(fresh, stale);

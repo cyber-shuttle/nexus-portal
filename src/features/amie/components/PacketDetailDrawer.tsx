@@ -1,9 +1,8 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import * as React from "react";
-import { JsonView, defaultStyles } from "react-json-view-lite";
-import "react-json-view-lite/dist/index.css";
 import { cn } from "@/lib/utils";
 import { ErrorState } from "@/shared/ui/ErrorState";
 import { CenteredSpinner } from "@/shared/ui/Loading";
@@ -11,18 +10,15 @@ import { SideDrawer } from "@/shared/ui/SideDrawer";
 import { Button } from "@/shared/ui/button";
 import { Tabs as TabsPrimitive } from "@base-ui/react/tabs";
 import type { Packet, PacketEvent } from "../types";
+import { ageHoursOf, formatDate } from "../utils";
 import { PacketStatusBadge } from "./PacketStatusBadge";
 
-function ageHoursOf(iso: string): number {
-  const t = Date.parse(iso);
-  if (Number.isNaN(t)) return 0;
-  return (Date.now() - t) / 3600_000;
-}
-
-function formatDate(iso?: string): string {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleString();
-}
+// react-json-view-lite + its stylesheet is ~110 kB; only load it when the user
+// actually opens the Raw JSON tab to keep the inbox first-paint small.
+const PacketRawJson = dynamic(() => import("./PacketRawJson"), {
+  ssr: false,
+  loading: () => <CenteredSpinner label="Loading JSON viewer" />,
+});
 
 function entityHref(type: string, id: string): string | null {
   if (type === "project") return `/allocations?project=${encodeURIComponent(id)}`;
@@ -146,21 +142,7 @@ function RawJsonTab({ packet }: { packet: Packet }) {
   if (!packet.raw_json) {
     return <p className="text-sm text-muted-foreground">No raw payload available.</p>;
   }
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(packet.raw_json);
-  } catch {
-    return (
-      <pre className="overflow-x-auto rounded-md border bg-muted/20 p-3 text-xs">
-        {packet.raw_json}
-      </pre>
-    );
-  }
-  return (
-    <div className="overflow-x-auto rounded-md border bg-background p-3 text-xs">
-      <JsonView data={parsed as object} style={defaultStyles} />
-    </div>
-  );
+  return <PacketRawJson rawJson={packet.raw_json} />;
 }
 
 function eventIconLabel(event: PacketEvent): string {
@@ -366,8 +348,8 @@ export function PacketDetailDrawer({
                   </Button>
                 </form>
               ) : (
-                <Button variant="destructive" onClick={() => setResolveOpen(true)}>
-                  Resolve manually
+                <Button variant="outline" onClick={() => setResolveOpen(true)}>
+                  Resolve manually…
                 </Button>
               )
             ) : null}

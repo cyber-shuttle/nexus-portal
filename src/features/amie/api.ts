@@ -1,11 +1,13 @@
 import { apiFetch } from "@shared/api/client";
 import { z } from "zod";
 import {
+  linkUnmappedPayloadSchema,
   packetEventSchema,
   packetListResponseSchema,
   packetSchema,
   packetStatsSchema,
   replyListResponseSchema,
+  resolvePacketPayloadSchema,
 } from "./schemas";
 import type {
   Packet,
@@ -60,9 +62,10 @@ export async function retryPacket(id: string): Promise<{ queued: true; packet: P
 }
 
 export async function resolvePacket(id: string, payload: { reason: string }): Promise<Packet> {
+  const validated = resolvePacketPayloadSchema.parse(payload);
   const raw = await apiFetch(`/amie/packets/${encodeURIComponent(id)}/resolve`, {
     method: "POST",
-    body: payload,
+    body: validated,
   });
   return packetSchema.parse(raw);
 }
@@ -101,9 +104,10 @@ export async function linkUnmapped(
   id: string,
   payload: { entity_type: string; entity_id: string },
 ): Promise<Packet> {
+  const validated = linkUnmappedPayloadSchema.parse(payload);
   const raw = await apiFetch(`/amie/unmapped/${encodeURIComponent(id)}/link`, {
     method: "POST",
-    body: payload,
+    body: validated,
   });
   return packetSchema.parse(raw);
 }

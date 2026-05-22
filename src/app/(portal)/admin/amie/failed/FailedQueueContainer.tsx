@@ -10,6 +10,7 @@ import {
   useRetryPacket,
 } from "@features/amie/queries";
 import type { Packet } from "@features/amie/types";
+import { pluralize } from "@features/amie/utils";
 import * as React from "react";
 import { toast } from "sonner";
 
@@ -65,8 +66,9 @@ export function FailedQueueContainer() {
         // continue
       }
     }
-    toast.success(`Queued ${queued} retry${queued === 1 ? "" : "s"}`);
+    toast.success(`Queued ${queued} ${pluralize("retry", queued, "retries")}`);
     setSelected(new Set());
+    failedQuery.refetch();
   }
 
   return (

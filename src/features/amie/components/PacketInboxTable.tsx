@@ -9,17 +9,8 @@ import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import * as React from "react";
 import { PACKET_TYPES, type Packet, type PacketStatus } from "../types";
+import { ageHoursOf, formatDate } from "../utils";
 import { PacketStatusBadge } from "./PacketStatusBadge";
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleString();
-}
-
-function ageHoursOf(iso: string): number {
-  const t = Date.parse(iso);
-  if (Number.isNaN(t)) return 0;
-  return (Date.now() - t) / 3600_000;
-}
 
 export type PacketFilters = {
   status: PacketStatus | "all";

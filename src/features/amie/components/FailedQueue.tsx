@@ -9,17 +9,8 @@ import { Button } from "@/shared/ui/button";
 import { TriangleAlertIcon } from "lucide-react";
 import * as React from "react";
 import type { Packet } from "../types";
+import { ageHoursOf, formatDate } from "../utils";
 import { PacketStatusBadge } from "./PacketStatusBadge";
-
-function ageHoursOf(iso: string): number {
-  const t = Date.parse(iso);
-  if (Number.isNaN(t)) return 0;
-  return (Date.now() - t) / 3600_000;
-}
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleString();
-}
 
 export type FailedQueueProps = {
   rows: Packet[];

@@ -8,12 +8,8 @@ import { Button } from "@/shared/ui/button";
 import { Label } from "@/shared/ui/label";
 import * as React from "react";
 import type { Reply, ReplyStatus } from "../types";
+import { formatDate } from "../utils";
 import { ReplyStatusBadge } from "./PacketStatusBadge";
-
-function formatDate(iso?: string): string {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleString();
-}
 
 export type ReplyTrackerProps = {
   rows: Reply[];
