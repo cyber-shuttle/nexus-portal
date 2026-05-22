@@ -40,15 +40,17 @@ export function TabsRouter({
 
   return (
     <TabsPrimitive.Root value={active} onValueChange={handleChange} className={cn(className)}>
-      <TabsPrimitive.List className="flex gap-1 border-b border-border/80">
+      <TabsPrimitive.List className="flex gap-6 border-b border-border">
         {tabs.map((tab) => (
           <TabsPrimitive.Tab
             key={tab.value}
             value={tab.value}
             className={cn(
-              "relative -mb-px inline-flex items-center justify-center rounded-t-md px-4 py-2 text-sm font-medium text-muted-foreground transition-colors",
+              // Flush underline pattern per §7.4 — no boxed chrome, the tab
+              // rests directly on the list's bottom border.
+              "relative -mb-px inline-flex items-center justify-center pb-3 text-sm font-medium text-muted-foreground transition-colors",
               "hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              "data-selected:border-b-2 data-selected:border-[color:var(--nexus-blue-500)] data-selected:text-foreground",
+              "data-selected:border-b-2 data-selected:border-brand data-selected:font-semibold data-selected:text-brand",
             )}
           >
             {tab.label}
