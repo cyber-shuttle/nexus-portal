@@ -9,8 +9,8 @@ const ROLE_VALUES: Role[] = ["guest", "user", "pi", "co_pi", "allocation_manager
 
 function deriveRoleFromClaims(profile: Record<string, unknown> | undefined): Role | null {
   if (!profile || typeof profile !== "object") return null;
-  if (profile["nexus_admin"] === true || profile["nexus_admin"] === "true") return "admin";
-  const claim = profile["nexus_role"];
+  if (profile.nexus_admin === true || profile.nexus_admin === "true") return "admin";
+  const claim = profile.nexus_role;
   if (typeof claim === "string" && ROLE_VALUES.includes(claim as Role)) {
     return claim as Role;
   }

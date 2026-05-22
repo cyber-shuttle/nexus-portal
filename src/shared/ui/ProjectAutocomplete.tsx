@@ -124,21 +124,26 @@ export function ProjectAutocomplete({
         </button>
       ) : null}
       {open && (results.length > 0 || isFetching) ? (
-        <ul
+        // ARIA combobox listbox — use div+button so biome's "non-interactive
+        // element with interactive role" lint stays clean while the WAI-ARIA
+        // contract (role=listbox / option) is preserved.
+        <div
           id={listboxId}
           role="listbox"
+          tabIndex={-1}
           className="absolute z-20 mt-1 max-h-60 w-72 overflow-auto rounded-md border bg-popover py-1 text-xs shadow-md"
         >
           {isFetching && results.length === 0 ? (
-            <li className="px-3 py-2 text-muted-foreground">Searching…</li>
+            <p className="px-3 py-2 text-muted-foreground">Searching…</p>
           ) : null}
           {results.map((p, i) => (
-            <li
+            <button
               key={p.id}
+              type="button"
               role="option"
               aria-selected={i === activeIndex}
               className={cn(
-                "cursor-pointer px-3 py-2",
+                "block w-full cursor-pointer px-3 py-2 text-left",
                 i === activeIndex ? "bg-muted" : "hover:bg-muted/60",
               )}
               onMouseDown={(e) => {
@@ -146,11 +151,11 @@ export function ProjectAutocomplete({
                 commit(p);
               }}
             >
-              <div className="font-mono">{p.originated_id}</div>
-              <div className="text-muted-foreground">{p.title}</div>
-            </li>
+              <span className="block font-mono">{p.originated_id}</span>
+              <span className="block text-muted-foreground">{p.title}</span>
+            </button>
           ))}
-        </ul>
+        </div>
       ) : null}
     </div>
   );

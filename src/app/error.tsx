@@ -17,10 +17,7 @@ export default function GlobalError({
   }, [error]);
 
   return (
-    <main
-      role="main"
-      className="mx-auto flex min-h-[60vh] max-w-2xl flex-col items-center justify-center gap-4 px-6 py-12"
-    >
+    <main className="mx-auto flex min-h-[60vh] max-w-2xl flex-col items-center justify-center gap-4 px-6 py-12">
       <ErrorState
         heading="Something broke"
         message={

@@ -79,9 +79,8 @@ export function DataTable<T>({
                   key={rowKey(row, index)}
                   className={cn(
                     "border-t border-border/60",
-                    onRowClick && "cursor-pointer transition-colors hover:bg-muted/40",
+                    onRowClick && "transition-colors hover:bg-muted/40",
                   )}
-                  onClick={onRowClick ? () => onRowClick(row) : undefined}
                 >
                   {(() => {
                     const firstWrappable = onRowClick

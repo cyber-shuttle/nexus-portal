@@ -10,16 +10,13 @@ describe("mergeHydrated", () => {
 
   it("preserves hydrated arrays while backfilling missing top-level fields", () => {
     const fresh = buildSeed();
-    const stale = { ...fresh, amiePackets: undefined, amieEvents: undefined } as unknown as Partial<
-      typeof fresh
-    >;
-    delete (stale as Record<string, unknown>).amiePackets;
-    delete (stale as Record<string, unknown>).amieEvents;
-    // Pretend the user mutated proposals in a prior session.
+    // Pretend the user mutated proposals in a prior session and the snapshot
+    // pre-dates the AMIE phase, so amiePackets / amieEvents are absent.
     const first = fresh.proposals[0];
     if (!first) throw new Error("seed has no proposals");
     const mutatedProposals = [first];
-    (stale as { proposals?: typeof fresh.proposals }).proposals = mutatedProposals;
+    const { amiePackets: _ignored, amieEvents: _ignored2, ...rest } = fresh;
+    const stale: Partial<typeof fresh> = { ...rest, proposals: mutatedProposals };
 
     const out = mergeHydrated(fresh, stale);
 
