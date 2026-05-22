@@ -2,6 +2,7 @@
 
 import { ErrorState } from "@/shared/ui/ErrorState";
 import { CardSkeleton } from "@/shared/ui/Loading";
+import { Button } from "@/shared/ui/button";
 import { TabsRouter } from "@/shared/ui/TabsRouter";
 import { subject } from "@casl/ability";
 import {
@@ -11,6 +12,7 @@ import {
 import { CreditsAndResources } from "@features/allocations/components/CreditsAndResources";
 import { useAllocation, useAllocationResources } from "@features/allocations/queries";
 import { RequestExtensionDrawer } from "@features/change-requests/components/RequestExtensionDrawer";
+import { AddMemberDrawer } from "@features/members/components/AddMemberDrawer";
 import { MembersTab } from "@features/members/components/MembersTab";
 import { useAllocationMembers, useUser } from "@features/members/queries";
 import { useProject } from "@features/projects/queries";
@@ -62,6 +64,7 @@ export function AllocationDetailContainer({ allocationId }: { allocationId: stri
   );
 
   const [extensionOpen, setExtensionOpen] = React.useState(false);
+  const [addMemberOpen, setAddMemberOpen] = React.useState(false);
   const currentSuAmount = allocationQuery.data?.initial_su_amount ?? 0;
   const allocationEndTime = allocationQuery.data?.end_time ?? new Date().toISOString();
 
@@ -88,6 +91,8 @@ export function AllocationDetailContainer({ allocationId }: { allocationId: stri
   // The credits card sub-line tracks when the total-usage figure last refreshed.
   const updatedAt = usageQuery.dataUpdatedAt || null;
 
+  const memberIds = (membersQuery.data ?? []).map((row) => row.membership.user_id);
+
   return (
     <section className="space-y-6">
       <AllocationDetailHeader
@@ -108,7 +113,6 @@ export function AllocationDetailContainer({ allocationId }: { allocationId: stri
               <MembersTab
                 allocationId={allocationId}
                 piUserId={piUserId}
-                allocationEndTime={allocationEndTime}
                 canManage={canManageMembers}
                 resources={resourceList}
               />
@@ -131,6 +135,27 @@ export function AllocationDetailContainer({ allocationId }: { allocationId: stri
             content: <AuditTabContainer allocationId={allocationId} />,
           },
         ]}
+        rightSlot={{
+          users: canManageMembers ? (
+            <Button
+              variant="default"
+              aria-label="Add user"
+              data-testid="add-member"
+              onClick={() => setAddMemberOpen(true)}
+            >
+              Add user
+            </Button>
+          ) : undefined,
+          credits: undefined,
+          audit: undefined,
+        }}
+      />
+      <AddMemberDrawer
+        open={addMemberOpen}
+        onOpenChange={setAddMemberOpen}
+        allocationId={allocationId}
+        allocationEndTime={allocationEndTime}
+        excludeUserIds={memberIds}
       />
       <RequestExtensionDrawer
         open={extensionOpen}

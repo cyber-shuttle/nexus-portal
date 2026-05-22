@@ -24,7 +24,6 @@ import {
   useDeleteMembership,
   useSetMembershipStatus,
 } from "../queries";
-import { AddMemberDrawer } from "./AddMemberDrawer";
 import { MemberDetailDrawer } from "./MemberDetailDrawer";
 import { OverridesDrawer, type OverridesDrawerResource } from "./OverridesDrawer";
 
@@ -52,7 +51,6 @@ function roleFor(row: AllocationMemberRow, piUserId: string | undefined): string
 export type MembersTabProps = {
   allocationId: string;
   piUserId: string | undefined;
-  allocationEndTime: string;
   canManage: boolean;
   resources: OverridesDrawerResource[];
 };
@@ -66,7 +64,6 @@ type ConfirmState =
 export function MembersTab({
   allocationId,
   piUserId,
-  allocationEndTime,
   canManage,
   resources,
 }: MembersTabProps) {
@@ -76,7 +73,8 @@ export function MembersTab({
 
   const [activeMember, setActiveMember] = React.useState<AllocationMemberRow | null>(null);
   const [drawerOpen, setDrawerOpen] = React.useState(false);
-  const [addOpen, setAddOpen] = React.useState(false);
+  // Add-member drawer moved to the tab right-slot in AllocationDetailContainer
+  // per §8 — MembersTab no longer owns that affordance.
   const [overridesFor, setOverridesFor] = React.useState<AllocationMemberRow | null>(null);
   const [confirm, setConfirm] = React.useState<ConfirmState>(null);
 
@@ -241,30 +239,16 @@ export function MembersTab({
     },
   ];
 
-  const excludeUserIds = (rows ?? []).map((r) => r.membership.user_id);
-
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-4 text-sm">
-          <span className="text-muted-foreground">
-            {(rows ?? []).length} member{(rows ?? []).length === 1 ? "" : "s"}
-          </span>
-          <span className="text-muted-foreground">·</span>
-          <span className="text-xs uppercase tracking-wide text-muted-foreground">
-            Roles: PI, Co-PI, Allocation Manager, User
-          </span>
-        </div>
-        {canManage ? (
-          <Button
-            variant="outline"
-            aria-label="Add member"
-            data-testid="add-member"
-            onClick={() => setAddOpen(true)}
-          >
-            Add member
-          </Button>
-        ) : null}
+      <div className="flex items-center gap-4 text-sm">
+        <span className="text-muted-foreground">
+          {(rows ?? []).length} member{(rows ?? []).length === 1 ? "" : "s"}
+        </span>
+        <span className="text-muted-foreground">·</span>
+        <span className="text-xs uppercase tracking-wide text-muted-foreground">
+          Roles: PI, Co-PI, Allocation Manager, User
+        </span>
       </div>
       {isLoading ? (
         <TableSkeleton rows={5} columns={5} />
@@ -279,13 +263,6 @@ export function MembersTab({
         <DataTable columns={columns} rows={rows} rowKey={(row) => row.membership.id} />
       )}
       <MemberDetailDrawer open={drawerOpen} onOpenChange={setDrawerOpen} member={activeMember} />
-      <AddMemberDrawer
-        open={addOpen}
-        onOpenChange={setAddOpen}
-        allocationId={allocationId}
-        allocationEndTime={allocationEndTime}
-        excludeUserIds={excludeUserIds}
-      />
       {overridesFor ? (
         <OverridesDrawer
           open={Boolean(overridesFor)}
