@@ -76,6 +76,7 @@ export const membershipHandlers = [
       membership_status: body.membership_status ?? "ACTIVE",
     };
     seed.memberships.push(created);
+    if (body.portal_role) seed.membershipRoles[created.id] = body.portal_role;
     return HttpResponse.json(created, { status: 201 });
   }),
 

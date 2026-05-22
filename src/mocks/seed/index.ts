@@ -13,6 +13,7 @@ import type {
   User,
   UserIdentity,
 } from "@features/members/schemas";
+import type { MembershipRole } from "@features/members/roles";
 import type {
   ComputeAllocationUsage,
   ComputeAllocationUsageTotal,
@@ -89,6 +90,7 @@ export type Seed = {
   resourceMappings: ComputeAllocationResourceMapping[];
   resourceRates: ComputeAllocationResourceRate[];
   memberships: ComputeAllocationMembership[];
+  membershipRoles: Record<string, MembershipRole>;
   overrides: ComputeAllocationMembershipResourceOverride[];
   usages: ComputeAllocationUsage[];
   changeRequests: ComputeAllocationChangeRequest[];
@@ -203,6 +205,7 @@ export function buildSeed(): Seed {
   const resourceMappings: ComputeAllocationResourceMapping[] = [];
   const resourceRates: ComputeAllocationResourceRate[] = [];
   const memberships: ComputeAllocationMembership[] = [];
+  const membershipRoles: Record<string, MembershipRole> = {};
   const overrides: ComputeAllocationMembershipResourceOverride[] = [];
   const usages: ComputeAllocationUsage[] = [];
   const changeRequests: ComputeAllocationChangeRequest[] = [];
@@ -268,6 +271,7 @@ export function buildSeed(): Seed {
         membership_status: "ACTIVE",
       };
       memberships.push(piMembership);
+      membershipRoles[piMembership.id] = "pi";
       const memberPool = users.filter((u) => u.id !== project.project_pi_id);
       const pickedMembers = new Set<string>([project.project_pi_id]);
       let memberSeq = 0;
@@ -280,27 +284,31 @@ export function buildSeed(): Seed {
         if (pickedMembers.has(candidate.id)) continue;
         pickedMembers.add(candidate.id);
         memberSeq += 1;
+        const memId = `${id}-mem-${memberSeq}`;
         memberships.push({
-          id: `${id}-mem-${memberSeq}`,
+          id: memId,
           compute_allocation_id: id,
           user_id: candidate.id,
           start_time: daysFromNow(startOffset + rangeInt(rng, 0, 30)).toISOString(),
           end_time: allocation.end_time,
           membership_status: rng() < 0.94 ? "ACTIVE" : "INACTIVE",
         });
+        membershipRoles[memId] = memberSeq === 1 && rng() < 0.3 ? "co_pi" : "user";
       }
 
       const personaResearcher = personaUsers.find((u) => u.id === "researcher@nexus.local");
       if (personaResearcher && !pickedMembers.has(personaResearcher.id) && allocCount % 8 === 1) {
         pickedMembers.add(personaResearcher.id);
+        const researcherMemId = `${id}-mem-researcher`;
         memberships.push({
-          id: `${id}-mem-researcher`,
+          id: researcherMemId,
           compute_allocation_id: id,
           user_id: personaResearcher.id,
           start_time: daysFromNow(startOffset + 10).toISOString(),
           end_time: allocation.end_time,
           membership_status: "ACTIVE",
         });
+        membershipRoles[researcherMemId] = "user";
       }
 
       const cycleHours = 24 * 30;
@@ -395,6 +403,7 @@ export function buildSeed(): Seed {
     resourceMappings,
     resourceRates,
     memberships,
+    membershipRoles,
     overrides,
     usages,
     changeRequests,

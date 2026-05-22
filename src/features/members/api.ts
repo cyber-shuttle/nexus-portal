@@ -10,6 +10,7 @@ import {
   userIdentitySchema,
   userSchema,
 } from "./schemas";
+import { MEMBERSHIP_ROLES } from "./roles";
 
 export async function getMembershipsForAllocation(
   allocId: string,
@@ -56,6 +57,9 @@ export const createMembershipPayloadSchema = z.object({
   start_time: z.string().min(1),
   end_time: z.string().min(1),
   membership_status: z.enum(["ACTIVE", "INACTIVE", "DELETED"]).default("ACTIVE"),
+  // portal_role is portal-only until the backend grows a role column on
+  // ComputeAllocationMembership. Forwarded to MSW; stripped before hitting core.
+  portal_role: z.enum(MEMBERSHIP_ROLES).optional(),
 });
 export type CreateMembershipPayload = z.input<typeof createMembershipPayloadSchema>;
 
