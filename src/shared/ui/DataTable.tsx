@@ -79,8 +79,28 @@ export function DataTable<T>({
                   key={rowKey(row, index)}
                   className={cn(
                     "border-t border-border/60",
-                    onRowClick && "transition-colors hover:bg-muted/40",
+                    onRowClick && "cursor-pointer transition-colors hover:bg-muted/40",
                   )}
+                  onClick={
+                    onRowClick
+                      ? (e) => {
+                          // Ignore clicks on interactive children (buttons,
+                          // checkboxes, links) — they have their own handlers.
+                          const target = e.target as HTMLElement;
+                          if (target.closest("button, a, input, select, textarea, label")) return;
+                          onRowClick(row);
+                        }
+                      : undefined
+                  }
+                  onKeyDown={
+                    onRowClick
+                      ? (e) => {
+                          if (e.key === "Enter" && e.target === e.currentTarget) {
+                            onRowClick(row);
+                          }
+                        }
+                      : undefined
+                  }
                 >
                   {(() => {
                     const firstWrappable = onRowClick
