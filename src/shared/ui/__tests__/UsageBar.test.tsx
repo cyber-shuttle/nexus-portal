@@ -9,10 +9,10 @@ function inner(progressBar: HTMLElement): HTMLElement {
 }
 
 describe("UsageBar thresholds", () => {
-  it("uses the blue fill below 75%", () => {
+  it("uses the brand fill below 75%", () => {
     render(<UsageBar value={50} max={100} />);
     const bar = screen.getByRole("progressbar");
-    expect(inner(bar).className).toContain("nexus-blue-500");
+    expect(inner(bar).className).toContain("bg-brand");
   });
 
   it("uses the amber fill between 75% and 90%", () => {
@@ -27,10 +27,18 @@ describe("UsageBar thresholds", () => {
     expect(inner(bar).className).toContain("nexus-red-500");
   });
 
+  it("flips to green when the bar is at 100%", () => {
+    render(<UsageBar value={100} max={100} />);
+    const bar = screen.getByRole("progressbar");
+    expect(inner(bar).className).toContain("nexus-green-500");
+  });
+
   it("clamps when value exceeds max", () => {
     render(<UsageBar value={200} max={100} />);
     const bar = screen.getByRole("progressbar");
     expect(bar.getAttribute("aria-valuemax")).toBe("100");
+    // Clamped to 100% → green.
+    expect(inner(bar).className).toContain("nexus-green-500");
   });
 
   it("treats a zero or negative max defensively", () => {

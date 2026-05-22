@@ -11,9 +11,11 @@ export type UsageBarProps = {
 };
 
 function thresholdColor(ratio: number): string {
+  // 100%+ flips to green per Figma — full bars read "done", not "danger".
+  if (ratio >= 1) return "bg-[color:var(--nexus-green-500)]";
   if (ratio >= 0.9) return "bg-[color:var(--nexus-red-500)]";
   if (ratio >= 0.75) return "bg-[color:var(--nexus-amber-500)]";
-  return "bg-[color:var(--nexus-blue-500)]";
+  return "bg-brand";
 }
 
 export function UsageBar({ value, max, label, ariaLabel, className, size = "md" }: UsageBarProps) {
@@ -88,7 +90,7 @@ export function SharedUsageBar({
         tabIndex={0}
         className="flex h-2.5 w-full overflow-hidden rounded-full bg-muted"
       >
-        <div className="h-full bg-[color:var(--nexus-blue-500)]" style={{ width: `${minePct}%` }} />
+        <div className="h-full bg-brand" style={{ width: `${minePct}%` }} />
         <div
           className="h-full bg-[color:var(--nexus-blue-300)] bg-[image:repeating-linear-gradient(45deg,transparent_0_4px,rgba(255,255,255,0.45)_4px_8px)]"
           style={{ width: `${restPct}%` }}
