@@ -43,10 +43,10 @@ export function SideDrawer({
             widthClass[width],
           )}
         >
-          <header className="flex items-start justify-between border-b border-border/60 p-5">
+          <header className="flex items-start justify-between border-b border-border px-6 py-4">
             <div className="space-y-1">
               {title ? (
-                <DialogPrimitive.Title className="font-heading text-lg font-semibold">
+                <DialogPrimitive.Title className="font-display text-lg font-semibold text-foreground">
                   {title}
                 </DialogPrimitive.Title>
               ) : null}
@@ -57,12 +57,19 @@ export function SideDrawer({
               ) : null}
             </div>
             <DialogPrimitive.Close
-              render={<Button variant="ghost" size="icon-sm" aria-label="Close" />}
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="Close"
+                  className="h-8 w-8 rounded-md"
+                />
+              }
             >
               <XIcon className="size-4" />
             </DialogPrimitive.Close>
           </header>
-          <div className="flex-1 overflow-y-auto p-5">{children}</div>
+          <div className="flex-1 overflow-y-auto px-6 py-4">{children}</div>
         </DialogPrimitive.Popup>
       </DialogPrimitive.Portal>
     </DialogPrimitive.Root>
