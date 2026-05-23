@@ -304,6 +304,42 @@ no in-flight customer has hit the cap.
 
 ---
 
+## 8. Proposed — `GET /compute-allocation-usages/aggregate` (Resources tab rollups)
+
+The TF3 Resources tab (`/analytics?tab=resources`) needs a one-dimensional
+rollup keyed by allocation / user / project / resource. In v1 the portal
+fans out per-allocation `/compute-allocations/{id}/usages` and buckets
+client-side via `groupTotals` / `resourceGroupMatrix` (see
+`src/features/analytics/aggregations.ts`). This is **acceptable for v1 per
+spec §12** — the same fan-out pattern as the admin overview tab — but
+scales linearly with allocation count.
+
+### Endpoint sketch (backend ask)
+
+| Verb | Path | Request | Response | Notes |
+|---|---|---|---|---|
+| GET | `/compute-allocation-usages/aggregate` | query: `group_by=allocation\|user\|project\|resource`, `from`, `to`, `project_id?`, `allocation_id?` | `Array<{ key, label, total_su, total_raw }>` | One row per bucket. `key` is the entity id (allocation/user/project/resource id depending on `group_by`); `label` is the display string the backend can prefer (saves the portal a fan-out for names). `project_id` filters to one project; `allocation_id` filters to one allocation. The portal computes `share_pct` client-side from the row totals. |
+
+### Status codes (proposed)
+
+- `200` with the rollup (or empty array when the filter excludes everything).
+- `400 invalid_request` when `group_by` is missing or `from > to`.
+- `403` when the caller can't read the scope (admin enforces site-wide,
+  PI/researcher enforce the membership-derived projection).
+
+### Auth model (proposed)
+
+- Bearer-token authenticated. Researcher scope = own memberships; PI scope
+  = projects where they are recorded PI; admin scope = site-wide. Same
+  contract as the rest of `/compute-allocations/*` reads.
+
+**Status:** **NOT MSW-mocked yet.** Portal fans out per-allocation today
+(see §3 caveat); the swap to this endpoint is a query replacement, not a
+UI rewrite. The same swap will also collapse the resource × group matrix
+when `?group_by=resource,user` (multi-value) ships in a follow-up.
+
+---
+
 ## Open questions
 
 1. **Aggregation horizon for `/queues/wait-time`.** Completed jobs only,
