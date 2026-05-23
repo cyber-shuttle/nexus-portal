@@ -3,7 +3,7 @@ import { z } from "zod";
 import {
   clusterSchema,
   updateClusterStatusPayloadSchema,
-} from "@features/admin/schemas";
+} from "@features/allocations/schemas";
 import { persistSeed, seed } from "../seed";
 import { path } from "./_utils";
 

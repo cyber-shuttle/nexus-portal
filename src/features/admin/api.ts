@@ -16,25 +16,20 @@ import {
   type AdminResourceUsagePoint,
   type AdminStats,
   type Adjustment,
-  type Cluster,
-  type ClusterStatus,
   type CreateAdjustmentPayload,
   type CreateRatePayload,
   type UnmappedJob,
-  type UpdateClusterStatusPayload,
   adjustmentSchema,
   adminAllocationSummarySchema,
   adminRateRowSchema,
   adminResourceRowSchema,
   adminResourceUsagePointSchema,
   adminStatsSchema,
-  clusterSchema,
   createAdjustmentPayloadSchema,
   createRatePayloadSchema,
   discardUnmappedJobPayloadSchema,
   linkUnmappedJobPayloadSchema,
   unmappedJobSchema,
-  updateClusterStatusPayloadSchema,
 } from "./schemas";
 
 export async function getAdminStats(): Promise<AdminStats> {
@@ -188,27 +183,7 @@ export async function createAdjustment(payload: CreateAdjustmentPayload): Promis
   return adjustmentSchema.parse(raw);
 }
 
-// Cluster status endpoints — spec §8 B5/B6. The list endpoint can be filtered
-// to `status=ENABLED` for selector consumers (see useEnabledClusters); the
-// PATCH flips the status (admin only, gated via CASL `manage Cluster`).
-export type ListClustersParams = { status?: ClusterStatus };
-
-export async function listClusters(params: ListClustersParams = {}): Promise<Cluster[]> {
-  const search = new URLSearchParams();
-  if (params.status) search.set("status", params.status);
-  const qs = search.toString();
-  const raw = await apiFetch(`/compute-clusters${qs ? `?${qs}` : ""}`);
-  return z.array(clusterSchema).parse(raw ?? []);
-}
-
-export async function updateClusterStatus(
-  id: string,
-  status: ClusterStatus,
-): Promise<Cluster> {
-  const validated = updateClusterStatusPayloadSchema.parse({ status } satisfies UpdateClusterStatusPayload);
-  const raw = await apiFetch(`/compute-clusters/${encodeURIComponent(id)}`, {
-    method: "PATCH",
-    body: validated,
-  });
-  return clusterSchema.parse(raw);
-}
+// Cluster fetchers (`listClusters`, `updateClusterStatus`) live in
+// `@features/allocations/api` per TF0 architect carry-over so selector
+// consumers in `features/proposals` and `features/signer` can import them
+// without crossing the §5 isolation rule.

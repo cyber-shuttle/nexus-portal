@@ -30,21 +30,15 @@ describe("clusterSchema", () => {
   });
 
   it("accepts a DISABLED row with no in-flight jobs", () => {
-    expect(
-      clusterSchema.safeParse({ ...validCluster, status: "DISABLED" }).success,
-    ).toBe(true);
+    expect(clusterSchema.safeParse({ ...validCluster, status: "DISABLED" }).success).toBe(true);
   });
 
   it("rejects an unknown status (guards against silent drift)", () => {
-    expect(
-      clusterSchema.safeParse({ ...validCluster, status: "MAINTENANCE" }).success,
-    ).toBe(false);
+    expect(clusterSchema.safeParse({ ...validCluster, status: "MAINTENANCE" }).success).toBe(false);
   });
 
   it("rejects a negative allocation_count", () => {
-    expect(
-      clusterSchema.safeParse({ ...validCluster, allocation_count: -1 }).success,
-    ).toBe(false);
+    expect(clusterSchema.safeParse({ ...validCluster, allocation_count: -1 }).success).toBe(false);
   });
 });
 
@@ -81,9 +75,7 @@ describe("listClusters fetcher", () => {
 
 describe("updateClusterStatus fetcher", () => {
   it("PATCHes /compute-clusters/{id} with the status body", async () => {
-    fetchMock.mockResolvedValueOnce(
-      mockResponse(200, { ...validCluster, status: "DISABLED" }),
-    );
+    fetchMock.mockResolvedValueOnce(mockResponse(200, { ...validCluster, status: "DISABLED" }));
     const out = await updateClusterStatus("cluster-001", "DISABLED");
     expect(out.status).toBe("DISABLED");
     const init = fetchMock.mock.calls[0]?.[1];
