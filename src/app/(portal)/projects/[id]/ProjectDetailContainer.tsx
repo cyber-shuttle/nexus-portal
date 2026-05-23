@@ -13,7 +13,8 @@ import {
   getChangeRequestsForAllocation,
 } from "@features/change-requests/api";
 import { changeRequestKeys } from "@features/change-requests/queries";
-import { useUser } from "@features/members/queries";
+import { getMembershipsForAllocation } from "@features/members/api";
+import { memberKeys, useUser } from "@features/members/queries";
 import { ProjectDetailHeader } from "@features/projects/components/ProjectDetailHeader";
 import {
   type ProjectAllocationRow,
@@ -76,6 +77,17 @@ export function ProjectDetailContainer({ projectId }: { projectId: string }) {
     })),
   });
 
+  // Membership fan-out for the Members KPI. Same query key the Members tab
+  // uses, so the cache is shared and the tab incurs no extra round-trips when
+  // opened.
+  const membershipQueries = useQueries({
+    queries: allocations.map((a) => ({
+      queryKey: memberKeys.forAllocation(a.id),
+      queryFn: () => getMembershipsForAllocation(a.id),
+      enabled: Boolean(a.id),
+    })),
+  });
+
   const totalAllocatedSu = allocations.reduce((s, a) => s + (a.initial_su_amount ?? 0), 0);
   const totalUsedSu = usageQueries.reduce(
     (s, q) => s + ((q.data as { total_su_amount?: number } | undefined)?.total_su_amount ?? 0),
@@ -117,13 +129,21 @@ export function ProjectDetailContainer({ projectId }: { projectId: string }) {
       ? [piUserQuery.data?.first_name, piUserQuery.data?.last_name].filter(Boolean).join(" ")
       : (piUserQuery.data?.email ?? null);
 
-  // Members distinct count is computed by ProjectMembersTab. For the KPI strip
-  // we approximate from the per-allocation memberships fanned out below; the
-  // tab does the same fan-out so cached results are reused.
-  // For the simple KPI we use 0/loading vs the actual count from the tab data
-  // cached in tanstack — but to avoid duplicate fan-out here, the KPI just
-  // shows "—" until the user opens the Members tab. Keep it simple per memory.
-  const membersValue = "—";
+  // Distinct members across every allocation. The fan-out shares a cache key
+  // with the Members tab so opening the tab is free after this loads. We
+  // intentionally render "—" until every membership query has resolved so the
+  // KPI never flickers a partial undercount.
+  const membershipsLoading =
+    membershipQueries.length === 0 ? false : membershipQueries.some((q) => q.isLoading);
+  const distinctMembers = React.useMemo(() => {
+    const set = new Set<string>();
+    for (const q of membershipQueries) {
+      const rows = (q.data ?? []) as Array<{ user_id: string }>;
+      for (const m of rows) set.add(m.user_id);
+    }
+    return set.size;
+  }, [membershipQueries]);
+  const membersValue = membershipsLoading ? "—" : String(distinctMembers);
 
   const canAddAllocation = ability.can(
     "create",
