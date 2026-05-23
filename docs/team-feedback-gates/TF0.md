@@ -263,3 +263,24 @@ grep -rnE "\b(text|bg|border)-nexus-(blue|red|green|amber|gray)-[0-9]+\b" src/  
 
 - QA visual review: _pending_
 - Architect review: _pending_
+
+## Architect-review (PASS-WITH-NOTES)
+
+All 12 verification items pass. EnableToggle ships per spec §7.1 with 6 tests. GroupByChipGroup already shipped in A0 (correctly skipped). Projects feature module extended (5 fetchers + 5 hooks + schemas + 4 component stubs). Admin cluster sub-feature with `useEnabledClusters()` single-source helper. CASL `Project` + `Cluster` subjects with `myMemberProjects` propagated through full auth pipeline (personaScopes → auth.ts Credentials+OIDC+JWT+session → next-auth.d.ts → AbilityProvider → /me/scopes MSW). MSW handlers Zod-validate both directions. Seed has 1 DISABLED cluster for QA visibility.
+
+### LOW (TF1/TF2/TF3 housekeeping)
+1. **TF1:** Trim redundant `projectKeys.detail` invalidation in `useUpdateProject` (`projectKeys.all` already covers as prefix).
+2. **TF1:** Lock the `/projects?paged=1` two-mode contract in `docs/backend-contracts/projects.md` — discriminator currently only in handler code.
+3. **TF1:** `getProjectUsageSummary` computes `used_pct` as share-of-project-total because resource-level allocated SUs aren't in seed; commit to one interpretation in contract doc.
+4. **TF1:** Decide project lifecycle (ACTIVE-on-create vs DRAFT/SUBMITTED). MSW handler hardcodes ACTIVE today.
+5. **TF2 (architectural):** `useEnabledClusters` will be consumed by `features/proposals`, `features/allocations`, `features/signer` — importing from `@features/admin/queries` would break the §5 isolation grep. **Promote `clusterKeys` + `useEnabledClusters` to `features/allocations/queries.ts`** since clusters are an allocations-domain concept. Document in TF2 plan.
+6. **TF3:** `MostUsedResourceCallout` stub lives in `features/projects/components/` but will be used by allocation detail + project Resource Usage tab + `/analytics/resources`. **Promote to `src/shared/ui/`** in TF3 if visual is identical across all three sites — otherwise allocations/analytics import from projects feature module breaks isolation.
+
+### Strengths
+- `EnableToggle` brand-tint/green-dot enabled vs muted/gray disabled — never red. Right semantic.
+- `myMemberProjects` PI-as-member union keeps `read Project` rule degenerate to "any project I touch" without union logic at call sites. Clean.
+- Schema dual-shape (lean `computeClusterSchema` for selectors, richer admin `clusterSchema` for the admin table) avoids forcing existing selectors to update.
+- MSW handler order in `index.ts` correct (projects before users, clusters after admin).
+- 308 unit tests / 25 routes / build clean. TypeScript no `any` / `@ts-ignore`.
+
+Sign-off: APPROVED. TF1 may proceed with the 4 housekeeping items as carry-overs.
