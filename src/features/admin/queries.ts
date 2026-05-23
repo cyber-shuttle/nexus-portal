@@ -7,6 +7,7 @@ import {
   type AdminAllocationsParams,
   type AdminChangeRequestsParams,
   type AdminResourcesParams,
+  type ListClustersParams,
   createAdjustment,
   createAdminRate,
   deactivateAdminRate,
@@ -22,7 +23,10 @@ import {
   getAdminStats,
   getUnmappedJobs,
   linkUnmappedJob,
+  listClusters,
+  updateClusterStatus,
 } from "./api";
+import type { ClusterStatus } from "./schemas";
 
 export const adminKeys = {
   all: ["admin"] as const,
@@ -153,5 +157,38 @@ export function useCreateAdjustment() {
   return useMutation({
     mutationFn: createAdjustment,
     onSuccess: () => client.invalidateQueries({ queryKey: [...adminKeys.all, "adjustments"] }),
+  });
+}
+
+// Cluster status — spec §5.3. `clusterKeys` lives under `admin` so cache
+// invalidations after a PATCH cascade through every cluster query (filtered
+// or not). The `useEnabledClusters` wrapper is the single canonical place
+// the rest of the app pulls "valid selector options" from (see spec §5.4).
+export const clusterKeys = {
+  all: ["clusters"] as const,
+  list: (params: ListClustersParams = {}) => [...clusterKeys.all, "list", params] as const,
+};
+
+export function useClusters(params: ListClustersParams = {}) {
+  return useQuery({
+    queryKey: clusterKeys.list(params),
+    queryFn: () => listClusters(params),
+  });
+}
+
+export function useEnabledClusters() {
+  return useClusters({ status: "ENABLED" });
+}
+
+export function useUpdateClusterStatus() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, status }: { id: string; status: ClusterStatus }) =>
+      updateClusterStatus(id, status),
+    onSuccess: () => {
+      // Every list variant (ENABLED-only, ALL, etc.) needs to refetch so the
+      // toggle reflects immediately in selectors and the admin table.
+      client.invalidateQueries({ queryKey: clusterKeys.all });
+    },
   });
 }

@@ -1,5 +1,34 @@
 import { z } from "zod";
 
+// Cluster status — spec §8 B4 introduces a status column on
+// `compute_clusters`. We mirror the backend's `VARCHAR(16) NOT NULL DEFAULT
+// 'ENABLED'` migration verbatim. `DISABLED` hides the cluster from new
+// allocation selectors but never breaks existing allocations or in-flight
+// jobs (see spec §5.4 cluster filter propagation).
+export const clusterStatusSchema = z.enum(["ENABLED", "DISABLED"]);
+export type ClusterStatus = z.infer<typeof clusterStatusSchema>;
+
+// Admin-facing cluster row. The portal-wide `ComputeCluster` schema
+// (features/allocations/schemas.ts) is intentionally tiny ({id, name}) so it
+// can be shared by selectors that don't care about status. This extended
+// shape is used by the admin Clusters tab table only.
+export const clusterSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  status: clusterStatusSchema,
+  type: z.string().optional(),
+  location: z.string().optional(),
+  allocation_count: z.number().int().nonnegative(),
+  user_count: z.number().int().nonnegative(),
+  inflight_jobs: z.number().int().nonnegative().optional(),
+});
+export type Cluster = z.infer<typeof clusterSchema>;
+
+export const updateClusterStatusPayloadSchema = z.object({
+  status: clusterStatusSchema,
+});
+export type UpdateClusterStatusPayload = z.infer<typeof updateClusterStatusPayloadSchema>;
+
 export const adminAllocationSummarySchema = z.object({
   id: z.string(),
   name: z.string(),
