@@ -23,15 +23,17 @@ test.describe("Admin resources route", () => {
     });
 
     await loginAs(page, "admin");
-    const response = await page.goto("/admin/resources");
+    // TF2 added a TabsRouter — the Resources content lives behind ?tab=resources
+    // (Clusters is now the default tab).
+    const response = await page.goto("/admin/resources?tab=resources");
     expect(response?.status()).toBe(200);
 
-    await expect(page.getByRole("heading", { name: /^Resources$/ })).toBeVisible({
-      timeout: 20_000,
-    });
+    await expect(
+      page.getByRole("heading", { name: /^Resources & Clusters$/ }),
+    ).toBeVisible({ timeout: 20_000 });
 
-    // The filter form is always rendered; the table appears once data resolves.
-    await expect(page.getByLabel(/^Cluster$/)).toBeVisible();
+    // The Resources tab keeps its existing filter form + table.
+    await expect(page.getByLabel(/^Cluster$/)).toBeVisible({ timeout: 20_000 });
     await expect(page.locator("tbody tr").first()).toBeVisible({ timeout: 20_000 });
 
     // No serious console errors from the schema-validation widening or

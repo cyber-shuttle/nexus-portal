@@ -89,37 +89,35 @@ export function ClustersTable({
   }, [rows, statusFilter, typeFilter, q]);
 
   // DataTable applies cell styles uniformly, so we mute the row content per-
-  // cell when status is DISABLED. The EnableToggle pill in the Status column
-  // stays at full contrast because it owns the row's primary affordance.
+  // cell when status is DISABLED. We only dim with `opacity-70` (not also
+  // `text-muted-foreground`) because the cell text on this table already
+  // uses the muted token in places, and stacking both pushes contrast below
+  // WCAG AA. The EnableToggle pill in the Status column stays at full
+  // contrast because it owns the row's primary affordance.
   const muteIfDisabled = (r: Cluster, className: string) =>
-    r.status === "DISABLED" ? `${className} text-muted-foreground opacity-70` : className;
+    r.status === "DISABLED" ? `${className} opacity-70` : className;
 
   const columns: DataTableColumn<Cluster>[] = [
     {
       key: "name",
       header: "Cluster",
       cell: (r) => (
-        <span className={muteIfDisabled(r, "flex flex-col")} data-testid={`cluster-row-${r.id}`}>
-          <span className="font-medium">{r.name}</span>
-          <span className="text-xs text-muted-foreground">{r.id}</span>
+        <span className={muteIfDisabled(r, "font-medium")} data-testid={`cluster-row-${r.id}`}>
+          {r.name}
         </span>
       ),
     },
     {
       key: "type",
       header: "Type",
-      cell: (r) => (
-        <span className={muteIfDisabled(r, "text-xs text-muted-foreground")}>{r.type ?? "—"}</span>
-      ),
+      // Keep at full body text token (not muted-foreground) so 14px AA
+      // contrast holds even when the row is otherwise muted via opacity-70.
+      cell: (r) => <span className={muteIfDisabled(r, "text-sm")}>{r.type ?? "—"}</span>,
     },
     {
       key: "location",
       header: "Location",
-      cell: (r) => (
-        <span className={muteIfDisabled(r, "text-xs text-muted-foreground")}>
-          {r.location ?? "—"}
-        </span>
-      ),
+      cell: (r) => <span className={muteIfDisabled(r, "text-sm")}>{r.location ?? "—"}</span>,
     },
     {
       key: "allocs",
