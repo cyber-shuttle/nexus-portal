@@ -173,7 +173,7 @@ export function ProjectsListContainer({ userId, persona }: Props) {
   const emptyCopy = {
     heading: empty.heading,
     description: empty.description,
-    cta: canCreate ? <NewProjectCta /> : undefined,
+    cta: canCreate ? <NewProjectCta canCreate={canCreate} /> : undefined,
   };
 
   return (
@@ -188,7 +188,7 @@ export function ProjectsListContainer({ userId, persona }: Props) {
       onStatusFilterChange={(next) => updateParam("status", next === "all" ? null : next)}
       piFilter={piFilter}
       onPiFilterChange={(next) => updateParam("pi", next)}
-      headerCta={canCreate ? <NewProjectCta /> : undefined}
+      headerCta={<NewProjectCta canCreate={canCreate} />}
       emptyCopy={emptyCopy}
     />
   );

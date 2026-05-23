@@ -1,6 +1,14 @@
 "use client";
 
 import { DataTable, type DataTableColumn } from "@/shared/ui/DataTable";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/shared/ui/dialog";
 import { EmptyState } from "@/shared/ui/EmptyState";
 import { ErrorState } from "@/shared/ui/ErrorState";
 import { TableSkeleton } from "@/shared/ui/Loading";
@@ -11,6 +19,7 @@ import {
 import { UsageBar } from "@/shared/ui/UsageBar";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/ui/tooltip";
 import Link from "next/link";
 import * as React from "react";
 import type { Project, ProjectStatus } from "../schemas";
@@ -256,24 +265,49 @@ export function ProjectsList({
   );
 }
 
-// Surface a "+ New project" button used by the page header. Keeps the
-// presentational component framework-agnostic; gating happens at the call
-// site via CASL `Can` or `ability.can`.
-export function NewProjectCta({ onClick }: { onClick?: () => void }) {
+// Surface a "+ New project" button used by the page header. The container
+// gates rendering on `ability.can('create', 'Project')` for the enabled
+// variant; the disabled tooltip variant exists so layouts that always render
+// the CTA (e.g. empty-state copy slots) can still hint at the capability.
+export function NewProjectCta({ canCreate = true }: { canCreate?: boolean }) {
+  const [open, setOpen] = React.useState(false);
+
+  if (!canCreate) {
+    return (
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              aria-disabled
+              aria-label="New project (no permission)"
+              className="opacity-50 cursor-not-allowed"
+              onClick={(e) => e.preventDefault()}
+            >
+              + New project
+            </Button>
+          }
+        />
+        <TooltipContent>You don't have permission to create projects</TooltipContent>
+      </Tooltip>
+    );
+  }
+
   return (
-    <Button
-      variant="default"
-      // Disabled hint: the create modal lands in a future phase. Click is a
-      // no-op today; presence of the CTA still signals capability to PIs.
-      aria-disabled
-      aria-label="New project (available in a future phase)"
-      className="opacity-50 cursor-not-allowed"
-      onClick={(e) => {
-        e.preventDefault();
-        onClick?.();
-      }}
-    >
-      + New project
-    </Button>
+    <>
+      <Button onClick={() => setOpen(true)} aria-label="New project">
+        + New project
+      </Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>New project</DialogTitle>
+            <DialogDescription>
+              Project creation form lands in a future phase.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter showCloseButton />
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
