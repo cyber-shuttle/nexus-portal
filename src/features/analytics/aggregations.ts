@@ -115,3 +115,77 @@ function startOfUtcDay(d: Date): Date {
     Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 0, 0, 0, 0),
   );
 }
+
+// --- PI aggregations -------------------------------------------------------
+
+export type PiProjectRollup = {
+  projectId: string;
+  projectName: string;
+  used: number;
+  allocated: number;
+  forecastExhaust: Date | null;
+  endDate: Date | null;
+  atRisk: boolean;
+  pendingChangeRequests: number;
+  firstAllocationId: string | null;
+};
+
+// `projectsAtRisk` flags projects whose forecast exhaust falls more than
+// `riskBufferDays` (default 7 per spec §6.2 KPI #4) before the latest award
+// end across the project's allocations.
+const RISK_BUFFER_DAYS = 7;
+const DAY = 24 * 60 * 60 * 1000;
+
+export function isProjectAtRisk(
+  forecastExhaust: Date | null,
+  endDate: Date | null,
+  bufferDays: number = RISK_BUFFER_DAYS,
+): boolean {
+  if (!forecastExhaust || !endDate) return false;
+  return forecastExhaust.getTime() < endDate.getTime() - bufferDays * DAY;
+}
+
+export function projectsAtRiskCount(rollups: PiProjectRollup[]): number {
+  return rollups.reduce((acc, r) => (r.atRisk ? acc + 1 : acc), 0);
+}
+
+export type MemberContribution = {
+  user_id: string;
+  total: number;
+};
+
+// `topMembers` rolls per-membership totals up to one row per user, sorts desc,
+// and folds the tail beyond `n` into a single "Other" bucket so the bar chart
+// stays readable for PIs with many members across projects.
+export function topMembers(
+  contributions: MemberContribution[],
+  n = 10,
+  otherLabel = "Other",
+): MemberContribution[] {
+  const byUser = new Map<string, number>();
+  for (const c of contributions) {
+    byUser.set(c.user_id, (byUser.get(c.user_id) ?? 0) + c.total);
+  }
+  const merged: MemberContribution[] = Array.from(byUser.entries())
+    .map(([user_id, total]) => ({ user_id, total }))
+    .sort((a, b) => b.total - a.total);
+  if (merged.length <= n) return merged;
+  const head = merged.slice(0, n);
+  const tail = merged.slice(n);
+  const other = tail.reduce((acc, c) => acc + c.total, 0);
+  return [...head, { user_id: otherLabel, total: other }];
+}
+
+// `projectForecast` returns the earliest allocation exhaust across a project's
+// allocations; that's the limiting factor for "this project will run out".
+export function projectForecast(
+  rollups: Array<{ forecastExhaust: Date | null }>,
+): Date | null {
+  let earliest: number | null = null;
+  for (const r of rollups) {
+    if (!r.forecastExhaust) continue;
+    const t = r.forecastExhaust.getTime();
+    if (earliest === null || t < earliest) earliest = t;
+  }
+  return earliest === null ? null : new Date(earliest);
+}
