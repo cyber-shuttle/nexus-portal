@@ -110,3 +110,41 @@ grep -rnE "\b(text|bg|border)-nexus-(blue|red|green|amber|gray)-[0-9]+\b" src/  
 
 - QA visual review: _pending_
 - Architect review: _pending_
+
+## Architect-review (PASS-WITH-NOTES)
+
+All 14 verification items pass. TF0 carry-over completed: cluster api/queries/schemas live in `@features/allocations`; admin module has breadcrumb comments pointing to the new location; zero `@features/admin` imports from proposals/signer. Isolation cleanup (commit `7d611a3`) moved ClustersTable from `app/(portal)/admin/resources/` to `features/allocations/components/` — correct dependency direction.
+
+### Architectural strengths
+- `ClustersContainer` stays admin-local (owns CASL gate + filter state + mutation wiring); `ClustersTable` is feature-presentational. Textbook container/presentational split.
+- `useClusters({})` fetches without status filter so the in-table dropdown can flip ENABLED/DISABLED/All without re-roundtripping. Acceptable at cluster-count cardinality.
+- Cluster schema layering (lean `computeClusterSchema` for selectors vs richer admin `clusterSchema`) right call.
+- Backend contract carries the `ComputeClusterStatusEvent` audit ask explicitly.
+
+### LOW (TF3 housekeeping)
+1. Spec §9 TF2 DoD on selector wiring is technically partial — no live cluster picker exists in proposals/signer yet, so wiring is anchored via TODOs that reference `useEnabledClusters` from `@features/allocations/queries`. Safety property upheld since no UI surface can leak DISABLED clusters. TF3 should not close until the first picker that adopts `useEnabledClusters()` ships.
+2. WCAG AA contrast: implementer dropped `text-muted-foreground` from disabled-row sub-text (kept `opacity-70` per-cell). Correct trade-off; full-contrast pill remains as primary affordance.
+3. Type dropdown wraps when only one type exists — `hide when options.length === 1` polish.
+4. Optimistic-update on cluster status mutation deferred; current `invalidateQueries({clusterKeys.all})` is correct for v1.
+
+Sign-off: APPROVED. TF3 may proceed.
+
+## Visual QA (PASS-WITH-NOTES + ESCALATE)
+
+Admin happy path PASS:
+- TabsRouter with Clusters default + Resources ✓
+- DataTable columns + filter strip ✓
+- Toggle opens confirmation dialog with impact stats ("Active allocations: 70 / Active users: 52") ✓
+- Confirm → toast "Nexus-A disabled" → switch a11y label flips to "Disabled: click to enable Nexus-A" ✓
+- Re-enable works ✓
+- Zero console errors during happy path ✓
+
+### HIGH (recurring .next cache wedge, not TF2 code)
+- `/sign-in` returns 500 after admin sign-out. Same pattern as prior phases — stale `.next` chunks. Workaround: `pkill -f "next dev" && rm -rf .next && pnpm dev`. Blocks researcher CASL verification but the read-only state was confirmed on the PI persona path (a11y label "Nexus-A status: Enabled (read-only)").
+
+### LOW (TF3/TF4 polish)
+1. Seed fixture has 2 clusters (Nexus-A, Nexus-B) both ENABLED. Spec expected 3 with one DISABLED for QA visibility. Update seed to include a Nexus-Legacy DISABLED cluster.
+2. Confirm button copy says "Disable" instead of "Disable cluster" (spec mismatch, semantically equivalent).
+3. Impact stats render as two labeled stats vs single "X active allocations · Y users" line (design choice).
+
+Sign-off: PASS-WITH-NOTES. TF3 may proceed; the four LOW items above roll to TF3/TF4.
