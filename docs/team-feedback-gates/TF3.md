@@ -182,3 +182,32 @@ grep -rn "MostUsedResourceCallout" src/ | grep -v "shared/ui/MostUsedResourceCal
 ## Sign-off
 
 Pending architect + visual QA review.
+
+## Architect-review (APPROVED)
+
+All 12 verification items pass. Container/presentation seam correct: `ResourcesAnalyticsContainer` at route layer (12 cross-feature imports), `features/analytics/components/` zero cross-feature. Aggregation primitives (`groupTotals`, `topConsumers`, `resourceGroupMatrix`) well-shaped + tested. CASL composition correct (researcher member-only, PI per-project, admin all). MostUsedResourceCallout promoted + consumed by exactly 3 sites. Backend-contract aggregate endpoint sketched in `analytics.md §8`.
+
+### Strengths
+- Drill drawer unification with discriminated-union state across 3 drill kinds.
+- Per-allocation fan-out documented + bounded; aggregate endpoint is the architecturally clean escape hatch.
+- 8 plain imperative commits.
+- TS strict, zero `any`.
+
+### Open items (TF4)
+1. **Matrix warn-band skip** (green → red at 0.6 ratio) — boost amber contrast via `--nexus-amber-800` on `--nexus-amber-100` OR bold cell font weight.
+2. `window.location.assign` in `CreditsAndResources.tsx:106` → switch to `useRouter().push()` for SPA navigation.
+3. `${rid}::${k}` composite map key in `resourceGroupMatrix` — consider typed tuple key if extended.
+4. Retire fallback drawer in `MostUsedResourceCallout` once project Resource Usage tab adopts its own drill convention.
+
+Sign-off: APPROVED. TF4 may proceed.
+
+## Visual QA (PASS-WITH-NOTES)
+
+All spec §6.4 regions present. Group-by change propagates URL + matrix heading + KPI + table. DrillStack works with breadcrumb. Callout on all 3 sites verified. Admin scope expansion confirmed (Total SUs 22,178 PI → 31,948 admin). Zero console errors.
+
+### LOW (TF4 polish)
+1. Group-by surface is one dropdown chip ("Group: all" with menu items By allocation/By user/By project) vs spec §6.4's "3 GroupByChips" — implementer chose tidier single-chip pattern. Align with design intent.
+2. `?project=` deep-link param accepted but doesn't filter — the page still shows full PI scope. Wire actual filter in TF4 (or downgrade the link to documentation-only).
+3. "Explore in Analytics →" arrow glyph not in a11y tree — visual confirm needed.
+
+Sign-off: PASS-WITH-NOTES. TF4 may proceed.
