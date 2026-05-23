@@ -103,17 +103,26 @@ export function useAdminAllocations(params: AdminAllocationsParams = {}) {
 }
 
 // A3 site-wide enumerations for the admin analytics page.
-export function useAdminProjectsFull() {
+//
+// The optional `enabled` gate keeps non-admin Resources tab consumers from
+// burning a /admin/projects-full round-trip whose payload they can't read —
+// the persona switch in ResourcesAnalyticsContainer toggles this per call.
+export function useAdminProjectsFull(options: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: adminKeys.projectsFull(),
     queryFn: getAdminProjectsFull,
+    enabled: options.enabled ?? true,
   });
 }
 
-export function useAdminAllocationsFull(params: AdminAllocationsFullParams = {}) {
+export function useAdminAllocationsFull(
+  params: AdminAllocationsFullParams = {},
+  options: { enabled?: boolean } = {},
+) {
   return useQuery({
     queryKey: adminKeys.allocationsFull(params),
     queryFn: () => getAdminAllocationsFull(params),
+    enabled: options.enabled ?? true,
   });
 }
 

@@ -264,3 +264,85 @@ export function complianceCell(
   const ratio = input.used / input.allocated;
   return { value: ratio, band: bandForUsageRatio(ratio) };
 }
+
+// --- Resources tab aggregations (TF3) -------------------------------------
+
+// One-dimensional rollup of flat usage rows by an arbitrary group key. The
+// caller supplies a `keyOf` that maps each usage row to its bucket so the
+// same primitive drives "by resource", "by user", "by allocation", and "by
+// project" cuts on the Resources tab. Rows whose key is empty/undefined are
+// skipped so the chart never renders a phantom bucket.
+export type ResourceGroupTotal = {
+  key: string;
+  total_su: number;
+};
+
+export type ResourceUsagePoint = UsagePoint & {
+  user_id?: string;
+  project_id?: string;
+};
+
+export function groupTotals<T extends { used_su_amount: number }>(
+  rows: T[],
+  keyOf: (row: T) => string | null | undefined,
+): ResourceGroupTotal[] {
+  const totals = new Map<string, number>();
+  for (const r of rows) {
+    const k = keyOf(r);
+    if (!k) continue;
+    totals.set(k, (totals.get(k) ?? 0) + r.used_su_amount);
+  }
+  return Array.from(totals.entries())
+    .map(([key, total_su]) => ({ key, total_su }))
+    .sort((a, b) => b.total_su - a.total_su);
+}
+
+// Top-N consumers with share-of-total folded onto each row. We compute share
+// against the full input so "Other" buckets in the matrix still reconcile to
+// 100% when the caller renders them. Tiebreak is name asc for visual
+// stability between renders.
+export type ResourceTopRow = {
+  key: string;
+  label: string;
+  total_su: number;
+  share_pct: number;
+};
+
+export function topConsumers(
+  totals: ResourceGroupTotal[],
+  labelOf: (key: string) => string,
+  n = 5,
+): ResourceTopRow[] {
+  const grand = totals.reduce((acc, t) => acc + t.total_su, 0);
+  const sorted = totals.slice().sort((a, b) => {
+    if (b.total_su !== a.total_su) return b.total_su - a.total_su;
+    const la = labelOf(a.key);
+    const lb = labelOf(b.key);
+    return la < lb ? -1 : la > lb ? 1 : 0;
+  });
+  return sorted.slice(0, n).map((t) => ({
+    key: t.key,
+    label: labelOf(t.key),
+    total_su: t.total_su,
+    share_pct: grand > 0 ? (t.total_su / grand) * 100 : 0,
+  }));
+}
+
+// Resource × group cross-tab. Returns a (resource, group) → total map keyed
+// as `${resourceId}::${groupKey}`. Powers the ComplianceMatrix cells on the
+// Resources tab where each cell shows how much a particular user/project/
+// allocation drew from a particular resource.
+export function resourceGroupMatrix(
+  rows: ResourceUsagePoint[],
+  keyOf: (row: ResourceUsagePoint) => string | null | undefined,
+): Map<string, number> {
+  const out = new Map<string, number>();
+  for (const r of rows) {
+    const rid = r.compute_allocation_resource_id || r.compute_allocation_id;
+    const k = keyOf(r);
+    if (!rid || !k) continue;
+    const cellKey = `${rid}::${k}`;
+    out.set(cellKey, (out.get(cellKey) ?? 0) + r.used_su_amount);
+  }
+  return out;
+}
