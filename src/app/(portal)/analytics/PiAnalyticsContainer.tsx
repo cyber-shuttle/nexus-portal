@@ -26,7 +26,6 @@ import { projectKeys, useProjectsAsPi } from "@features/projects/queries";
 import { getAllocationUsages, getAllocationUserUsageTotal } from "@features/usage/api";
 import { usageKeys } from "@features/usage/queries";
 import { useSavedViewsToolbar } from "@features/analytics/views/components/SavedViewsToolbar";
-import type { SavedView } from "@features/analytics/views/types";
 import { forecast } from "@shared/api/aggregator";
 import type { ComputeAllocation } from "@shared/api/domain";
 import { useAbility } from "@shared/casl/AbilityProvider";
@@ -61,29 +60,13 @@ export function PiAnalyticsContainer({ userId }: PiAnalyticsContainerProps) {
   const groupByMember = groupBy[1] ?? "all";
   const groupByResource = groupBy[2] ?? "all";
 
-  // Saved-views toolbar slots. Apply-time we write both range and groupBy
-  // back to the URL via the existing setters (spec §5.3 + §9 Phase A4).
-  const applySavedView = React.useCallback(
-    (view: SavedView) => {
-      const fromMs = Date.parse(view.range.from);
-      const toMs = Date.parse(view.range.to);
-      if (!Number.isNaN(fromMs) && !Number.isNaN(toMs)) {
-        setRange({
-          from: new Date(fromMs),
-          to: new Date(toMs),
-          preset: view.range.preset,
-        });
-      }
-      setGroupBy(view.group_by);
-    },
-    [setRange, setGroupBy],
-  );
+  // Saved-views toolbar slots. The hook owns the atomic URL write so range
+  // + group_by land in one router.replace (spec §5.3 + §9 Phase A4).
   const savedViewSlots = useSavedViewsToolbar({
     persona: "pi",
     userId,
     range,
     groupBy: [groupByProject, groupByMember, groupByResource],
-    onApply: applySavedView,
   });
 
   const projectsQuery = useProjectsAsPi(userId);

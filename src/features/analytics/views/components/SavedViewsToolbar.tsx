@@ -1,11 +1,12 @@
 "use client";
 
 import type { AnalyticsPersona } from "@shared/auth/personaForAnalytics";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
 
 import { toast } from "sonner";
-import type { AnalyticsRange } from "@/shared/hooks/useUrlRange";
+import { applyGroupByToParams } from "@/shared/hooks/useUrlGroupBy";
+import { applyRangeToParams, type AnalyticsRange } from "@/shared/hooks/useUrlRange";
 import {
   useCreateSavedView,
   useDeleteSavedView,
@@ -21,9 +22,10 @@ export type SavedViewsToolbarProps = {
   userId: string | null;
   range: AnalyticsRange;
   groupBy: string[];
-  // Container callback — receives the resolved view at apply-time so it can
-  // write into URL state (range + groupBy slots). Returning void.
-  onApply: (view: SavedView) => void;
+  // Optional hook for callers that want to react to an apply (e.g. logging
+  // or extra side effects). The URL write is done by the toolbar itself so
+  // range + groupBy land atomically.
+  onApply?: (view: SavedView) => void;
 };
 
 export type SavedViewsToolbarSlots = {
@@ -43,6 +45,8 @@ export function useSavedViewsToolbar({
   groupBy,
   onApply,
 }: SavedViewsToolbarProps): SavedViewsToolbarSlots {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const viewsQuery = useSavedViews(persona, userId, { enabled: Boolean(userId) });
   const createMutation = useCreateSavedView(persona, userId);
   const updateMutation = useUpdateSavedView(persona, userId);
@@ -50,6 +54,29 @@ export function useSavedViewsToolbar({
 
   const views = viewsQuery.data ?? [];
   const defaultView = views.find((v) => v.is_default) ?? null;
+
+  // Atomic URL write: setRange + setGroupBy via separate hooks would each
+  // start from the same `searchParams` snapshot and the second writer would
+  // clobber the first. We compose both keys into one URLSearchParams and
+  // issue a single router.replace so range + group_by land together.
+  const writeViewToUrl = React.useCallback(
+    (view: SavedView) => {
+      const fromMs = Date.parse(view.range.from);
+      const toMs = Date.parse(view.range.to);
+      let params = new URLSearchParams(searchParams.toString());
+      if (!Number.isNaN(fromMs) && !Number.isNaN(toMs)) {
+        params = applyRangeToParams(params, {
+          from: new Date(fromMs),
+          to: new Date(toMs),
+          preset: view.range.preset,
+        });
+      }
+      params = applyGroupByToParams(params, view.group_by);
+      const query = params.toString();
+      router.replace(query ? `?${query}` : "?", { scroll: false });
+    },
+    [router, searchParams],
+  );
 
   const buildPayload = React.useCallback(
     (form: { name: string; is_default: boolean }): CreateSavedViewPayload => ({
@@ -107,16 +134,16 @@ export function useSavedViewsToolbar({
   const handleApply = React.useCallback(
     (view: SavedView) => {
       setActiveId(view.id);
-      onApply(view);
+      writeViewToUrl(view);
+      onApply?.(view);
     },
-    [onApply],
+    [writeViewToUrl, onApply],
   );
 
   // Auto-apply the default view on a fresh navigation (spec §9 Phase A4).
   // "Fresh" = the URL has none of the analytics state params (`preset`,
   // `from`, `to`, `gb`). We gate on a ref so the apply only happens once
   // per mount even when the view list refetches.
-  const searchParams = useSearchParams();
   const hasUrlState = React.useMemo(() => {
     return (
       searchParams.has("preset") ||
@@ -139,8 +166,9 @@ export function useSavedViewsToolbar({
     }
     autoAppliedRef.current = true;
     setActiveId(defaultView.id);
-    onApply(defaultView);
-  }, [viewsQuery.isLoading, hasUrlState, defaultView, onApply]);
+    writeViewToUrl(defaultView);
+    onApply?.(defaultView);
+  }, [viewsQuery.isLoading, hasUrlState, defaultView, writeViewToUrl, onApply]);
 
   const chips = (
     <SavedViewChips

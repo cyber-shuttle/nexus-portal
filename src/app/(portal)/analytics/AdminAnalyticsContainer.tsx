@@ -28,7 +28,6 @@ import {
 import { getAllocationUsages } from "@features/usage/api";
 import { usageKeys } from "@features/usage/queries";
 import { useSavedViewsToolbar } from "@features/analytics/views/components/SavedViewsToolbar";
-import type { SavedView } from "@features/analytics/views/types";
 import { forecast, topN } from "@shared/api/aggregator";
 import { useAbility } from "@shared/casl/AbilityProvider";
 import type { DateRangeValue } from "@/shared/ui/DateRangePicker";
@@ -65,29 +64,13 @@ export function AdminAnalyticsContainer({ userId }: AdminAnalyticsContainerProps
   const groupByProject = groupBy[1] ?? "all";
   const groupByOrg = groupBy[2] ?? "all";
 
-  // Saved-views toolbar slots. Apply-time writes both range and groupBy
-  // back to URL state via the existing setters (spec §5.3 + §9 Phase A4).
-  const applySavedView = React.useCallback(
-    (view: SavedView) => {
-      const fromMs = Date.parse(view.range.from);
-      const toMs = Date.parse(view.range.to);
-      if (!Number.isNaN(fromMs) && !Number.isNaN(toMs)) {
-        setRange({
-          from: new Date(fromMs),
-          to: new Date(toMs),
-          preset: view.range.preset,
-        });
-      }
-      setGroupBy(view.group_by);
-    },
-    [setRange, setGroupBy],
-  );
+  // Saved-views toolbar slots. The hook owns the atomic URL write so range
+  // + group_by land in one router.replace (spec §5.3 + §9 Phase A4).
   const savedViewSlots = useSavedViewsToolbar({
     persona: "admin",
     userId,
     range,
     groupBy: [groupByResource, groupByProject, groupByOrg],
-    onApply: applySavedView,
   });
 
   // CASL gate: admin gets `manage Analytics` (explicit rule); also covered by

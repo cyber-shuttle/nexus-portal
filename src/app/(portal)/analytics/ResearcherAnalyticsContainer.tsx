@@ -14,7 +14,6 @@ import {
 } from "@features/analytics/aggregations";
 import { useJobs, useQueueWaitTimes } from "@features/analytics/queries";
 import { useSavedViewsToolbar } from "@features/analytics/views/components/SavedViewsToolbar";
-import type { SavedView } from "@features/analytics/views/types";
 import { useMembershipsForUser } from "@features/members/queries";
 import { getAllocationUsages } from "@features/usage/api";
 import { usageKeys } from "@features/usage/queries";
@@ -47,29 +46,13 @@ export function ResearcherAnalyticsContainer({ userId }: ResearcherAnalyticsCont
   const groupByResource = groupBy[0] ?? "resource";
   const groupByProject = groupBy[1] ?? "all";
 
-  // Saved-views toolbar slots. Apply-time writes both range and groupBy
-  // back to URL state via the existing setters (spec §5.3 + §9 Phase A4).
-  const applySavedView = React.useCallback(
-    (view: SavedView) => {
-      const fromMs = Date.parse(view.range.from);
-      const toMs = Date.parse(view.range.to);
-      if (!Number.isNaN(fromMs) && !Number.isNaN(toMs)) {
-        setRange({
-          from: new Date(fromMs),
-          to: new Date(toMs),
-          preset: view.range.preset,
-        });
-      }
-      setGroupBy(view.group_by);
-    },
-    [setRange, setGroupBy],
-  );
+  // Saved-views toolbar slots. The hook owns the atomic URL write so range
+  // + group_by land in one router.replace (spec §5.3 + §9 Phase A4).
   const savedViewSlots = useSavedViewsToolbar({
     persona: "researcher",
     userId,
     range,
     groupBy: [groupByResource, groupByProject],
-    onApply: applySavedView,
   });
 
   const membershipsQuery = useMembershipsForUser(userId);

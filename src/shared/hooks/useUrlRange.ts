@@ -45,6 +45,26 @@ export type UseUrlRangeOptions = {
   now?: () => number;
 };
 
+// Helper used by callers (saved-view apply) that need to write range + other
+// keys in the same URL replace so the second writer doesn't clobber the
+// first (each useUrl* hook reads `searchParams` independently — calling two
+// setters back-to-back loses the first one's mutation).
+export function applyRangeToParams(
+  params: URLSearchParams,
+  next: AnalyticsRange,
+): URLSearchParams {
+  const out = new URLSearchParams(params.toString());
+  out.set("preset", next.preset);
+  if (next.preset === "custom") {
+    out.set("from", next.from.toISOString());
+    out.set("to", next.to.toISOString());
+  } else {
+    out.delete("from");
+    out.delete("to");
+  }
+  return out;
+}
+
 // `?from=&to=&preset=` <-> { from, to, preset }. Default = last 30 days.
 // Custom ranges require both `from` and `to`; missing/bad values fall back to default.
 export function useUrlRange(options: UseUrlRangeOptions = {}) {
