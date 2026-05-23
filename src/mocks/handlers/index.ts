@@ -2,6 +2,7 @@ import type { HttpHandler } from "msw";
 import { adminHandlers } from "./admin";
 import { allocationHandlers } from "./allocations";
 import { amieHandlers } from "./amie";
+import { analyticsViewsHandlers } from "./analytics-views";
 import { changeRequestHandlers } from "./change-requests";
 import { clientHandlers } from "./clients";
 import { diffHandlers } from "./diffs";
@@ -29,4 +30,5 @@ export const handlers: HttpHandler[] = [
   ...clientHandlers,
   ...amieHandlers,
   ...jobsHandlers,
+  ...analyticsViewsHandlers,
 ];

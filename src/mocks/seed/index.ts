@@ -9,6 +9,7 @@ import type {
 } from "@features/allocations/schemas";
 import type { Packet, PacketEvent, Reply } from "@features/amie/types";
 import type { Job, QueueWaitTime } from "@features/analytics/schemas";
+import type { SavedView } from "@features/analytics/views/types";
 import type { Client } from "@features/clients/types";
 import type { MembershipRole } from "@features/members/roles";
 import type {
@@ -111,6 +112,7 @@ export type Seed = {
   adjustments: Adjustment[];
   jobs: Job[];
   queueWaitTimes: QueueWaitTime[];
+  savedViews: SavedView[];
   preferences: Record<string, { timezone: string; notify_on_change_request_decided: boolean; notify_on_proposal_decided: boolean }>;
 };
 
@@ -675,6 +677,109 @@ export function buildSeed(): Seed {
     });
   }
 
+  // Seed a couple of saved analytics views per dev persona so the chip strip
+  // is non-empty on first load (spec §9 Phase A4). One is marked default per
+  // persona to exercise the auto-apply path on a fresh navigation.
+  const savedViewsNow = new Date().toISOString();
+  const savedViews: SavedView[] = [
+    {
+      id: "view-researcher-weekly",
+      user_id: "researcher@nexus.local",
+      name: "Last 7 days",
+      persona: "researcher",
+      range: {
+        from: hoursFromNow(-7 * 24).toISOString(),
+        to: new Date().toISOString(),
+        preset: "7d",
+      },
+      group_by: ["resource", "all"],
+      filters: {},
+      is_default: true,
+      created_at: savedViewsNow,
+      updated_at: savedViewsNow,
+    },
+    {
+      id: "view-researcher-quarter",
+      user_id: "researcher@nexus.local",
+      name: "This quarter",
+      persona: "researcher",
+      range: {
+        from: hoursFromNow(-90 * 24).toISOString(),
+        to: new Date().toISOString(),
+        preset: "90d",
+      },
+      group_by: ["resource", "all"],
+      filters: {},
+      is_default: false,
+      created_at: savedViewsNow,
+      updated_at: savedViewsNow,
+    },
+    {
+      id: "view-pi-weekly",
+      user_id: "pi@nexus.local",
+      name: "Weekly review",
+      persona: "pi",
+      range: {
+        from: hoursFromNow(-7 * 24).toISOString(),
+        to: new Date().toISOString(),
+        preset: "7d",
+      },
+      group_by: ["all", "all", "all"],
+      filters: {},
+      is_default: true,
+      created_at: savedViewsNow,
+      updated_at: savedViewsNow,
+    },
+    {
+      id: "view-pi-quarter",
+      user_id: "pi@nexus.local",
+      name: "Quarter rollup",
+      persona: "pi",
+      range: {
+        from: hoursFromNow(-90 * 24).toISOString(),
+        to: new Date().toISOString(),
+        preset: "90d",
+      },
+      group_by: ["all", "all", "all"],
+      filters: {},
+      is_default: false,
+      created_at: savedViewsNow,
+      updated_at: savedViewsNow,
+    },
+    {
+      id: "view-admin-daily",
+      user_id: "admin@nexus.local",
+      name: "Yesterday",
+      persona: "admin",
+      range: {
+        from: hoursFromNow(-24).toISOString(),
+        to: new Date().toISOString(),
+        preset: "24h",
+      },
+      group_by: ["all", "all", "all"],
+      filters: {},
+      is_default: true,
+      created_at: savedViewsNow,
+      updated_at: savedViewsNow,
+    },
+    {
+      id: "view-admin-monthly",
+      user_id: "admin@nexus.local",
+      name: "Last 30 days",
+      persona: "admin",
+      range: {
+        from: hoursFromNow(-30 * 24).toISOString(),
+        to: new Date().toISOString(),
+        preset: "30d",
+      },
+      group_by: ["all", "all", "all"],
+      filters: {},
+      is_default: false,
+      created_at: savedViewsNow,
+      updated_at: savedViewsNow,
+    },
+  ];
+
   const QUEUE_NAMES = ["normal", "gpu", "largemem", "debug", "interactive"];
   const queueWaitTimes: QueueWaitTime[] = QUEUE_NAMES.map((queue) => {
     const p50 = rangeInt(rng, 60, 400);
@@ -715,6 +820,7 @@ export function buildSeed(): Seed {
     adjustments,
     jobs,
     queueWaitTimes,
+    savedViews,
     preferences: {},
   };
 }
