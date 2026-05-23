@@ -21,7 +21,12 @@ function deriveRoleFromClaims(profile: Record<string, unknown> | undefined): Rol
 
 async function fetchScopesFallback(
   accessToken: string,
-): Promise<{ role: Role; myPiAllocations: string[]; assignedAllocations: string[] } | null> {
+): Promise<{
+  role: Role;
+  myPiAllocations: string[];
+  myPiProjects: string[];
+  assignedAllocations: string[];
+} | null> {
   try {
     const base = serverEnv.CORE_API_BASE_URL?.replace(/\/+$/, "") ?? "";
     if (!base) return null;
@@ -38,6 +43,11 @@ async function fetchScopesFallback(
       role,
       myPiAllocations: Array.isArray((parsed as { myPiAllocations?: unknown }).myPiAllocations)
         ? ((parsed as { myPiAllocations: string[] }).myPiAllocations as string[])
+        : [],
+      // `myPiProjects` powers the AnalyticsPI CASL gate (spec §5.5) — must
+      // round-trip from /me/scopes the same way as myPiAllocations.
+      myPiProjects: Array.isArray((parsed as { myPiProjects?: unknown }).myPiProjects)
+        ? ((parsed as { myPiProjects: string[] }).myPiProjects as string[])
         : [],
       assignedAllocations: Array.isArray(
         (parsed as { assignedAllocations?: unknown }).assignedAllocations,
@@ -144,12 +154,14 @@ export const authConfig: NextAuthConfig = {
         if (claimRole) {
           token.role = claimRole;
           token.myPiAllocations = [];
+          token.myPiProjects = [];
           token.assignedAllocations = [];
         } else if (typeof token.accessToken === "string") {
           const fallback = await fetchScopesFallback(token.accessToken);
           if (fallback) {
             token.role = fallback.role;
             token.myPiAllocations = fallback.myPiAllocations;
+            token.myPiProjects = fallback.myPiProjects;
             token.assignedAllocations = fallback.assignedAllocations;
           } else if (!token.role) {
             token.role = "user";

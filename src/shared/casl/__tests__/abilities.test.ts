@@ -92,4 +92,30 @@ describe("defineAbilityForRole", () => {
     expect(ability.can("read", subject("AnalyticsPI", { projectId: "proj-1" }))).toBe(false);
     expect(ability.can("read", "AnalyticsPI")).toBe(false);
   });
+
+  it("AnalyticsPI scoping: OIDC PI with myPiProjects from /me/scopes fallback passes the gate", () => {
+    // A3 carry-over N1 — OIDC sign-in must propagate `myPiProjects` from the
+    // /me/scopes fallback so the AnalyticsPI rule isn't dead for OIDC PIs.
+    // Mirrors what an OIDC PI session token looks like after the fallback
+    // populates the JWT (auth.ts JWT callback).
+    const ability = defineAbilityForRole("pi", {
+      userId: "u-pi-oidc",
+      myPiAllocations: ["alloc-oidc-1"],
+      myPiProjects: ["proj-oidc-1"],
+    });
+    expect(ability.can("read", subject("AnalyticsPI", { projectId: "proj-oidc-1" }))).toBe(true);
+    expect(ability.can("read", subject("AnalyticsPI", { projectId: "proj-other" }))).toBe(false);
+  });
+
+  it("AnalyticsPI scoping: OIDC PI with empty myPiProjects (claim path) cannot read AnalyticsPI", () => {
+    // A3 carry-over N1 — the claim branch resets myPiProjects to [], so the
+    // ability returns false for every project. Guards against regressions
+    // where a stale token bleeds across sign-ins.
+    const ability = defineAbilityForRole("pi", {
+      userId: "u-pi-oidc",
+      myPiAllocations: [],
+      myPiProjects: [],
+    });
+    expect(ability.can("read", subject("AnalyticsPI", { projectId: "proj-oidc-1" }))).toBe(false);
+  });
 });
