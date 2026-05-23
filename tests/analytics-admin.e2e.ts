@@ -16,7 +16,9 @@ test.describe("Admin analytics page", () => {
     await expect(page.getByRole("button", { name: /^Resource:/i })).toBeVisible();
     await expect(page.getByRole("button", { name: /^Project:/i })).toBeVisible();
     await expect(page.getByRole("button", { name: /^Org:/i })).toBeVisible();
-    await expect(page.getByRole("button", { name: /\+ Save view/i })).toBeDisabled();
+    // A4: + Save view is enabled and opens the popover; the disabled
+    // placeholder is gone.
+    await expect(page.getByTestId("analytics-save-view-trigger")).toBeEnabled();
 
     // KPI strip — 5 KpiCards per §6.3.
     const kpiStrip = page.getByTestId("analytics-kpi-strip");
@@ -64,7 +66,9 @@ test.describe("Admin analytics page", () => {
       test.skip(true, "No populated compliance cells in current seed window");
     }
     await interactiveCell.click();
-    await expect(page).toHaveURL(/\/allocations\/[^?]+\?tab=credits/);
+    // F7: drill links forward the analytics range (`from` + `to`) alongside
+    // the credits tab so the destination preserves the window.
+    await expect(page).toHaveURL(/\/allocations\/[^?]+\?.*tab=credits/);
   });
 
   test("AMIE flow View failed link navigates with status filter", async ({ page }) => {

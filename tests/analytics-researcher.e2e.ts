@@ -15,7 +15,9 @@ test.describe("researcher analytics page", () => {
     await expect(page.getByRole("button", { name: /Range:/i })).toBeVisible();
     await expect(page.getByRole("button", { name: /Resource:/i })).toBeVisible();
     await expect(page.getByRole("button", { name: /^Project:/i })).toBeVisible();
-    await expect(page.getByRole("button", { name: /\+ Save view/i })).toBeDisabled();
+    // A4: + Save view is enabled and opens the popover; the disabled
+    // placeholder is gone.
+    await expect(page.getByTestId("analytics-save-view-trigger")).toBeEnabled();
 
     // KPI strip — 5 KpiCards.
     const kpiStrip = page.getByTestId("analytics-kpi-strip");
