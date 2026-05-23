@@ -29,6 +29,15 @@ describe("KpiCard", () => {
     expect(screen.queryByTestId("kpi-sparkline")).toBeNull();
   });
 
+  it("labels the sparkline with the card title so each card is distinct in the a11y tree", () => {
+    render(
+      <KpiCard title="Burn rate" value="4,160/d" sparkline={[1, 2, 3, 4, 5]} />,
+    );
+    expect(
+      screen.getByRole("img", { name: /Burn rate trend sparkline/i }),
+    ).toBeInTheDocument();
+  });
+
   it("fires onClick when card is clicked", () => {
     const onClick = vi.fn();
     render(<KpiCard title="Jobs run" value="312" onClick={onClick} />);

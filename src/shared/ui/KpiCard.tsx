@@ -65,6 +65,16 @@ function DeltaPill({ delta, tone }: { delta: KpiDelta; tone: KpiDeltaTone }) {
   );
 }
 
+function sparklineLabelFor(title: ReactNode): string {
+  // Per-card aria-label so each sparkline surfaces distinctly in the a11y
+  // tree. Falls back to a generic label when the title isn't a plain string
+  // (e.g. JSX badge composition).
+  if (typeof title === "string" && title.trim().length > 0) {
+    return `${title} trend sparkline`;
+  }
+  return "Trend sparkline";
+}
+
 function KpiCardBody({
   icon,
   title,
@@ -86,7 +96,7 @@ function KpiCardBody({
         <div className="mt-3" data-testid="kpi-sparkline">
           <Sparkline
             data={sparkline.map((v) => ({ value: v }))}
-            ariaLabel="KPI trend"
+            ariaLabel={sparklineLabelFor(title)}
             height={28}
           />
         </div>
