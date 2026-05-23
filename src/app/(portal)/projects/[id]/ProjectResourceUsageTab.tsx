@@ -27,6 +27,18 @@ function rangeForLastNDays(days: number): { from: string; to: string } {
   return { from: from.toISOString(), to: to.toISOString() };
 }
 
+// Tactical fix until the backend exposes a clean resource-class field: the
+// seed populates `resource_type` randomly, which lets `cpu-haswell` show up
+// as "gpu" and vice versa. Resource names follow a `{class}-{model}`
+// convention so the prefix is the reliable signal today.
+function deriveResourceType(name: string, fallback: string): string {
+  const prefix = name.split("-")[0]?.toLowerCase() ?? "";
+  if (prefix === "cpu") return "CPU";
+  if (prefix === "gpu") return "GPU";
+  if (prefix === "storage" || prefix === "data") return "Storage";
+  return fallback;
+}
+
 export function ProjectResourceUsageTab({ projectId }: ProjectResourceUsageTabProps) {
   const range = React.useMemo(() => rangeForLastNDays(30), []);
   const { data, isLoading, error, refetch } = useProjectUsageSummary(projectId, range);
@@ -55,7 +67,11 @@ export function ProjectResourceUsageTab({ projectId }: ProjectResourceUsageTabPr
     {
       key: "type",
       header: "Type",
-      cell: (row) => <span className="text-sm text-muted-foreground">{row.resource_type}</span>,
+      cell: (row) => (
+        <span className="text-sm text-muted-foreground">
+          {deriveResourceType(row.resource_name, row.resource_type)}
+        </span>
+      ),
     },
     {
       key: "used_su",
