@@ -440,6 +440,7 @@ export function AdminAnalyticsContainer() {
       matrixCell={matrixCell}
       matrixCellAllocationId={matrixCellAllocationId}
       atRisk={atRisk}
+      matrixApproximate
       onAmieSegmentClick={onAmieSegmentClick}
     />
   );

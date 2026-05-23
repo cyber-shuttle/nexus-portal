@@ -76,6 +76,10 @@ export type AdminAnalyticsProps = {
     resource: AdminMatrixResource,
   ) => string | null;
   atRisk: AdminAtRiskRow[];
+  // Caption rendered under the matrix when per-(project, resource) capacity is
+  // an approximation (even split across the project's used resources). Off when
+  // the backend ships exact per-resource budgets — see F3 in A3 gate.
+  matrixApproximate?: boolean;
   // Fired when a packet-flow segment is clicked; container builds the deep-link
   // URL because date format depends on URL state (spec §6.3, A3 F2).
   onAmieSegmentClick?: (seriesKey: string, date: string) => void;
@@ -127,6 +131,7 @@ export function AdminAnalytics(props: AdminAnalyticsProps) {
     matrixCell,
     matrixCellAllocationId,
     atRisk,
+    matrixApproximate,
     onAmieSegmentClick,
   } = props;
 
@@ -345,7 +350,23 @@ export function AdminAnalytics(props: AdminAnalyticsProps) {
               cell={matrixCell}
               onCellClick={onMatrixCellClick}
               caption="Allocation health by project and resource"
+              cellTooltip={
+                matrixApproximate
+                  ? () =>
+                      "Approximate; based on even split across project's resources."
+                  : undefined
+              }
             />
+            {matrixApproximate ? (
+              <p
+                className="mt-2 text-xs text-muted-foreground"
+                data-testid="admin-compliance-matrix-approximate-caption"
+              >
+                Approximate per-resource allocation — backend doesn't yet expose
+                per-resource budgets, so cells split each project's total
+                evenly across used resources.
+              </p>
+            ) : null}
           </div>
         )}
       </AnalyticsCard>

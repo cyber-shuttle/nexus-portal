@@ -20,6 +20,8 @@ export type ComplianceMatrixProps<R, C> = {
   formatValue?: (cell: ComplianceCell, r: R, c: C) => string;
   className?: string;
   caption?: string;
+  /** Optional native title text per cell — surfaces caveats on hover. */
+  cellTooltip?: (cell: ComplianceCell, r: R, c: C) => string | undefined;
 };
 
 // Token-arbitrary tints are the agreed exception (spec §7.6) — none of the
@@ -47,6 +49,7 @@ export function ComplianceMatrix<R, C>({
   formatValue = defaultFormat,
   className,
   caption,
+  cellTooltip,
 }: ComplianceMatrixProps<R, C>) {
   return (
     <div className={cn("relative overflow-x-auto", className)}>
@@ -89,6 +92,7 @@ export function ComplianceMatrix<R, C>({
                 const text = data ? formatValue(value, r, c) : "—";
                 const ariaLabel = `${rowLabel(r)} — ${colLabel(c)}: ${text}`;
                 const clickable = Boolean(onCellClick);
+                const title = cellTooltip ? cellTooltip(value, r, c) : undefined;
                 return (
                   // biome-ignore lint/suspicious/noArrayIndexKey: cols may not be primitives
                   <td key={ci} className="p-1">
@@ -97,6 +101,7 @@ export function ComplianceMatrix<R, C>({
                         type="button"
                         onClick={() => onCellClick?.(r, c)}
                         aria-label={ariaLabel}
+                        title={title}
                         className={cn(
                           "block w-full rounded-md px-2 py-2 text-right text-xs tabular-nums transition-colors hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                           bandStyles[band],
@@ -108,6 +113,7 @@ export function ComplianceMatrix<R, C>({
                     ) : (
                       <div
                         aria-label={ariaLabel}
+                        title={title}
                         className={cn(
                           "rounded-md px-2 py-2 text-right text-xs tabular-nums",
                           bandStyles[band],

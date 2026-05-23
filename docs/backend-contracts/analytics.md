@@ -70,3 +70,30 @@ without changing the existing fields.
    page may add a `queue_resources` join endpoint if the matrix is useful.
 3. **Granularity of `started_at` ordering.** Same-millisecond ties on the
    real cluster: stable sort by job_id desc as the tiebreaker.
+
+## Known approximations (backend tickets)
+
+### Per-(project, resource) allocated SUs — admin compliance matrix
+
+**Where:** `AdminAnalyticsContainer.tsx` → `allocatedByProjectResource`.
+
+**What today:** the portal splits a project's total allocated capacity
+evenly across the resources that project has any usage on. This is a
+heuristic — the backend exposes `resourceMappings` (allocation ↔ resource
+× resource_amount) but no per-allocation per-resource SU budget.
+
+**Surfaced UX:** the admin ComplianceMatrix shows an "Approximate
+per-resource allocation" caption and a per-cell tooltip "Approximate;
+based on even split across project's resources." when the heuristic is in
+effect (A3 carry-over F3).
+
+**Proper fix (backend ticket):** expose one of —
+- A direct `allocated_su_amount` column on `ComputeAllocationResource` (or
+  per-mapping), set at allocation-creation time from the per-resource
+  budgets in the source system (AMIE, NAIRR, etc.).
+- A site-wide `GET /admin/resource-budgets?from&to` endpoint returning
+  `{ project_id, resource_id, allocated_su, used_su }` rows, so the portal
+  can render the matrix without N fan-out and without the even-split
+  approximation.
+
+Until that lands the portal must keep the "Approximate" caption visible.
