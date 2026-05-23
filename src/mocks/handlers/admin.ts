@@ -257,6 +257,25 @@ export const adminHandlers = [
     });
   }),
 
+  // Phase A3 portal-only enumeration for the admin analytics page so the
+  // page can render the full project × resource compliance matrix without
+  // fanning out through a per-user search. Documented in
+  // docs/backend-contracts/admin.md (analytics block).
+  http.get(path("/admin/projects-full"), () => {
+    return HttpResponse.json(seed.projects);
+  }),
+
+  // Phase A3 portal-only enumeration of full allocation rows for the admin
+  // analytics page. `/admin/allocations` returns a summary triple
+  // ({id, name, status}); analytics needs the full row to compute pace +
+  // capacity. Documented in docs/backend-contracts/admin.md.
+  http.get(path("/admin/allocations-full"), ({ request }) => {
+    const url = new URL(request.url);
+    const status = url.searchParams.get("status");
+    const rows = seed.allocations.filter((a) => (status ? a.status === status : true));
+    return HttpResponse.json(rows);
+  }),
+
   http.get(path("/admin/allocations"), ({ request }) => {
     const url = new URL(request.url);
     const q = (url.searchParams.get("q") ?? "").trim().toLowerCase();

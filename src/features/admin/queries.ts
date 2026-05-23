@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   type AdjustmentsParams,
+  type AdminAllocationsFullParams,
   type AdminAllocationsParams,
   type AdminChangeRequestsParams,
   type AdminResourcesParams,
@@ -12,7 +13,9 @@ import {
   discardUnmappedJob,
   getAdjustments,
   getAdminAllocations,
+  getAdminAllocationsFull,
   getAdminChangeRequests,
+  getAdminProjectsFull,
   getAdminRates,
   getAdminResources,
   getAdminResourceTrend,
@@ -32,6 +35,9 @@ export const adminKeys = {
   rates: () => [...adminKeys.all, "rates"] as const,
   allocationSummaries: (params: AdminAllocationsParams = {}) =>
     [...adminKeys.all, "allocations", params] as const,
+  projectsFull: () => [...adminKeys.all, "projects-full"] as const,
+  allocationsFull: (params: AdminAllocationsFullParams = {}) =>
+    [...adminKeys.all, "allocations-full", params] as const,
   unmappedJobs: () => [...adminKeys.all, "unmapped-jobs"] as const,
   adjustments: (params: AdjustmentsParams = {}) =>
     [...adminKeys.all, "adjustments", params] as const,
@@ -93,6 +99,21 @@ export function useAdminAllocations(params: AdminAllocationsParams = {}) {
   return useQuery({
     queryKey: adminKeys.allocationSummaries(params),
     queryFn: () => getAdminAllocations(params),
+  });
+}
+
+// A3 site-wide enumerations for the admin analytics page.
+export function useAdminProjectsFull() {
+  return useQuery({
+    queryKey: adminKeys.projectsFull(),
+    queryFn: getAdminProjectsFull,
+  });
+}
+
+export function useAdminAllocationsFull(params: AdminAllocationsFullParams = {}) {
+  return useQuery({
+    queryKey: adminKeys.allocationsFull(params),
+    queryFn: () => getAdminAllocationsFull(params),
   });
 }
 

@@ -1,7 +1,11 @@
 import { apiFetch } from "@shared/api/client";
 import {
+  type ComputeAllocation,
   type ComputeAllocationChangeRequest,
+  type Project,
   computeAllocationChangeRequestSchema,
+  computeAllocationSchema,
+  projectSchema,
 } from "@shared/api/domain";
 import { z } from "zod";
 import {
@@ -98,6 +102,28 @@ export type AdminAllocationsParams = {
   status?: "ACTIVE" | "INACTIVE";
   limit?: number;
 };
+
+// A3 site-wide enumeration for the admin analytics page. The lighter
+// `getAdminAllocations` summary doesn't carry initial_su_amount / dates so
+// we keep both endpoints rather than widening the existing schema.
+export async function getAdminProjectsFull(): Promise<Project[]> {
+  const raw = await apiFetch("/admin/projects-full");
+  return z.array(projectSchema).parse(raw ?? []);
+}
+
+export type AdminAllocationsFullParams = {
+  status?: "ACTIVE" | "INACTIVE";
+};
+
+export async function getAdminAllocationsFull(
+  params: AdminAllocationsFullParams = {},
+): Promise<ComputeAllocation[]> {
+  const search = new URLSearchParams();
+  if (params.status) search.set("status", params.status);
+  const qs = search.toString();
+  const raw = await apiFetch(`/admin/allocations-full${qs ? `?${qs}` : ""}`);
+  return z.array(computeAllocationSchema).parse(raw ?? []);
+}
 
 export async function getAdminAllocations(
   params: AdminAllocationsParams = {},
