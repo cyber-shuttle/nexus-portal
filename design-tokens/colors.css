@@ -46,6 +46,11 @@
   --nexus-amber-500: #f59e0b;
   --nexus-amber-600: #d97706;
   --nexus-amber-700: #b45309;
+  /* amber-800/900 add darker stops so warn bands (e.g. ComplianceMatrix amber
+     cells) can clear WCAG AA at 12px against amber-100 — amber-700/100 only
+     hits 4.03:1, amber-800/100 reaches 6.28:1. */
+  --nexus-amber-800: #92400e;
+  --nexus-amber-900: #78350f;
 
   --nexus-white: #ffffff;
 

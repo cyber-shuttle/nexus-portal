@@ -372,17 +372,17 @@ export function ResourcesAnalyticsContainer({
     return max;
   })();
 
-  // Compliance-style banding repurposed for raw SU magnitudes. We skip the
-  // `warn` (amber) band because amber-700 on amber-100 fails WCAG AA contrast
-  // at the 12px cell font (4.03:1, needs 4.5:1) — same nit as admin A3 noted
-  // but the resources matrix has many more cells, so the contrast violation
-  // shows up consistently. `ok` (green) and `hot` (red) both pass at the
-  // existing tokens.
+  // Three-band heatmap. TF3 skipped the amber band entirely for WCAG AA at
+  // 12px (amber-700 on amber-100 = 4.03:1); TF4 darkens warn text to
+  // amber-800 + bold (see ComplianceMatrix bandStyles) which clears 6.28:1,
+  // so the band returns. 0.3/0.6 thresholds give green→amber→red parity with
+  // the admin A3 compliance matrix.
   function bandFor(value: number): ComplianceCell["band"] {
     if (matrixMax <= 0) return "empty";
     const ratio = value / matrixMax;
     if (ratio === 0) return "empty";
     if (ratio >= 0.6) return "hot";
+    if (ratio >= 0.3) return "warn";
     return "ok";
   }
 

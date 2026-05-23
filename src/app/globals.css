@@ -79,6 +79,15 @@
   --color-nexus-green-700: var(--nexus-green-700);
   --color-nexus-green-800: var(--nexus-green-800);
 
+  --color-nexus-amber-50: var(--nexus-amber-50);
+  --color-nexus-amber-100: var(--nexus-amber-100);
+  --color-nexus-amber-200: var(--nexus-amber-200);
+  --color-nexus-amber-500: var(--nexus-amber-500);
+  --color-nexus-amber-600: var(--nexus-amber-600);
+  --color-nexus-amber-700: var(--nexus-amber-700);
+  --color-nexus-amber-800: var(--nexus-amber-800);
+  --color-nexus-amber-900: var(--nexus-amber-900);
+
   --color-nexus-gray-50: var(--nexus-gray-50);
   --color-nexus-gray-100: var(--nexus-gray-100);
   --color-nexus-gray-200: var(--nexus-gray-200);

@@ -29,7 +29,11 @@ export type ComplianceMatrixProps<R, C> = {
 // tokens via `bg-[color:var(...)]`. Documented in A0 gate report.
 const bandStyles: Record<ComplianceBand, string> = {
   ok: "bg-[color:var(--nexus-green-100)] text-[color:var(--nexus-green-700)]",
-  warn: "bg-[color:var(--nexus-amber-100)] text-[color:var(--nexus-amber-700)]",
+  // amber-800 on amber-100 clears WCAG AA at 12px (6.28:1). amber-700 only
+  // hits 4.03:1 — the warn band silently dropped a real signal in TF3 to
+  // dodge that. font-semibold lifts the body text into the bold contrast
+  // bracket so screen-magnifier users get the same emphasis as ok/hot.
+  warn: "bg-[color:var(--nexus-amber-100)] text-[color:var(--nexus-amber-800)] font-semibold",
   hot: "bg-[color:var(--nexus-red-100)] text-[color:var(--nexus-red-700)]",
   empty: "bg-muted text-muted-foreground",
 };
