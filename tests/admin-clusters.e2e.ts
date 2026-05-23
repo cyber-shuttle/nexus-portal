@@ -46,7 +46,7 @@ test.describe("Admin clusters tab", () => {
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
     await expect(dialog.getByText(/Disable Nexus-A\?/)).toBeVisible();
-    await dialog.getByRole("button", { name: "Disable" }).click();
+    await dialog.getByRole("button", { name: "Disable cluster" }).click();
 
     // Dialog closes and the toggle flips to disabled.
     await expect(dialog).toBeHidden({ timeout: 10_000 });
@@ -65,7 +65,7 @@ test.describe("Admin clusters tab", () => {
     // Cleanup — re-enable Nexus-A so other tests in the same worker observe
     // the seeded default.
     await reloadedRow.getByRole("switch").click();
-    await page.getByRole("dialog").getByRole("button", { name: "Enable" }).click();
+    await page.getByRole("dialog").getByRole("button", { name: "Enable cluster" }).click();
     await expect(page.getByRole("dialog")).toBeHidden({ timeout: 10_000 });
   });
 

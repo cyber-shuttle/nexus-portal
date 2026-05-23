@@ -96,7 +96,7 @@ describe("ClustersTable", () => {
     expect(within(dialog).getByText("47")).toBeInTheDocument();
     expect(within(dialog).getByText("213")).toBeInTheDocument();
 
-    fireEvent.click(within(dialog).getByRole("button", { name: "Disable" }));
+    fireEvent.click(within(dialog).getByRole("button", { name: "Disable cluster" }));
     await vi.waitFor(() => expect(onToggle).toHaveBeenCalledTimes(1));
     expect(onToggle).toHaveBeenCalledWith(enabledRow, false);
   });

@@ -23,7 +23,7 @@ test.describe("Cluster filter propagation", () => {
     await nexusARow.getByRole("switch").click();
     await page
       .getByRole("dialog")
-      .getByRole("button", { name: "Disable" })
+      .getByRole("button", { name: "Disable cluster" })
       .click();
     await expect(page.getByRole("dialog")).toBeHidden({ timeout: 10_000 });
 
@@ -42,7 +42,7 @@ test.describe("Cluster filter propagation", () => {
     // Cleanup: re-enable so the next test starts from the seeded baseline.
     const reloaded = page.getByTestId("cluster-row-cluster-001").locator("..").locator("..");
     await reloaded.getByRole("switch").click();
-    await page.getByRole("dialog").getByRole("button", { name: "Enable" }).click();
+    await page.getByRole("dialog").getByRole("button", { name: "Enable cluster" }).click();
     await expect(page.getByRole("dialog")).toBeHidden({ timeout: 10_000 });
   });
 });

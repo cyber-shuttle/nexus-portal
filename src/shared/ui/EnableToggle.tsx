@@ -69,6 +69,10 @@ export function EnableToggle({
 
   const next = !enabled;
   const actionLabel = next ? "Enable" : "Disable";
+  // Dialog button + error heading echo the kind (e.g. "Disable cluster") so
+  // the admin sees what they're acting on without re-reading the title (TF2
+  // QA copy nit).
+  const actionLabelWithKind = `${actionLabel} ${resource.kind}`;
   const stateLabel = enabled ? "Enabled" : "Disabled";
 
   async function handleConfirm() {
@@ -172,7 +176,7 @@ export function EnableToggle({
           ) : null}
 
           {error ? (
-            <ErrorState heading={`Could not ${actionLabel.toLowerCase()}`} message={error} />
+            <ErrorState heading={`Could not ${actionLabelWithKind.toLowerCase()}`} message={error} />
           ) : null}
 
           {submitting ? (
@@ -192,7 +196,7 @@ export function EnableToggle({
               Cancel
             </Button>
             <Button onClick={handleConfirm} disabled={submitting} type="button">
-              {actionLabel}
+              {actionLabelWithKind}
             </Button>
           </DialogFooter>
         </DialogContent>

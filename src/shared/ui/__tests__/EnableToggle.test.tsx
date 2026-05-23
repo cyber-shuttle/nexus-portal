@@ -37,7 +37,7 @@ describe("EnableToggle", () => {
     const onConfirm = vi.fn().mockResolvedValue(undefined);
     render(<EnableToggle {...baseProps} enabled onConfirm={onConfirm} />);
     fireEvent.click(screen.getByRole("switch"));
-    fireEvent.click(screen.getByRole("button", { name: "Disable" }));
+    fireEvent.click(screen.getByRole("button", { name: "Disable cluster" }));
     await waitFor(() => expect(onConfirm).toHaveBeenCalledWith(false));
   });
 
@@ -45,7 +45,7 @@ describe("EnableToggle", () => {
     const onConfirm = vi.fn().mockRejectedValue(new Error("backend down"));
     render(<EnableToggle {...baseProps} enabled onConfirm={onConfirm} />);
     fireEvent.click(screen.getByRole("switch"));
-    fireEvent.click(screen.getByRole("button", { name: "Disable" }));
+    fireEvent.click(screen.getByRole("button", { name: "Disable cluster" }));
     await waitFor(() => {
       expect(screen.getByRole("alert")).toHaveTextContent("backend down");
     });
