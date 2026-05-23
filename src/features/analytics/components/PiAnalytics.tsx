@@ -5,6 +5,7 @@ import type { DataTableColumn } from "@/shared/ui/DataTable";
 import { DataTable } from "@/shared/ui/DataTable";
 import { DateRangePicker, type DateRangeValue } from "@/shared/ui/DateRangePicker";
 import { DrillStack } from "@/shared/ui/DrillStack";
+import { EmptyState } from "@/shared/ui/EmptyState";
 import { GroupByChip, GroupByChipGroup } from "@/shared/ui/GroupByChip";
 import { KpiCard } from "@/shared/ui/KpiCard";
 import { LastSyncedBadge } from "@/shared/ui/LastSyncedBadge";
@@ -161,6 +162,34 @@ export function PiAnalytics(props: PiAnalyticsProps) {
 
   const drilledMemberRows =
     drill.kind === "member" ? (memberUsageByAllocation[drill.userId] ?? []) : [];
+
+  // A2 N3 carry-over: empty-projects PI passes the CASL gate but has nothing
+  // to render — show a soft, explanatory empty state instead of a 403-style
+  // page. The link-projects action lives in admin scope so no CTA.
+  if (projects.length === 0) {
+    return (
+      <section className="space-y-6">
+        <header className="flex items-center justify-between">
+          <h1
+            className="font-display text-[28px] font-bold leading-tight text-foreground"
+            data-testid="analytics-title"
+          >
+            Analytics
+          </h1>
+          <span className="text-sm text-muted-foreground">
+            Viewing as:{" "}
+            <span className="font-medium text-foreground" data-testid="analytics-viewing-as">
+              PI
+            </span>
+          </span>
+        </header>
+        <EmptyState
+          heading="No projects yet"
+          description="You're listed as a PI on allocations but don't own any projects. Ask an admin to link them."
+        />
+      </section>
+    );
+  }
 
   return (
     <section className="space-y-6">
