@@ -35,6 +35,7 @@ import { CenteredSpinner } from "@/shared/ui/Loading";
 import { useUrlGroupBy } from "@/shared/hooks/useUrlGroupBy";
 import { useUrlRange } from "@/shared/hooks/useUrlRange";
 import { useQueries } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import * as React from "react";
 
 const ANALYTICS_USAGE_LIMIT = 2000;
@@ -50,6 +51,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 // docs/backend-contracts/analytics.md.
 export function AdminAnalyticsContainer() {
   const ability = useAbility();
+  const router = useRouter();
   const { range, setRange } = useUrlRange();
   // Spec §6.3 toolbar: Resource / Project / Org chips → URL `?gb=` slots 0/1/2.
   const { groupBy, setGroupBy } = useUrlGroupBy();
@@ -394,6 +396,16 @@ export function AdminAnalyticsContainer() {
 
   const syncedAt = newestUpdate(flatUsages) ?? new Date();
 
+  // Per spec §6.3: clicking a packet-flow segment opens the AMIE inbox
+  // pre-filtered to that status. We forward `from` so the inbox window
+  // matches what the user was looking at (A3 carry-over F2).
+  const onAmieSegmentClick = (seriesKey: string, _date: string) => {
+    const params = new URLSearchParams();
+    params.set("status", seriesKey);
+    params.set("from", range.from.toISOString());
+    router.push(`/admin/amie/packets?${params.toString()}`);
+  };
+
   return (
     <AdminAnalytics
       syncedAt={syncedAt}
@@ -428,6 +440,7 @@ export function AdminAnalyticsContainer() {
       matrixCell={matrixCell}
       matrixCellAllocationId={matrixCellAllocationId}
       atRisk={atRisk}
+      onAmieSegmentClick={onAmieSegmentClick}
     />
   );
 }

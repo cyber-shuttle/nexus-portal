@@ -76,6 +76,9 @@ export type AdminAnalyticsProps = {
     resource: AdminMatrixResource,
   ) => string | null;
   atRisk: AdminAtRiskRow[];
+  // Fired when a packet-flow segment is clicked; container builds the deep-link
+  // URL because date format depends on URL state (spec §6.3, A3 F2).
+  onAmieSegmentClick?: (seriesKey: string, date: string) => void;
 };
 
 const RESOURCE_OPTIONS = [
@@ -124,6 +127,7 @@ export function AdminAnalytics(props: AdminAnalyticsProps) {
     matrixCell,
     matrixCellAllocationId,
     atRisk,
+    onAmieSegmentClick,
   } = props;
 
   const router = useRouter();
@@ -318,6 +322,7 @@ export function AdminAnalytics(props: AdminAnalyticsProps) {
                 data={amieFlow.rows}
                 seriesKeys={amieFlow.seriesKeys}
                 ariaLabel="AMIE packet flow by status"
+                onSegmentClick={onAmieSegmentClick}
               />
             </div>
           )}

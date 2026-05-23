@@ -24,6 +24,10 @@ export type StackedAreaUsageProps = {
   colors?: string[];
   height?: number;
   ariaLabel?: string;
+  // Recharts fires Area `onClick` with the active datum; we extract the date
+  // and pass it back alongside the series key so callers can build deep-links
+  // without depending on Recharts payload internals (spec §6.3 click contract).
+  onSegmentClick?: (seriesKey: string, date: string) => void;
 };
 
 export function StackedAreaUsage({
@@ -32,6 +36,7 @@ export function StackedAreaUsage({
   colors = DEFAULT_COLORS,
   height = 240,
   ariaLabel,
+  onSegmentClick,
 }: StackedAreaUsageProps) {
   return (
     <div role="img" aria-label={ariaLabel ?? "Stacked area usage chart"}>
@@ -50,6 +55,17 @@ export function StackedAreaUsage({
               stroke={colors[i % colors.length]}
               fill={colors[i % colors.length]}
               fillOpacity={0.4}
+              onClick={
+                onSegmentClick
+                  ? (props) => {
+                      const payload = (props as { payload?: { date?: string } } | undefined)
+                        ?.payload;
+                      const date = payload?.date;
+                      if (typeof date === "string") onSegmentClick(key, date);
+                    }
+                  : undefined
+              }
+              style={onSegmentClick ? { cursor: "pointer" } : undefined}
             />
           ))}
         </AreaChart>
