@@ -122,6 +122,10 @@ export type PiProjectRollup = {
   projectId: string;
   projectName: string;
   used: number;
+  // `projected` extrapolates window-end SUs from the per-project rolling burn
+  // rate so the ForecastBar can render the hatched projected segment (spec
+  // §6.2 Burn by project + A2 N5). Equals `used` when there's no burn signal.
+  projected: number;
   allocated: number;
   forecastExhaust: Date | null;
   endDate: Date | null;

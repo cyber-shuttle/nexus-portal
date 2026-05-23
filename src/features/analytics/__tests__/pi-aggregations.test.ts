@@ -14,6 +14,7 @@ function rollup(over: Partial<PiProjectRollup> = {}): PiProjectRollup {
     projectId: "proj-1",
     projectName: "Project 1",
     used: 0,
+    projected: 0,
     allocated: 1000,
     forecastExhaust: null,
     endDate: null,

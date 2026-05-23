@@ -252,7 +252,7 @@ export function PiAnalytics(props: PiAnalyticsProps) {
                 key={p.projectId}
                 label={p.projectName}
                 used={p.used}
-                projected={p.used}
+                projected={p.projected}
                 capacity={p.allocated}
                 exhaustDate={p.forecastExhaust ?? undefined}
                 endDate={p.endDate ?? undefined}

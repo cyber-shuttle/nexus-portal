@@ -40,6 +40,7 @@ import * as React from "react";
 const ANALYTICS_USAGE_LIMIT = 2000;
 const TOP_PROJECTS_FOR_BURN = 6;
 const TOP_MEMBERS = 10;
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 export type PiAnalyticsContainerProps = {
   userId: string;
@@ -192,6 +193,17 @@ export function PiAnalyticsContainer({ userId }: PiAnalyticsContainerProps) {
     );
   }
 
+  // `daysToEndOfRange` extrapolates from "now" to `range.to` so the projected
+  // hatched segment shows what window-end consumption looks like at the
+  // current burn rate. When the window ends in the past we collapse to 0
+  // (projected == used) per A2 N5 carry-over.
+  const nowMs = Date.now();
+  const daysToEndOfRange = Math.max(0, (range.to.getTime() - nowMs) / DAY_MS);
+  const windowDays = Math.max(
+    1,
+    (range.to.getTime() - range.from.getTime()) / DAY_MS,
+  );
+
   const projectRollups: PiProjectRollup[] = projects.map((project, projIdx) => {
     const projectAllocs = allocsByProjectQueries[projIdx]?.data ?? [];
     let used = 0;
@@ -215,10 +227,13 @@ export function PiAnalyticsContainer({ userId }: PiAnalyticsContainerProps) {
       pending += pendingCrsByAllocation.get(a.id) ?? 0;
     }
     const exhaust = projectForecast(exhausts);
+    const burnRatePerDay = used / windowDays;
+    const projected = Math.min(allocated, used + burnRatePerDay * daysToEndOfRange);
     return {
       projectId: project.id,
       projectName: project.title,
       used,
+      projected,
       allocated,
       forecastExhaust: exhaust,
       endDate: latestEnd,
