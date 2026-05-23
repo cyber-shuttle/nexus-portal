@@ -338,6 +338,15 @@ scales linearly with allocation count.
 UI rewrite. The same swap will also collapse the resource × group matrix
 when `?group_by=resource,user` (multi-value) ships in a follow-up.
 
+### Deep-link parity — `?project=` URL filter
+
+The Resources tab accepts a `?project=<id>` URL param (TF4) and narrows the
+per-allocation fan-out to allocations whose `project_id` matches before any
+client-side aggregation runs. The proposed endpoint already exposes the
+`project_id?` query param so the swap is a one-to-one pass-through:
+portal reads `?project=` from the URL, drops it into the request, and stops
+needing the post-fetch filter once this endpoint is live.
+
 ---
 
 ## Open questions
