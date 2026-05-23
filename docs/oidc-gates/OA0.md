@@ -134,3 +134,48 @@ OA0 owns every DoD item that does **not** require touching the production VM or 
 
 - [ ] QA visual review (Chrome MCP at 1440×900 on the sign-in page in both dev and a synthetic `?error=not_allowed` URL).
 - [ ] Architect review (callback factory + env schema + persona-cookie protocol; spec §4.3 + §4.4 + §9 risk matrix).
+
+## Architect-review (PASS-WITH-NOTES)
+
+All 13 verification items pass. Allowlist fail-closed at three independent layers (env superRefine, `isEmailAllowed`, signIn callback). Callback factory genuinely pure — pulls only `isEmailAllowed`, `Role` type, `NextAuthConfig` type, `cookies()` from `next/headers`. Persona→Role mapping aligned with existing `Role` type (`"user"`, not `"researcher"`) — round-trips cleanly with `personaForAnalytics`.
+
+### Secrets hygiene (critical)
+- `grep -rn "D3f87D7K0R8P32s01s6jirocChIRExBS"` across nexus-portal/ → **zero hits**.
+- `grep -rn "dev-nexus-portal"` → one hit (OA0.md gate doc; client-id is public, not secret).
+- `.env` stays gitignored. Secret only lives on the VM.
+
+### Non-blocking notes (for future phases)
+1. `// TODO(OA2): pull from /me/scopes` worth adding above the empty-array assignment in `callbacks.ts` jwt branch.
+2. `personId = email` is intentional + spec'd; document when backend issues real personIds.
+3. Persona cookie TTL=300s with no replay protection — low-impact (same browser, same user, 5min window).
+4. `oidcEnabled` flag in `buildAuthCallbacks` is slightly redundant with the providers-array check but explicit/clearer.
+
+Sign-off: APPROVED. OA1 may proceed once VM `.env` is updated.
+
+## Visual QA (PASS)
+
+All 8 protocol checks green at 1440×900.
+- 3 persona cards only — "OR ANY CLUSTER USER" block fully removed.
+- Researcher + PI dev sign-ins work; sign-out works.
+- `/sign-in?error=not_allowed&email=outsider@example.com` renders banner with "Not on the allowlist" heading + email + admin hint + "Try a different account" button (richer copy than spec — positive).
+- "Try a different account" clears error param + signs out.
+- Zero console errors throughout.
+
+Screenshots: `${TMPDIR}/nexus-qa-OA0/01-signin-no-cluster-box.png`, `02-signin-error-banner.png`.
+
+Sign-off: PASS. OA1 may proceed.
+
+## Next: OA1 handoff to operator
+
+Before OA1 can run, **Lahiru updates `/opt/nexus-portal/.env` on the VM**:
+
+```
+PORTAL_AUTH_MODE=oidc
+NEXT_PUBLIC_PORTAL_AUTH_MODE=oidc
+OIDC_ISSUER_URL=https://auth.dev.cybershuttle.org/realms/default
+OIDC_CLIENT_ID=dev-nexus-portal
+OIDC_CLIENT_SECRET=<secret>
+NEXUS_ALLOWED_EMAILS=ljayathilake3@gatech.edu,dwannipurage3@gatech.edu,smarru6@gatech.edu,eabeysinghe3@gatech.edu,spamidig6@gatech.edu,pjayawardana3@gatech.edu,gkrishnan46@gatech.edu,asherman39@gatech.edu
+```
+
+Then operator runs `./deploy.sh` from local. Then runs the 4-step manual verification protocol (spec §6 OA1).
