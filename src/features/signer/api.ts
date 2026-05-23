@@ -32,6 +32,11 @@ export async function getCertificate(serial: number | string): Promise<Certifica
   return certificateSchema.parse(raw);
 }
 
+// TODO (TF2 carry-over): when the issue-cert flow lands, gate the allocation
+// picker on cluster.status — call `useEnabledClusters` from
+// `@features/allocations/queries` and filter the allocations to those whose
+// `compute_cluster_id` is in the enabled set, so a DISABLED cluster never
+// silently produces a new cert.
 export async function revokeCertificate(
   serial: number | string,
   payload: RevokeCertificatePayload,

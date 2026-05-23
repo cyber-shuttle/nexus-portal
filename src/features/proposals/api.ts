@@ -11,6 +11,12 @@ import {
 } from "./schemas";
 import type { Proposal, ProposalListParams } from "./types";
 
+// TODO (TF2 carry-over): the proposal wizard today picks resources, not a
+// cluster. When the wizard learns about clusters (or an "Add allocation"
+// dialog ships under projects), gate the cluster picker through
+// `useEnabledClusters` from `@features/allocations/queries` so a DISABLED
+// cluster never reaches a new flow. Existing proposals + allocations continue
+// to render the cluster regardless of status (spec §5.4 selector-only filter).
 function toQuery(params: ProposalListParams): string {
   const search = new URLSearchParams();
   if (params.status) {
