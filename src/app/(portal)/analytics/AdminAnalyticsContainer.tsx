@@ -27,6 +27,8 @@ import {
 } from "@features/analytics/components/AdminAnalytics";
 import { getAllocationUsages } from "@features/usage/api";
 import { usageKeys } from "@features/usage/queries";
+import { useSavedViewsToolbar } from "@features/analytics/views/components/SavedViewsToolbar";
+import type { SavedView } from "@features/analytics/views/types";
 import { forecast, topN } from "@shared/api/aggregator";
 import { useAbility } from "@shared/casl/AbilityProvider";
 import type { DateRangeValue } from "@/shared/ui/DateRangePicker";
@@ -49,7 +51,11 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 // pending change-requests. Heavy in v1 — site-wide usage uses N
 // `/compute-allocations/{id}/usages` calls; the gap is documented in
 // docs/backend-contracts/analytics.md.
-export function AdminAnalyticsContainer() {
+export type AdminAnalyticsContainerProps = {
+  userId: string;
+};
+
+export function AdminAnalyticsContainer({ userId }: AdminAnalyticsContainerProps) {
   const ability = useAbility();
   const router = useRouter();
   const { range, setRange } = useUrlRange();
@@ -58,6 +64,31 @@ export function AdminAnalyticsContainer() {
   const groupByResource = groupBy[0] ?? "all";
   const groupByProject = groupBy[1] ?? "all";
   const groupByOrg = groupBy[2] ?? "all";
+
+  // Saved-views toolbar slots. Apply-time writes both range and groupBy
+  // back to URL state via the existing setters (spec §5.3 + §9 Phase A4).
+  const applySavedView = React.useCallback(
+    (view: SavedView) => {
+      const fromMs = Date.parse(view.range.from);
+      const toMs = Date.parse(view.range.to);
+      if (!Number.isNaN(fromMs) && !Number.isNaN(toMs)) {
+        setRange({
+          from: new Date(fromMs),
+          to: new Date(toMs),
+          preset: view.range.preset,
+        });
+      }
+      setGroupBy(view.group_by);
+    },
+    [setRange, setGroupBy],
+  );
+  const savedViewSlots = useSavedViewsToolbar({
+    persona: "admin",
+    userId,
+    range,
+    groupBy: [groupByResource, groupByProject, groupByOrg],
+    onApply: applySavedView,
+  });
 
   // CASL gate: admin gets `manage Analytics` (explicit rule); also covered by
   // `manage all`. Early-return per §8 conformance.
@@ -442,6 +473,8 @@ export function AdminAnalyticsContainer() {
       atRisk={atRisk}
       matrixApproximate
       onAmieSegmentClick={onAmieSegmentClick}
+      savedViewsChips={savedViewSlots.chips}
+      saveViewTrigger={savedViewSlots.trigger}
     />
   );
 }

@@ -83,6 +83,10 @@ export type AdminAnalyticsProps = {
   // Fired when a packet-flow segment is clicked; container builds the deep-link
   // URL because date format depends on URL state (spec §6.3, A3 F2).
   onAmieSegmentClick?: (seriesKey: string, date: string) => void;
+  // Toolbar slot for the saved-views row — composed at the container layer so
+  // feature components don't import the views feature module directly (A4 §1).
+  savedViewsChips?: React.ReactNode;
+  saveViewTrigger?: React.ReactNode;
 };
 
 const RESOURCE_OPTIONS = [
@@ -133,6 +137,8 @@ export function AdminAnalytics(props: AdminAnalyticsProps) {
     atRisk,
     matrixApproximate,
     onAmieSegmentClick,
+    savedViewsChips,
+    saveViewTrigger,
   } = props;
 
   const router = useRouter();
@@ -248,10 +254,12 @@ export function AdminAnalytics(props: AdminAnalyticsProps) {
               onChange={onGroupByOrgChange}
             />
           </GroupByChipGroup>
-          {/* Saved views land in A4. */}
-          <Button variant="outline" size="sm" disabled>
-            + Save view
-          </Button>
+          {savedViewsChips}
+          {saveViewTrigger ?? (
+            <Button variant="outline" size="sm" disabled>
+              + Save view
+            </Button>
+          )}
         </div>
       </header>
 

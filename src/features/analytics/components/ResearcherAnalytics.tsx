@@ -56,6 +56,10 @@ export type ResearcherAnalyticsProps = {
   waitTimes: QueueWaitTime[];
   resourceMix: ResourceMixSlice[];
   recentJobs: Job[];
+  // Toolbar slot for the saved-views row — composed at the container layer so
+  // feature components don't import the views feature module directly (A4 §1).
+  savedViewsChips?: React.ReactNode;
+  saveViewTrigger?: React.ReactNode;
 };
 
 // Multi-chip GroupBy pattern (A1 carry-over 0b). Each dimension owns one
@@ -129,6 +133,8 @@ export function ResearcherAnalytics(props: ResearcherAnalyticsProps) {
     waitTimes,
     resourceMix,
     recentJobs,
+    savedViewsChips,
+    saveViewTrigger,
   } = props;
 
   const [drill, setDrill] = React.useState<DrillState>({ kind: "none" });
@@ -187,10 +193,12 @@ export function ResearcherAnalytics(props: ResearcherAnalyticsProps) {
               onChange={onGroupByProjectChange}
             />
           </GroupByChipGroup>
-          {/* Saved views land in A4. */}
-          <Button variant="outline" size="sm" disabled>
-            + Save view
-          </Button>
+          {savedViewsChips}
+          {saveViewTrigger ?? (
+            <Button variant="outline" size="sm" disabled>
+              + Save view
+            </Button>
+          )}
         </div>
       </header>
 

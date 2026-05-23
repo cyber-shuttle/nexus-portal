@@ -58,6 +58,11 @@ export type PiAnalyticsProps = {
   memberUsageByAllocation: Record<string, Array<{ allocation_id: string; total: number }>>;
   resourceMix: ResourceMixSlice[];
   projects: PiProjectRollup[];
+  // Toolbar slot for the saved-views row — composed at the container layer so
+  // feature components don't import the views feature module directly (spec
+  // §5.2 + A4 §1). One slot for chips, one for the Save trigger.
+  savedViewsChips?: React.ReactNode;
+  saveViewTrigger?: React.ReactNode;
 };
 
 const PROJECT_OPTIONS = [
@@ -106,6 +111,8 @@ export function PiAnalytics(props: PiAnalyticsProps) {
     memberUsageByAllocation,
     resourceMix,
     projects,
+    savedViewsChips,
+    saveViewTrigger,
   } = props;
 
   const router = useRouter();
@@ -231,10 +238,12 @@ export function PiAnalytics(props: PiAnalyticsProps) {
               onChange={onGroupByResourceChange}
             />
           </GroupByChipGroup>
-          {/* Saved views land in A4. */}
-          <Button variant="outline" size="sm" disabled>
-            + Save view
-          </Button>
+          {savedViewsChips}
+          {saveViewTrigger ?? (
+            <Button variant="outline" size="sm" disabled>
+              + Save view
+            </Button>
+          )}
         </div>
       </header>
 

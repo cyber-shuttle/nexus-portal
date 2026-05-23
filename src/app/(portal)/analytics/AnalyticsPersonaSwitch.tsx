@@ -18,7 +18,7 @@ export function AnalyticsPersonaSwitch({ persona, userId }: AnalyticsPersonaSwit
     return <PiAnalyticsContainer userId={userId} />;
   }
   if (persona === "admin") {
-    return <AdminAnalyticsContainer />;
+    return <AdminAnalyticsContainer userId={userId} />;
   }
   return <ResearcherAnalyticsContainer userId={userId} />;
 }
