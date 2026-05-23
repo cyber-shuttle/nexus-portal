@@ -39,6 +39,7 @@ import { useUrlGroupBy } from "@/shared/hooks/useUrlGroupBy";
 import { useUrlRange } from "@/shared/hooks/useUrlRange";
 import { subject } from "@casl/ability";
 import { useQueries, useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "next/navigation";
 import * as React from "react";
 
 const ANALYTICS_USAGE_LIMIT = 2000;
@@ -70,6 +71,13 @@ export function ResourcesAnalyticsContainer({
   const { range, setRange } = useUrlRange();
   const { groupBy: groupBySlots, setGroupBy } = useUrlGroupBy();
   const groupBy = (groupBySlots[0] as ResourcesGroupBy | undefined) ?? "allocation";
+
+  // ?project= deep-link narrows the per-allocation fan-out to that project's
+  // allocations only. Used by the project detail Resource Usage tab's
+  // "Explore in Analytics" link to keep cross-page context. Absent param =
+  // full persona scope (default behaviour).
+  const searchParams = useSearchParams();
+  const projectFilter = searchParams.get("project");
 
   const savedViewSlots = useSavedViewsToolbar({
     persona,
@@ -295,12 +303,18 @@ export function ResourcesAnalyticsContainer({
     membershipByAllocationId.set(id, membersQueries[i]?.data ?? []);
   }
 
-  // Materialize the flat usage stream with project/user resolution.
+  // Materialize the flat usage stream with project/user resolution. When
+  // `?project=` is present, skip usage rows whose allocation belongs to a
+  // different project — keeps the deep-link from the project Resource Usage
+  // tab "Explore in Analytics" scoped instead of dumping the full persona
+  // surface on the user.
   const flatUsages: ResourceUsagePoint[] = [];
   for (let i = 0; i < usageQueries.length; i += 1) {
     const rows = usageQueries[i]?.data ?? [];
     const allocId = allocationIds[i];
     if (!allocId) continue;
+    const allocProject = allocationProjectById.get(allocId);
+    if (projectFilter && allocProject !== projectFilter) continue;
     for (const u of rows) {
       flatUsages.push({
         compute_allocation_id: u.compute_allocation_id,
@@ -308,7 +322,7 @@ export function ResourcesAnalyticsContainer({
         used_su_amount: u.used_su_amount,
         last_updated: u.last_updated,
         user_id: u.user_id,
-        project_id: allocationProjectById.get(allocId),
+        project_id: allocProject,
       });
     }
   }
@@ -406,12 +420,18 @@ export function ResourcesAnalyticsContainer({
 
   const personaLabel =
     persona === "admin" ? "Admin" : persona === "pi" ? "PI" : "Researcher";
-  const scopeNote =
+  const baseScopeNote =
     persona === "admin"
       ? "Site-wide resource consumption across every active allocation."
       : persona === "pi"
         ? "Resource consumption across every project where you are PI."
         : "Resource consumption across every allocation you belong to.";
+  const filteredProjectLabel = projectFilter
+    ? (projectNameById.get(projectFilter) ?? projectFilter)
+    : null;
+  const scopeNote = filteredProjectLabel
+    ? `${baseScopeNote} Filtered to project: ${filteredProjectLabel}.`
+    : baseScopeNote;
 
   const syncedAt = newestUpdate(flatUsages) ?? new Date();
 
