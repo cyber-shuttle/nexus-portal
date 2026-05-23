@@ -2,7 +2,7 @@
 
 **Spec:** `airavata-custos/docs/portal/2026-05-22-nexus-portal-team-feedback-v1.md` §9 phase TF2.
 **Baseline commit:** `43e0993 Sign off Phase TF1 gate with fix-up addendum`.
-**HEAD commit:** `b055336 Add TF2 unit and e2e tests for cluster toggle and propagation`.
+**HEAD commit:** `7d611a3 Move ClustersTable into allocations feature for isolation`.
 
 ## Commits in TF2
 
@@ -13,7 +13,7 @@ a353363 Promote cluster queries to allocations feature module
 39e0a7e Document clusters backend contract
 b055336 Add TF2 unit and e2e tests for cluster toggle and propagation
 9b12b0f Add Phase TF2 gate report
-<HEAD>  Move ClustersTable into allocations feature for isolation
+7d611a3 Move ClustersTable into allocations feature for isolation
 ```
 
 ## TF0 carry-over status — cluster queries promotion
