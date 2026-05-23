@@ -25,6 +25,7 @@ async function fetchScopesFallback(
   role: Role;
   myPiAllocations: string[];
   myPiProjects: string[];
+  myMemberProjects: string[];
   assignedAllocations: string[];
 } | null> {
   try {
@@ -48,6 +49,14 @@ async function fetchScopesFallback(
       // round-trip from /me/scopes the same way as myPiAllocations.
       myPiProjects: Array.isArray((parsed as { myPiProjects?: unknown }).myPiProjects)
         ? ((parsed as { myPiProjects: string[] }).myPiProjects as string[])
+        : [],
+      // myMemberProjects powers the `read Project` CASL gate (spec §5.5
+      // TF0 extension) — every persona uses it to scope /projects to rows
+      // they actually belong to.
+      myMemberProjects: Array.isArray(
+        (parsed as { myMemberProjects?: unknown }).myMemberProjects,
+      )
+        ? ((parsed as { myMemberProjects: string[] }).myMemberProjects as string[])
         : [],
       assignedAllocations: Array.isArray(
         (parsed as { assignedAllocations?: unknown }).assignedAllocations,
@@ -93,6 +102,7 @@ const credentialsProvider = Credentials({
         role: preset.role,
         myPiAllocations: scopes.myPiAllocations,
         myPiProjects: scopes.myPiProjects,
+        myMemberProjects: scopes.myMemberProjects,
         assignedAllocations: scopes.assignedAllocations,
       };
     }
@@ -103,6 +113,7 @@ const credentialsProvider = Credentials({
       role: "user" as Role,
       myPiAllocations: scopes.myPiAllocations,
       myPiProjects: scopes.myPiProjects,
+      myMemberProjects: scopes.myMemberProjects,
       assignedAllocations: scopes.assignedAllocations,
     };
   },
@@ -137,6 +148,7 @@ export const authConfig: NextAuthConfig = {
         token.personId = user.personId;
         token.myPiAllocations = user.myPiAllocations;
         token.myPiProjects = user.myPiProjects;
+        token.myMemberProjects = user.myMemberProjects;
         token.assignedAllocations = user.assignedAllocations;
       }
       if (account?.access_token) {
@@ -155,6 +167,7 @@ export const authConfig: NextAuthConfig = {
           token.role = claimRole;
           token.myPiAllocations = [];
           token.myPiProjects = [];
+          token.myMemberProjects = [];
           token.assignedAllocations = [];
         } else if (typeof token.accessToken === "string") {
           const fallback = await fetchScopesFallback(token.accessToken);
@@ -162,6 +175,7 @@ export const authConfig: NextAuthConfig = {
             token.role = fallback.role;
             token.myPiAllocations = fallback.myPiAllocations;
             token.myPiProjects = fallback.myPiProjects;
+            token.myMemberProjects = fallback.myMemberProjects;
             token.assignedAllocations = fallback.assignedAllocations;
           } else if (!token.role) {
             token.role = "user";
@@ -177,6 +191,7 @@ export const authConfig: NextAuthConfig = {
         session.user.personId = token.personId;
         session.user.myPiAllocations = token.myPiAllocations;
         session.user.myPiProjects = token.myPiProjects;
+        session.user.myMemberProjects = token.myMemberProjects;
         session.user.assignedAllocations = token.assignedAllocations;
         if (typeof token.sub === "string") {
           session.user.id = token.sub;

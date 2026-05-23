@@ -8,6 +8,10 @@ export type AbilityContext = {
   userId?: string;
   myPiAllocations?: string[];
   myPiProjects?: string[];
+  // Membership-derived project IDs — every project where the user is a
+  // member (PI, co-PI, or plain). Researchers see only this slice; PIs see
+  // their own + member projects; admins see everything via `manage all`.
+  myMemberProjects?: string[];
   assignedAllocations?: string[];
 };
 
@@ -28,6 +32,13 @@ export function defineAbilityForRole(role: Role, ctx: AbilityContext = {}): AppA
     can("manage", "Client", { owner_user_id: ctx.userId ?? "__none__" });
     can("create", "ChangeRequest");
     can("read", "AnalyticsResearcher", { userId: ctx.userId ?? "__none__" });
+    // Project read is membership-scoped for every signed-in persona — admin
+    // overrides via `manage all` below, PI extends with `manage Project` on
+    // owned rows. Researchers see only projects they belong to.
+    can("read", "Project", { id: { $in: ctx.myMemberProjects ?? [] } });
+    // Cluster read is universal (every persona enumerates clusters in their
+    // allocation forms); cluster `manage` is admin-only and lives below.
+    can("read", "Cluster");
   }
 
   if (role === "pi" || role === "co_pi") {
@@ -46,6 +57,11 @@ export function defineAbilityForRole(role: Role, ctx: AbilityContext = {}): AppA
     can("create", "Client");
     can("manage", "Client", { allocation_id: { $in: ctx.myPiAllocations ?? [] } });
     can("read", "AnalyticsPI", { projectId: { $in: ctx.myPiProjects ?? [] } });
+    // Project create + own-project manage. PIs may create new projects and
+    // edit/delete projects where they are the recorded PI. `myPiProjects`
+    // already collects "projects where I am PI" from the persona scopes.
+    can("create", "Project");
+    can("manage", "Project", { id: { $in: ctx.myPiProjects ?? [] } });
   }
 
   if (role === "allocation_manager") {
@@ -62,6 +78,12 @@ export function defineAbilityForRole(role: Role, ctx: AbilityContext = {}): AppA
     can("manage", "all");
     // Explicit so the rule is greppable; `manage all` already covers it.
     can("manage", "Analytics");
+    // Same rationale for Project + Cluster — kept explicit so anyone
+    // grepping the codebase finds the admin grants alongside the persona
+    // ones in the same block.
+    can("manage", "Project");
+    can("create", "Project");
+    can("manage", "Cluster");
   }
 
   return build();

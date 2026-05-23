@@ -59,6 +59,7 @@ export const userHandlers = [
       role: isAdmin ? "admin" : isPi ? "pi" : "user",
       myPiAllocations: scopes.myPiAllocations,
       myPiProjects: scopes.myPiProjects,
+      myMemberProjects: scopes.myMemberProjects,
       assignedAllocations: scopes.assignedAllocations,
     });
   }),

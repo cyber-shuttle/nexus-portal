@@ -14,6 +14,7 @@ declare module "next-auth" {
       personId?: string;
       myPiAllocations?: string[];
       myPiProjects?: string[];
+      myMemberProjects?: string[];
       assignedAllocations?: string[];
     };
   }
@@ -23,6 +24,7 @@ declare module "next-auth" {
     personId?: string;
     myPiAllocations?: string[];
     myPiProjects?: string[];
+    myMemberProjects?: string[];
     assignedAllocations?: string[];
   }
 }
@@ -34,6 +36,7 @@ declare module "next-auth/jwt" {
     personId?: string;
     myPiAllocations?: string[];
     myPiProjects?: string[];
+    myMemberProjects?: string[];
     assignedAllocations?: string[];
   }
 }

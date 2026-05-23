@@ -15,6 +15,7 @@ export function AbilityProvider({ children }: { children: ReactNode }) {
         userId: session?.user?.id,
         myPiAllocations: session?.user?.myPiAllocations,
         myPiProjects: session?.user?.myPiProjects,
+        myMemberProjects: session?.user?.myMemberProjects,
         assignedAllocations: session?.user?.assignedAllocations,
       }),
     [
@@ -22,6 +23,7 @@ export function AbilityProvider({ children }: { children: ReactNode }) {
       session?.user?.id,
       session?.user?.myPiAllocations,
       session?.user?.myPiProjects,
+      session?.user?.myMemberProjects,
       session?.user?.assignedAllocations,
     ],
   );

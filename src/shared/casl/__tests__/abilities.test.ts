@@ -118,4 +118,54 @@ describe("defineAbilityForRole", () => {
     });
     expect(ability.can("read", subject("AnalyticsPI", { projectId: "proj-oidc-1" }))).toBe(false);
   });
+
+  it("researcher can read projects they are a member of and cannot create projects", () => {
+    const ability = defineAbilityForRole("user", {
+      userId: "researcher@nexus.local",
+      myMemberProjects: ["proj-1", "proj-2"],
+    });
+    expect(ability.can("read", subject("Project", { id: "proj-1" }))).toBe(true);
+    expect(ability.can("read", subject("Project", { id: "proj-other" }))).toBe(false);
+    expect(ability.can("create", "Project")).toBe(false);
+    expect(ability.can("manage", subject("Project", { id: "proj-1" }))).toBe(false);
+  });
+
+  it("pi can read own + member projects, create projects, and manage own", () => {
+    const ability = defineAbilityForRole("pi", {
+      userId: "u-pi",
+      myPiAllocations: ["alloc-1"],
+      myPiProjects: ["proj-owned"],
+      myMemberProjects: ["proj-owned", "proj-member-only"],
+    });
+    // Own (member rule covers it because PIs are members of their own projects in seed)
+    expect(ability.can("read", subject("Project", { id: "proj-owned" }))).toBe(true);
+    expect(ability.can("read", subject("Project", { id: "proj-member-only" }))).toBe(true);
+    expect(ability.can("read", subject("Project", { id: "proj-stranger" }))).toBe(false);
+    expect(ability.can("create", "Project")).toBe(true);
+    expect(ability.can("manage", subject("Project", { id: "proj-owned" }))).toBe(true);
+    expect(ability.can("manage", subject("Project", { id: "proj-member-only" }))).toBe(false);
+  });
+
+  it("admin can manage all projects and all clusters", () => {
+    const ability = defineAbilityForRole("admin");
+    expect(ability.can("manage", subject("Project", { id: "any-project" }))).toBe(true);
+    expect(ability.can("create", "Project")).toBe(true);
+    expect(ability.can("manage", "Cluster")).toBe(true);
+  });
+
+  it("researcher can read clusters but cannot manage them (EnableToggle stays disabled)", () => {
+    const ability = defineAbilityForRole("user", { userId: "researcher@nexus.local" });
+    expect(ability.can("read", "Cluster")).toBe(true);
+    expect(ability.can("manage", "Cluster")).toBe(false);
+  });
+
+  it("pi can read clusters but cannot manage them (cluster enablement is admin-only)", () => {
+    const ability = defineAbilityForRole("pi", {
+      userId: "u-pi",
+      myPiAllocations: ["alloc-1"],
+      myPiProjects: ["proj-1"],
+    });
+    expect(ability.can("read", "Cluster")).toBe(true);
+    expect(ability.can("manage", "Cluster")).toBe(false);
+  });
 });
