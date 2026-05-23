@@ -1,7 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { Cpu } from "lucide-react";
 import { describe, expect, it } from "vitest";
-import { StatCard, StatCardRow } from "../StatCard";
+import { StatCard } from "../StatCard";
+import { StatCardRow } from "../StatCardRow";
 
 describe("StatCard", () => {
   it("renders text variant with title, value, and sub", () => {

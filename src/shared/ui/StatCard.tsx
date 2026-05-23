@@ -70,7 +70,5 @@ export function StatCard(props: StatCardProps) {
   );
 }
 
-// Re-export so callers can `import { StatCardRow } from "@/shared/ui/StatCard"`
-// or `"@/shared/ui/StatCardRow"` — the row is the canonical KPI strip primitive
-// (spec §7.1 + §8 KPI conformance), home-style 3-col is the default.
-export { StatCardRow } from "./StatCardRow";
+// `StatCardRow` lives in `@/shared/ui/StatCardRow` — promoted in A2 as the
+// canonical KPI strip primitive (spec §7.1 + §8 conformance).

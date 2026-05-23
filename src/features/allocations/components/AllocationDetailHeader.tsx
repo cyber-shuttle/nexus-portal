@@ -2,7 +2,8 @@
 
 import { formatDate, formatNumber, formatRelative } from "@/lib/format";
 import { MetaItem, MetaRow } from "@/shared/ui/MetaRow";
-import { StatCard, StatCardRow } from "@/shared/ui/StatCard";
+import { StatCard } from "@/shared/ui/StatCard";
+import { StatCardRow } from "@/shared/ui/StatCardRow";
 import type { ComputeAllocation, ComputeAllocationResource } from "@features/allocations/schemas";
 import { Calendar, Cpu, CreditCard, UserSquare, Users } from "lucide-react";
 
