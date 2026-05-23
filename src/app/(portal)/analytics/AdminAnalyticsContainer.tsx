@@ -43,6 +43,10 @@ const ANALYTICS_USAGE_LIMIT = 2000;
 const TOP_PROJECTS_LIMIT = 10;
 const MATRIX_COLUMN_LIMIT = 10;
 const AT_RISK_FORECAST_BUFFER_DAYS = 0;
+// Caps the at-risk table render so a site with hundreds of resource breakouts
+// doesn't blow the page open. Sort is `daysToExhaust` asc — the most urgent
+// rows survive the cap. Tracked in docs/backend-contracts/analytics.md.
+const AT_RISK_ROW_LIMIT = 50;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 // Route-level fan-out per spec §5.2 + §6.3. Composes site-wide projects +
@@ -366,41 +370,62 @@ export function AdminAnalyticsContainer({ userId }: AdminAnalyticsContainerProps
     return cellInputs.get(cellKey(project.id, resource.id))?.allocationId ?? null;
   };
 
-  // At-risk allocations — fan-out forecast across all allocations, filter to
-  // those exhausting before end_date, sort by daysToExhaust ascending.
-  const atRiskRows: AdminAtRiskRow[] = allocations.map((a) => {
+  // At-risk allocations — enumerate (allocation × resource) so the table
+  // names the specific resource the project will burn through first instead
+  // of collapsing to one row per allocation (A6 polish, A4 carry-over F6).
+  // Per-resource capacity is the same even-split heuristic as the compliance
+  // matrix; documented in docs/backend-contracts/analytics.md.
+  const resourceNameById = new Map(resourceRows.map((r) => [r.id, r.name]));
+  const atRiskRows: AdminAtRiskRow[] = [];
+  for (const a of allocations) {
     const usages = usagesByAllocId.get(a.id) ?? [];
-    const used = usages.reduce((acc, u) => acc + u.used_su_amount, 0);
-    const f = forecast(
-      usages.map((u) => ({
-        used_su_amount: u.used_su_amount,
-        last_updated: u.last_updated,
-      })),
-      a,
-      range.to.getTime(),
-    );
     const project = projects.find((p) => p.id === a.project_id);
     const endMs = Date.parse(a.end_time);
     const endDate = Number.isNaN(endMs) ? null : new Date(endMs);
-    const daysToExhaust = f.daysRemaining;
-    return {
-      projectId: a.project_id,
-      projectName: project?.title ?? a.project_id,
-      resourceId: null,
-      resourceName: null,
-      allocationId: a.id,
-      usedPct: a.initial_su_amount > 0 ? (used / a.initial_su_amount) * 100 : 0,
-      daysToExhaust,
-      endDate,
-      ownerId: project?.project_pi_id ?? "—",
-    };
-  });
-  const atRisk = atRiskAllocations(atRiskRows).filter((r) => {
-    // Defense-in-depth on top of `atRiskAllocations`: also drop rows whose
-    // forecast exhaust falls within `AT_RISK_FORECAST_BUFFER_DAYS` of now.
-    if (r.daysToExhaust === null) return false;
-    return r.daysToExhaust >= AT_RISK_FORECAST_BUFFER_DAYS;
-  });
+
+    // Group usages by resource within this allocation.
+    const usagesByResource = new Map<string, typeof usages>();
+    for (const u of usages) {
+      const rid = u.compute_allocation_resource_id;
+      if (!rid) continue;
+      const arr = usagesByResource.get(rid) ?? [];
+      arr.push(u);
+      usagesByResource.set(rid, arr);
+    }
+    if (usagesByResource.size === 0) continue;
+
+    const perResourceBudget = a.initial_su_amount / usagesByResource.size;
+    for (const [resourceId, resourceUsages] of usagesByResource.entries()) {
+      const used = resourceUsages.reduce((acc, u) => acc + u.used_su_amount, 0);
+      const f = forecast(
+        resourceUsages.map((u) => ({
+          used_su_amount: u.used_su_amount,
+          last_updated: u.last_updated,
+        })),
+        { ...a, initial_su_amount: perResourceBudget },
+        range.to.getTime(),
+      );
+      atRiskRows.push({
+        projectId: a.project_id,
+        projectName: project?.title ?? a.project_id,
+        resourceId,
+        resourceName: resourceNameById.get(resourceId) ?? resourceId,
+        allocationId: a.id,
+        usedPct: perResourceBudget > 0 ? (used / perResourceBudget) * 100 : 0,
+        daysToExhaust: f.daysRemaining,
+        endDate,
+        ownerId: project?.project_pi_id ?? "—",
+      });
+    }
+  }
+  const atRisk = atRiskAllocations(atRiskRows)
+    .filter((r) => {
+      // Defense-in-depth on top of `atRiskAllocations`: also drop rows whose
+      // forecast exhaust falls within `AT_RISK_FORECAST_BUFFER_DAYS` of now.
+      if (r.daysToExhaust === null) return false;
+      return r.daysToExhaust >= AT_RISK_FORECAST_BUFFER_DAYS;
+    })
+    .slice(0, AT_RISK_ROW_LIMIT);
 
   const dateRangeValue: DateRangeValue = {
     from: range.from,

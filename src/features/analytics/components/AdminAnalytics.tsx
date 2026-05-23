@@ -398,7 +398,7 @@ export function AdminAnalytics(props: AdminAnalyticsProps) {
         <DataTable
           columns={atRiskColumns}
           rows={atRisk}
-          rowKey={(row) => row.allocationId}
+          rowKey={(row) => `${row.allocationId}::${row.resourceId ?? "all"}`}
           caption="At-risk allocations"
           onRowClick={(row) =>
             router.push(`/allocations/${row.allocationId}?tab=credits`)
