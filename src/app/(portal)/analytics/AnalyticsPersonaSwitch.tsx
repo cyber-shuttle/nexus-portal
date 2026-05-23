@@ -2,6 +2,7 @@
 
 import type { AnalyticsPersona } from "@/shared/auth/personaForAnalytics";
 import { PlaceholderPage } from "@/shared/ui/PlaceholderPage";
+import { PiAnalyticsContainer } from "./PiAnalyticsContainer";
 import { ResearcherAnalyticsContainer } from "./ResearcherAnalyticsContainer";
 
 export type AnalyticsPersonaSwitchProps = {
@@ -14,13 +15,7 @@ export type AnalyticsPersonaSwitchProps = {
 // presentational and the fan-out lives at the route layer (spec §5.2).
 export function AnalyticsPersonaSwitch({ persona, userId }: AnalyticsPersonaSwitchProps) {
   if (persona === "pi") {
-    return (
-      <PlaceholderPage
-        title="PI Analytics"
-        phase={2}
-        description="Available in Phase A2."
-      />
-    );
+    return <PiAnalyticsContainer userId={userId} />;
   }
   if (persona === "admin") {
     return (

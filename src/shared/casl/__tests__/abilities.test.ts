@@ -75,4 +75,21 @@ describe("defineAbilityForRole", () => {
     const ability = defineAbilityForRole("admin");
     expect(ability.can("manage", "Analytics")).toBe(true);
   });
+
+  it("AnalyticsPI scoping: pi with myPiProjects=['proj-1'] passes for proj-1 only", () => {
+    // A2 contract per brief — keeps the spec §5.5 invariant grep-visible.
+    const ability = defineAbilityForRole("pi", {
+      userId: "u-pi",
+      myPiAllocations: ["alloc-1"],
+      myPiProjects: ["proj-1"],
+    });
+    expect(ability.can("read", subject("AnalyticsPI", { projectId: "proj-1" }))).toBe(true);
+    expect(ability.can("read", subject("AnalyticsPI", { projectId: "proj-other" }))).toBe(false);
+  });
+
+  it("AnalyticsPI scoping: researcher cannot read AnalyticsPI at all", () => {
+    const ability = defineAbilityForRole("user", { userId: "u-1" });
+    expect(ability.can("read", subject("AnalyticsPI", { projectId: "proj-1" }))).toBe(false);
+    expect(ability.can("read", "AnalyticsPI")).toBe(false);
+  });
 });
