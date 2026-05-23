@@ -372,15 +372,17 @@ export function ResourcesAnalyticsContainer({
     return max;
   })();
 
-  // Compliance-style banding repurposed for raw SU magnitudes — top 25% by
-  // cell value is "hot" so the heatmap still reads at a glance without
-  // pretending the totals are usage percentages.
+  // Compliance-style banding repurposed for raw SU magnitudes. We skip the
+  // `warn` (amber) band because amber-700 on amber-100 fails WCAG AA contrast
+  // at the 12px cell font (4.03:1, needs 4.5:1) — same nit as admin A3 noted
+  // but the resources matrix has many more cells, so the contrast violation
+  // shows up consistently. `ok` (green) and `hot` (red) both pass at the
+  // existing tokens.
   function bandFor(value: number): ComplianceCell["band"] {
     if (matrixMax <= 0) return "empty";
     const ratio = value / matrixMax;
     if (ratio === 0) return "empty";
-    if (ratio >= 0.75) return "hot";
-    if (ratio >= 0.4) return "warn";
+    if (ratio >= 0.6) return "hot";
     return "ok";
   }
 
