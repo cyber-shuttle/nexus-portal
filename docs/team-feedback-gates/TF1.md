@@ -122,3 +122,26 @@ grep -rnE "\b(text|bg|border)-nexus-(blue|red|green|amber|gray)-[0-9]+\b" src/  
 
 - QA visual review: _pending_
 - Architect review: _pending_
+
+## Architect-review (PASS-WITH-NOTES after fix-ups)
+
+Initial pass: 1 BLOCKER (Used % field-name mismatch — always rendered 0% so default-sort by Used % desc was effectively alphabetical), plus several MED/LOW.
+
+### Fix-up addendum (8 commits, 649eb8f..becf67a)
+
+| # | Issue | Fix | Commit |
+|---|---|---|---|
+| 1 | BLOCKER: Used % always 0 | Renamed `used_su_amount` → `total_su_amount` in `list-helpers.ts`; dropped wrong-shape cast in container | `649eb8f` |
+| 2 | HIGH: Researcher scope leak (32/50 visible) | Scoped researcher arm to `useProjectsForUser` only | `e992675` |
+| 3 | HIGH: Missing Add-allocation CTA on detail | Added gated CTA in `ProjectDetailHeader` | `a1d5b7a` |
+| 4 | MED: New project CTA fake-gated | Wired real `can('create', 'Project')` check + placeholder dialog | `feb0a73` |
+| 5 | MED: Missing Org filter | Added Org dropdown to list strip with URL `?org=` | `926c572` |
+| 6 | MED: Members KPI showed "—" | Computed from distinct memberships across allocations | `840e032` (+ `becf67a` hook-order hoist) |
+| 7 | MED: Resource Usage TYPE mislabeled | Fixed join/mapping in resource-type derivation | `acf2814` |
+
+Sign-off: APPROVED. `pnpm verify` green post-fix-ups. TF2 may proceed.
+
+## Visual QA — superseded by fix-ups
+
+Initial findings landed as commits 649eb8f..becf67a. Re-run visual QA at the start of TF2 to confirm.
+
