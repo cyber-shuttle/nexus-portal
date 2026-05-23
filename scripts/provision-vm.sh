@@ -95,15 +95,24 @@ sudo systemctl enable --now nginx
 if [ ! -f "${APP_DIR}/.env" ]; then
   echo "==> Generate ${APP_DIR}/.env"
   SECRET=$(openssl rand -base64 32)
+  # OIDC vars are emitted as commented placeholders. To switch the VM to real
+  # Keycloak/CILogon sign-in: flip PORTAL_AUTH_MODE + NEXT_PUBLIC_PORTAL_AUTH_MODE
+  # to 'oidc', uncomment + fill the four OIDC_*/NEXUS_ALLOWED_EMAILS lines, then
+  # `sudo systemctl restart nexus-portal`. Server boot will fail-fast if any
+  # required OIDC var is missing.
   sudo -u "${APP_USER}" tee "${APP_DIR}/.env" > /dev/null <<ENV
 PORT=3000
 HOSTNAME=127.0.0.1
-PORTAL_AUTH_MODE=dev
-NEXT_PUBLIC_PORTAL_AUTH_MODE=dev
+PORTAL_AUTH_MODE=dev   # set to 'oidc' to require Keycloak/CILogon sign-in
+NEXT_PUBLIC_PORTAL_AUTH_MODE=dev   # mirrors the above; must match
 NEXT_PUBLIC_PORTAL_USE_MSW=true
 NEXTAUTH_URL=https://${DOMAIN}
 NEXTAUTH_SECRET=${SECRET}
 NODE_ENV=production
+# OIDC_ISSUER_URL=https://auth.dev.cybershuttle.org/realms/default
+# OIDC_CLIENT_ID=
+# OIDC_CLIENT_SECRET=
+# NEXUS_ALLOWED_EMAILS=
 ENV
   sudo chmod 600 "${APP_DIR}/.env"
 fi
