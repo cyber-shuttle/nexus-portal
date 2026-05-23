@@ -119,7 +119,7 @@ export function useSavedViewsToolbar({
         {
           onSuccess: (next) =>
             toast.success(
-              next.is_default ? `Pinned “${next.name}” as default` : `Cleared default`,
+              next.is_default ? `Pinned “${next.name}” as default` : "Cleared default",
             ),
           onError: (err) => toast.error(err.message ?? "Failed to update view"),
         },

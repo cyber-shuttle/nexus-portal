@@ -39,10 +39,11 @@ export function SavedViewChips({
   const visible = views.slice(0, VISIBLE_CHIP_LIMIT);
 
   return (
-    <div
-      role="group"
+    // `<fieldset>` per biome's a11y/useSemanticElements; behaves like a
+    // group landmark for the chip strip without the form-field affordances.
+    <fieldset
       aria-label="Saved views"
-      className={cn("flex flex-wrap items-center gap-1", className)}
+      className={cn("flex flex-wrap items-center gap-1 border-0 p-0", className)}
       data-testid="analytics-saved-view-chips"
     >
       {visible.map((view) => {
@@ -102,6 +103,6 @@ export function SavedViewChips({
           </div>
         );
       })}
-    </div>
+    </fieldset>
   );
 }
