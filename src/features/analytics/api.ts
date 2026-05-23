@@ -8,6 +8,7 @@ import {
 
 export type JobsListParams = {
   user_id?: string;
+  project_id?: string;
   from?: string;
   to?: string;
   limit?: number;
@@ -30,6 +31,7 @@ export async function getJobs(params: JobsListParams = {}): Promise<Job[]> {
 export type QueueWaitTimeParams = {
   from?: string;
   to?: string;
+  project_id?: string;
   group_by?: "queue";
 };
 
