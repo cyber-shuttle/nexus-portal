@@ -102,7 +102,7 @@ export function ProjectResourceUsageTab({ projectId }: ProjectResourceUsageTabPr
           All resources (last 30 days)
         </h3>
         <Link
-          href={`/analytics/resources?project=${projectId}`}
+          href={`/analytics?tab=resources&project=${projectId}`}
           className="inline-flex items-center gap-1 text-sm text-brand hover:underline"
         >
           Explore in Analytics
