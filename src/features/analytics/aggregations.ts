@@ -1,4 +1,4 @@
-import type { ComplianceBand } from "@shared/api/aggregator";
+import { bandForUsageRatio, type ComplianceBand } from "@shared/api/aggregator";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -262,10 +262,5 @@ export function complianceCell(
 ): { value: number; band: ComplianceBand } | null {
   if (!input || input.allocated <= 0) return null;
   const ratio = input.used / input.allocated;
-  let band: ComplianceBand;
-  if (!Number.isFinite(ratio) || ratio < 0.01) band = "empty";
-  else if (ratio >= 0.9) band = "hot";
-  else if (ratio >= 0.75) band = "warn";
-  else band = "ok";
-  return { value: ratio, band };
+  return { value: ratio, band: bandForUsageRatio(ratio) };
 }

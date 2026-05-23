@@ -147,17 +147,29 @@ export function AdminAnalytics(props: AdminAnalyticsProps) {
     [topProjects],
   );
 
+  // Forward analytics range to drill-down destinations (A3 F7) so the
+  // allocation detail page can preserve the window the user was looking at.
+  const rangeParams = React.useMemo(() => {
+    const p = new URLSearchParams();
+    p.set("from", range.from.toISOString());
+    p.set("to", range.to.toISOString());
+    return p;
+  }, [range.from, range.to]);
+
   // The compliance matrix routes to the first allocation found at the
   // project × resource intersection (spec §6.3: "Cell click → /allocations/:id?tab=credits").
   const onMatrixCellClick = (project: AdminMatrixProject, resource: AdminMatrixResource) => {
     const id = matrixCellAllocationId(project, resource);
-    if (id) router.push(`/allocations/${id}?tab=credits`);
+    if (!id) return;
+    const p = new URLSearchParams(rangeParams);
+    p.set("tab", "credits");
+    router.push(`/allocations/${id}?${p.toString()}`);
   };
 
   const onTopProjectClick = (datum: { key: string }) => {
     const project = topProjects.find((p) => p.projectId === datum.key);
     if (project?.firstAllocationId) {
-      router.push(`/allocations/${project.firstAllocationId}`);
+      router.push(`/allocations/${project.firstAllocationId}?${rangeParams.toString()}`);
     }
   };
 

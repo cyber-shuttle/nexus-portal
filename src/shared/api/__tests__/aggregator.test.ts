@@ -9,7 +9,6 @@ import {
   bandForUsageRatio,
   buildRecentActivity,
   classifyAllocations,
-  complianceMatrix,
   computeUsage30d,
   forecast,
   pace,
@@ -283,33 +282,6 @@ describe("bandForUsageRatio", () => {
     expect(bandForUsageRatio(0.9)).toBe("hot");
     expect(bandForUsageRatio(1.2)).toBe("hot");
     expect(bandForUsageRatio(Number.NaN)).toBe("empty");
-  });
-});
-
-describe("complianceMatrix", () => {
-  it("returns a row x col grid of {value, band}", () => {
-    const rows = ["proj-a", "proj-b"];
-    const cols = ["res-1", "res-2"];
-    const scores: Record<string, Record<string, number>> = {
-      "proj-a": { "res-1": 0.95, "res-2": 0.5 },
-      "proj-b": { "res-1": 0, "res-2": 0.8 },
-    };
-    const matrix = complianceMatrix(rows, cols, (r, c) => scores[r]?.[c] ?? 0);
-    expect(matrix).toEqual([
-      [
-        { value: 0.95, band: "hot" },
-        { value: 0.5, band: "ok" },
-      ],
-      [
-        { value: 0, band: "empty" },
-        { value: 0.8, band: "warn" },
-      ],
-    ]);
-  });
-
-  it("handles empty rows and cols", () => {
-    expect(complianceMatrix([], ["c"], () => 0)).toEqual([]);
-    expect(complianceMatrix(["r"], [], () => 0)).toEqual([[]]);
   });
 });
 

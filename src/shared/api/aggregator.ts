@@ -257,11 +257,6 @@ export function topN<T>(
 
 export type ComplianceBand = "ok" | "warn" | "hot" | "empty";
 
-export type ComplianceCell = {
-  value: number;
-  band: ComplianceBand;
-};
-
 // Bands match `UsageBar` thresholds: ≥90% hot, ≥75% warn, ≥1 ok, else empty.
 export function bandForUsageRatio(ratio: number): ComplianceBand {
   if (!Number.isFinite(ratio) || ratio < 0.01) return "empty";
@@ -270,15 +265,3 @@ export function bandForUsageRatio(ratio: number): ComplianceBand {
   return "ok";
 }
 
-export function complianceMatrix<R, C>(
-  rows: R[],
-  cols: C[],
-  scoreFn: (row: R, col: C) => number,
-): ComplianceCell[][] {
-  return rows.map((row) =>
-    cols.map((col) => {
-      const value = scoreFn(row, col);
-      return { value, band: bandForUsageRatio(value) };
-    }),
-  );
-}
