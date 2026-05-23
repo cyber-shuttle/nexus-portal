@@ -2,6 +2,7 @@
 
 import { getProjectComputeAllocations } from "@features/projects/api";
 import { getAllocationUsageTotal } from "@features/usage/api";
+import type { ComputeAllocationUsageTotal } from "@features/usage/schemas";
 import {
   NewProjectCta,
   type ProjectRow,
@@ -123,9 +124,9 @@ export function ProjectsListContainer({ userId, persona }: Props) {
 
   // Re-bucket usages back onto each project so the rollup helper can sum them.
   const usageByAllocId = React.useMemo(() => {
-    const map = new Map<string, { used_su_amount: number } | undefined>();
+    const map = new Map<string, ComputeAllocationUsageTotal | undefined>();
     flatAllocIds.forEach((id, i) => {
-      map.set(id, usageQueries[i]?.data as { used_su_amount: number } | undefined);
+      map.set(id, usageQueries[i]?.data as ComputeAllocationUsageTotal | undefined);
     });
     return map;
   }, [flatAllocIds, usageQueries]);

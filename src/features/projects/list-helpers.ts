@@ -59,10 +59,13 @@ export type ProjectRollup = {
 
 export function computeProjectRollup(
   allocations: Array<{ initial_su_amount: number }>,
-  usages: Array<{ used_su_amount: number } | undefined>,
+  // Field name matches the real `/compute-allocations/{id}/usages/total`
+  // contract (`ComputeAllocationUsageTotal`); the earlier `used_su_amount`
+  // shape was inferred from the per-row schema and silently produced 0%.
+  usages: Array<{ total_su_amount: number } | undefined>,
 ): ProjectRollup {
   const totalSu = allocations.reduce((sum, a) => sum + (a.initial_su_amount ?? 0), 0);
-  const usedSu = usages.reduce((sum, u) => sum + (u?.used_su_amount ?? 0), 0);
+  const usedSu = usages.reduce((sum, u) => sum + (u?.total_su_amount ?? 0), 0);
   // Floor at 1 so a project with allocations but 0 SUs allocated doesn't NaN
   // out the bar. UsageBar clamps anyway, but keep the math sane upstream.
   const safeMax = totalSu > 0 ? totalSu : 1;

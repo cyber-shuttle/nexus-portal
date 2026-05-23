@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { ComputeAllocationUsageTotal } from "@features/usage/schemas";
 import {
   computeProjectRollup,
   dedupePiAndMemberProjects,
@@ -74,7 +75,7 @@ describe("computeProjectRollup", () => {
   it("sums allocated and used SUs across rows", () => {
     const out = computeProjectRollup(
       [{ initial_su_amount: 1000 }, { initial_su_amount: 500 }],
-      [{ used_su_amount: 250 }, { used_su_amount: 100 }],
+      [{ total_su_amount: 250 }, { total_su_amount: 100 }],
     );
     expect(out.totalSu).toBe(1500);
     expect(out.usedSu).toBe(350);
@@ -97,9 +98,23 @@ describe("computeProjectRollup", () => {
   it("caps usedPct at 500 to keep transient over-100% values bounded", () => {
     const out = computeProjectRollup(
       [{ initial_su_amount: 100 }],
-      [{ used_su_amount: 10_000 }],
+      [{ total_su_amount: 10_000 }],
     );
     expect(out.usedPct).toBe(500);
+  });
+
+  // Regression for the TF1 fix-up BLOCKER: the rollup must consume the actual
+  // `ComputeAllocationUsageTotal` shape returned by
+  // /compute-allocations/{id}/usages/total — the earlier implementation read
+  // `used_su_amount`, which is the per-row schema field, so Used % stuck at 0.
+  it("compiles against the real ComputeAllocationUsageTotal shape", () => {
+    const usage: ComputeAllocationUsageTotal = {
+      compute_allocation_id: "alloc-001",
+      total_su_amount: 750,
+    };
+    const out = computeProjectRollup([{ initial_su_amount: 1000 }], [usage]);
+    expect(out.usedSu).toBe(750);
+    expect(out.usedPct).toBeCloseTo(75, 5);
   });
 });
 
