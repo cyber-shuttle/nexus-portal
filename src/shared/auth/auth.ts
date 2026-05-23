@@ -65,11 +65,13 @@ const providers: NextAuthConfig["providers"] = [
     ? [
         Keycloak({
           // Lock the callback path to /api/auth/callback/oidc so the Keycloak
-          // client registration is stable regardless of provider class.
+          // client registration is stable regardless of provider class. The
+          // env schema (superRefine) guarantees these four vars are present
+          // and non-empty when PORTAL_AUTH_MODE === 'oidc'.
           id: "oidc",
-          issuer: serverEnv.OIDC_ISSUER_URL!,
-          clientId: serverEnv.OIDC_CLIENT_ID!,
-          clientSecret: serverEnv.OIDC_CLIENT_SECRET!,
+          issuer: serverEnv.OIDC_ISSUER_URL ?? "",
+          clientId: serverEnv.OIDC_CLIENT_ID ?? "",
+          clientSecret: serverEnv.OIDC_CLIENT_SECRET ?? "",
           authorization: { params: { scope: "openid email profile" } },
         }),
       ]
