@@ -1,7 +1,7 @@
 "use client";
 
 import type { AnalyticsPersona } from "@/shared/auth/personaForAnalytics";
-import { PlaceholderPage } from "@/shared/ui/PlaceholderPage";
+import { AdminAnalyticsContainer } from "./AdminAnalyticsContainer";
 import { PiAnalyticsContainer } from "./PiAnalyticsContainer";
 import { ResearcherAnalyticsContainer } from "./ResearcherAnalyticsContainer";
 
@@ -18,13 +18,7 @@ export function AnalyticsPersonaSwitch({ persona, userId }: AnalyticsPersonaSwit
     return <PiAnalyticsContainer userId={userId} />;
   }
   if (persona === "admin") {
-    return (
-      <PlaceholderPage
-        title="Admin Analytics"
-        phase={3}
-        description="Available in Phase A3."
-      />
-    );
+    return <AdminAnalyticsContainer />;
   }
   return <ResearcherAnalyticsContainer userId={userId} />;
 }
