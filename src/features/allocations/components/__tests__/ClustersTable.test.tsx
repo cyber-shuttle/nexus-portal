@@ -1,6 +1,6 @@
-import type { Cluster } from "@features/allocations/schemas";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import type { Cluster } from "../../schemas";
 import { ClustersTable } from "../ClustersTable";
 
 const enabledRow: Cluster = {

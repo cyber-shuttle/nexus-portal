@@ -1,6 +1,5 @@
 "use client";
 
-import type { Cluster, ClusterStatus } from "@features/allocations/schemas";
 import { DataTable, type DataTableColumn } from "@/shared/ui/DataTable";
 import { EmptyState } from "@/shared/ui/EmptyState";
 import { EnableToggle, type EnableToggleImpact } from "@/shared/ui/EnableToggle";
@@ -10,6 +9,7 @@ import { Label } from "@/shared/ui/label";
 import { TableSkeleton } from "@/shared/ui/Loading";
 import { Server } from "lucide-react";
 import * as React from "react";
+import type { Cluster, ClusterStatus } from "../schemas";
 
 export type ClustersTableProps = {
   rows: Cluster[];

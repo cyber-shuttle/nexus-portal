@@ -12,6 +12,8 @@ a353363 Promote cluster queries to allocations feature module
 4369fcc Filter cluster selectors to enabled clusters only
 39e0a7e Document clusters backend contract
 b055336 Add TF2 unit and e2e tests for cluster toggle and propagation
+9b12b0f Add Phase TF2 gate report
+<HEAD>  Move ClustersTable into allocations feature for isolation
 ```
 
 ## TF0 carry-over status — cluster queries promotion
@@ -31,7 +33,7 @@ b055336 Add TF2 unit and e2e tests for cluster toggle and propagation
 
 - Route shell: `src/app/(portal)/admin/resources/page.tsx` — wraps the existing `ResourcesContainer` and the new `ClustersContainer` in a `TabsRouter` with `defaultValue="clusters"`. Header changed to `Resources & Clusters` to reflect the dual scope.
 - Container: `src/app/(portal)/admin/resources/ClustersContainer.tsx` — CASL gate computes `canManage = ability.can('manage', 'all') || ability.can('manage', 'Cluster')`, pulls `useClusters({})` for the unfiltered list, calls `useUpdateClusterStatus` on toggle.
-- Presentational: `src/features/admin/components/ClustersTable.tsx` — DataTable with columns `Cluster · Type · Location · # Allocations · # Users · Status (EnableToggle)`, filter strip with search + status + type, empty state, error retry, muted treatment on DISABLED rows via `opacity-70` only (stacking with `text-muted-foreground` failed WCAG AA contrast at 12px).
+- Presentational: `src/features/allocations/components/ClustersTable.tsx` — DataTable with columns `Cluster · Type · Location · # Allocations · # Users · Status (EnableToggle)`, filter strip with search + status + type, empty state, error retry, muted treatment on DISABLED rows via `opacity-70` only (stacking with `text-muted-foreground` failed WCAG AA contrast at 12px). The component lives under `features/allocations/` (not `features/admin/`) so the §5 isolation rule holds — the admin container imports a feature module from the allocations domain, never the other way around.
 - Existing `ResourcesContainer.tsx` had its duplicate `<h1>` removed so it nests cleanly under the new page-level header.
 
 Per-row impact summary feeding the EnableToggle dialog:
@@ -71,7 +73,7 @@ The hook itself is callable today from anywhere under `@features/allocations/que
 - [x] Backend-contract doc `docs/backend-contracts/clusters.md` published (92 lines: migration, two endpoints, selector semantics, audit ask).
 - [x] Unit tests:
   - `src/features/allocations/__tests__/cluster-queries.test.tsx` — 4 hook tests (enabled filter URL, no-DISABLED leak, full-list pass-through, mutation triggers invalidation cascade).
-  - `src/features/admin/components/__tests__/ClustersTable.test.tsx` — 8 tests (render, muted treatment, CASL read-only, status filter onChange, local filter narrowing, dialog impact + confirm, empty state, error retry).
+  - `src/features/allocations/components/__tests__/ClustersTable.test.tsx` — 8 tests (render, muted treatment, CASL read-only, status filter onChange, local filter narrowing, dialog impact + confirm, empty state, error retry).
 - [x] E2E tests:
   - `tests/admin-clusters.e2e.ts` — 3 tests (default tab + three rows, toggle + dialog + persistence, status filter).
   - `tests/cluster-filter-propagation.e2e.ts` — 1 test (disabling Nexus-A drops it from Status=ENABLED view; Status=All still shows it).

@@ -1,6 +1,6 @@
 "use client";
 
-import { ClustersTable } from "@features/admin/components/ClustersTable";
+import { ClustersTable } from "@features/allocations/components/ClustersTable";
 import { useClusters, useUpdateClusterStatus } from "@features/allocations/queries";
 import type { Cluster, ClusterStatus } from "@features/allocations/schemas";
 import { useAbility } from "@shared/casl/AbilityProvider";
