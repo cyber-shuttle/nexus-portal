@@ -5,10 +5,10 @@ import { DrillStack } from "@/shared/ui/DrillStack";
 import { Cpu } from "lucide-react";
 import * as React from "react";
 
-// TF1 MVP — works for the project Resource Usage tab today. TF3 will promote
-// the component to `src/shared/ui/` and rewire it to also drive the allocation
-// detail callout + the analytics resources callout once the shared visual is
-// locked across all three surfaces (architect note in TF0 gate).
+// Promoted from `features/projects/components/` in TF3 so allocation detail +
+// the analytics Resources tab can reuse the same visual without crossing the
+// §5 feature-isolation rule. Stays pure-presentational — callers compute the
+// rows from whatever their domain query returns.
 
 export type MostUsedResourceCalloutRow = {
   id: string;
@@ -75,8 +75,11 @@ export function MostUsedResourceCallout({
               <button
                 type="button"
                 onClick={() => {
+                  if (onRowClick) {
+                    onRowClick(row);
+                    return;
+                  }
                   setDrillRow(row);
-                  onRowClick?.(row);
                 }}
                 className={cn(
                   "flex w-full items-center gap-3 rounded-md px-2 py-1.5 text-left",
@@ -111,16 +114,18 @@ export function MostUsedResourceCallout({
         })}
       </ol>
 
-      {/* Placeholder drill drawer. TF3 wires this to the analytics drill stack
-          with per-user / per-allocation breakdown. */}
+      {/* Built-in DrillStack is the fallback when the caller doesn't intercept
+          via `onRowClick` — keeps the project Resource Usage tab interactive
+          without forcing every consumer to wire a drawer. Analytics + the
+          allocation detail surface skip this branch entirely. */}
       <DrillStack
-        open={drillRow !== null}
+        open={!onRowClick && drillRow !== null}
         title={drillRow ? `Resource: ${drillRow.name}` : "Resource"}
         crumbs={[]}
         onClose={() => setDrillRow(null)}
       >
         <p className="text-sm text-muted-foreground">
-          Per-user and per-allocation breakdown for this resource lands with TF3.
+          Open the analytics Resources tab for the per-user and per-allocation breakdown.
         </p>
       </DrillStack>
     </section>

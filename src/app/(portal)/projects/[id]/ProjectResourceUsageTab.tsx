@@ -5,7 +5,7 @@ import { DataTable, type DataTableColumn } from "@/shared/ui/DataTable";
 import { ErrorState } from "@/shared/ui/ErrorState";
 import { TableSkeleton } from "@/shared/ui/Loading";
 import { UsageBar } from "@/shared/ui/UsageBar";
-import { MostUsedResourceCallout } from "@features/projects/components/MostUsedResourceCallout";
+import { MostUsedResourceCallout } from "@/shared/ui/MostUsedResourceCallout";
 import { useProjectUsageSummary } from "@features/projects/queries";
 import type { ProjectUsageResourceRow } from "@features/projects/schemas";
 import { ArrowUpRight } from "lucide-react";
