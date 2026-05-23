@@ -58,6 +58,7 @@ export const userHandlers = [
     return HttpResponse.json({
       role: isAdmin ? "admin" : isPi ? "pi" : "user",
       myPiAllocations: scopes.myPiAllocations,
+      myPiProjects: scopes.myPiProjects,
       assignedAllocations: scopes.assignedAllocations,
     });
   }),

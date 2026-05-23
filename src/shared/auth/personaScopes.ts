@@ -2,6 +2,7 @@ import { seed } from "@/mocks/seed";
 
 export type PersonaScopes = {
   myPiAllocations: string[];
+  myPiProjects: string[];
   assignedAllocations: string[];
 };
 
@@ -21,6 +22,9 @@ export function derivePersonaScopes(userId: string): PersonaScopes {
         .map((a) => a.id),
     ),
   ).sort();
+  // Project-scoped abilities (AnalyticsPI) need the project list separately —
+  // an allocation membership PI role is on the allocation, not the project.
+  const myPiProjects = Array.from(piProjectIds).sort();
 
   const assignedAllocations = Array.from(
     new Set(
@@ -30,5 +34,5 @@ export function derivePersonaScopes(userId: string): PersonaScopes {
     ),
   ).sort();
 
-  return { myPiAllocations, assignedAllocations };
+  return { myPiAllocations, myPiProjects, assignedAllocations };
 }

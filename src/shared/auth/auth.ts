@@ -82,6 +82,7 @@ const credentialsProvider = Credentials({
         name: preset.name,
         role: preset.role,
         myPiAllocations: scopes.myPiAllocations,
+        myPiProjects: scopes.myPiProjects,
         assignedAllocations: scopes.assignedAllocations,
       };
     }
@@ -91,6 +92,7 @@ const credentialsProvider = Credentials({
       name: email.split("@")[0],
       role: "user" as Role,
       myPiAllocations: scopes.myPiAllocations,
+      myPiProjects: scopes.myPiProjects,
       assignedAllocations: scopes.assignedAllocations,
     };
   },
@@ -124,6 +126,7 @@ export const authConfig: NextAuthConfig = {
         token.role = user.role;
         token.personId = user.personId;
         token.myPiAllocations = user.myPiAllocations;
+        token.myPiProjects = user.myPiProjects;
         token.assignedAllocations = user.assignedAllocations;
       }
       if (account?.access_token) {
@@ -161,6 +164,7 @@ export const authConfig: NextAuthConfig = {
         session.user.role = token.role;
         session.user.personId = token.personId;
         session.user.myPiAllocations = token.myPiAllocations;
+        session.user.myPiProjects = token.myPiProjects;
         session.user.assignedAllocations = token.assignedAllocations;
         if (typeof token.sub === "string") {
           session.user.id = token.sub;

@@ -289,8 +289,11 @@ export function PiAnalyticsContainer({ userId }: PiAnalyticsContainerProps) {
   const memberUsageByAllocation: PiAnalyticsProps["memberUsageByAllocation"] = {};
   for (const [i, key] of memberTotalKeys.entries()) {
     const total = memberTotalsQueries[i]?.data?.total_su_amount ?? 0;
-    const arr = (memberUsageByAllocation[key.userId] ??= []);
-    arr.push({ allocation_id: key.allocationId, total });
+    if (!memberUsageByAllocation[key.userId]) memberUsageByAllocation[key.userId] = [];
+    memberUsageByAllocation[key.userId]?.push({
+      allocation_id: key.allocationId,
+      total,
+    });
   }
 
   // Resource mix from the flat usage stream.

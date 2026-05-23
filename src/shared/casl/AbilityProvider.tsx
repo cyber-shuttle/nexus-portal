@@ -14,9 +14,16 @@ export function AbilityProvider({ children }: { children: ReactNode }) {
       defineAbilityForRole(role, {
         userId: session?.user?.id,
         myPiAllocations: session?.user?.myPiAllocations,
+        myPiProjects: session?.user?.myPiProjects,
         assignedAllocations: session?.user?.assignedAllocations,
       }),
-    [role, session?.user?.id, session?.user?.myPiAllocations, session?.user?.assignedAllocations],
+    [
+      role,
+      session?.user?.id,
+      session?.user?.myPiAllocations,
+      session?.user?.myPiProjects,
+      session?.user?.assignedAllocations,
+    ],
   );
 
   return <CaslAbilityProvider value={ability}>{children}</CaslAbilityProvider>;
