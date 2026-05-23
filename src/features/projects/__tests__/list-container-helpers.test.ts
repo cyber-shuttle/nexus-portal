@@ -1,4 +1,8 @@
 import { describe, expect, it } from "vitest";
+// Cross-feature import is intentional and contained to this test file: the
+// regression check exists precisely to catch drift between the rollup helper
+// and the real usage schema. Documented as an allowed test-only exception in
+// the TF1 fix-up addendum.
 import type { ComputeAllocationUsageTotal } from "@features/usage/schemas";
 import {
   computeProjectRollup,

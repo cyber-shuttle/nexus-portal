@@ -99,6 +99,22 @@ export function ProjectDetailContainer({ projectId }: { projectId: string }) {
     return sum + rows.filter((r) => r.change_status === "PENDING").length;
   }, 0);
 
+  // Distinct members across every allocation. The fan-out shares a cache key
+  // with the Members tab so opening the tab is free after this loads. The
+  // useMemo must run on every render (above the early returns) to keep React's
+  // hook-call order stable.
+  const membershipsLoading =
+    membershipQueries.length === 0 ? false : membershipQueries.some((q) => q.isLoading);
+  const distinctMembers = React.useMemo(() => {
+    const set = new Set<string>();
+    for (const q of membershipQueries) {
+      const rows = (q.data ?? []) as Array<{ user_id: string }>;
+      for (const m of rows) set.add(m.user_id);
+    }
+    return set.size;
+  }, [membershipQueries]);
+  const membersValue = membershipsLoading ? "—" : String(distinctMembers);
+
   // CASL gate — early ErrorState when read denied. We guard after the
   // project query lands so the rule can match against the row's id.
   if (projectQuery.isLoading) return <CardSkeleton />;
@@ -128,22 +144,6 @@ export function ProjectDetailContainer({ projectId }: { projectId: string }) {
     piUserQuery.data?.first_name || piUserQuery.data?.last_name
       ? [piUserQuery.data?.first_name, piUserQuery.data?.last_name].filter(Boolean).join(" ")
       : (piUserQuery.data?.email ?? null);
-
-  // Distinct members across every allocation. The fan-out shares a cache key
-  // with the Members tab so opening the tab is free after this loads. We
-  // intentionally render "—" until every membership query has resolved so the
-  // KPI never flickers a partial undercount.
-  const membershipsLoading =
-    membershipQueries.length === 0 ? false : membershipQueries.some((q) => q.isLoading);
-  const distinctMembers = React.useMemo(() => {
-    const set = new Set<string>();
-    for (const q of membershipQueries) {
-      const rows = (q.data ?? []) as Array<{ user_id: string }>;
-      for (const m of rows) set.add(m.user_id);
-    }
-    return set.size;
-  }, [membershipQueries]);
-  const membersValue = membershipsLoading ? "—" : String(distinctMembers);
 
   const canAddAllocation = ability.can(
     "create",
