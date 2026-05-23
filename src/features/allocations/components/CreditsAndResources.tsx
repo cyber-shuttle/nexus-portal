@@ -10,6 +10,7 @@ import {
 } from "@/shared/ui/MostUsedResourceCallout";
 import { UsageBar } from "@/shared/ui/UsageBar";
 import { useQueries } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import * as React from "react";
 import { getResourceRatesEffective } from "../api";
 import { allocationKeys, useAllocation, useAllocationResources } from "../queries";
@@ -21,6 +22,7 @@ export type CreditsAndResourcesProps = {
 };
 
 export function CreditsAndResources({ allocationId, usedByResource }: CreditsAndResourcesProps) {
+  const router = useRouter();
   const allocationQuery = useAllocation(allocationId);
   const resourcesQuery = useAllocationResources(allocationId);
 
@@ -99,11 +101,12 @@ export function CreditsAndResources({ allocationId, usedByResource }: CreditsAnd
             topN={5}
             onRowClick={(row) => {
               // Drill destination: persona analytics Resources tab with the
-              // allocation already selected. Keeps the callout interactive
-              // from the allocation detail without baking a per-user drawer
-              // here (per spec §6.4 drill-down convention).
-              const target = `/analytics?tab=resources&allocation=${allocationId}&resource=${row.id}`;
-              if (typeof window !== "undefined") window.location.assign(target);
+              // allocation already selected. SPA push keeps client cache hot
+              // so the analytics container reuses the per-allocation fetch
+              // populated by this page (per spec §6.4 drill-down convention).
+              router.push(
+                `/analytics?tab=resources&allocation=${allocationId}&resource=${row.id}`,
+              );
             }}
           />
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
