@@ -127,8 +127,12 @@ export function buildSeed(): Seed {
   const rng = makeRng(0x5eed1);
 
   const clusters: ComputeCluster[] = [
-    { id: "cluster-001", name: "Nexus-A" },
-    { id: "cluster-002", name: "Nexus-B" },
+    { id: "cluster-001", name: "Nexus-A", status: "ENABLED" },
+    { id: "cluster-002", name: "Nexus-B", status: "ENABLED" },
+    // QA visibility: keep one cluster DISABLED so the admin Clusters tab
+    // renders both states out of the box and selectors can be greppped for
+    // accidental "shows disabled" regressions.
+    { id: "cluster-003", name: "Nexus-Legacy", status: "DISABLED" },
   ];
 
   const organizations = [
@@ -908,4 +912,19 @@ export function getAllocationUserUsageTotalRow(
     .filter((u) => u.compute_allocation_id === allocId && u.user_id === userId)
     .reduce((acc, u) => acc + u.used_su_amount, 0);
   return { compute_allocation_id: allocId, user_id: userId, total_su_amount: total };
+}
+
+// Membership-derived "projects this user belongs to". Walks user → their
+// memberships → those allocations → distinct project ids. Includes PI-owned
+// projects because PIs are always seeded as members of their own
+// allocations (see buildSeed: piMembership). Single source of truth for the
+// /users/{id}/projects MSW handler.
+export function getProjectsForUserSeed(userId: string) {
+  const allocIds = new Set(
+    seed.memberships.filter((m) => m.user_id === userId).map((m) => m.compute_allocation_id),
+  );
+  const projectIds = new Set(
+    seed.allocations.filter((a) => allocIds.has(a.id)).map((a) => a.project_id),
+  );
+  return seed.projects.filter((p) => projectIds.has(p.id));
 }

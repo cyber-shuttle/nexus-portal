@@ -35,6 +35,11 @@ export const computeAllocationResourceRateSchema = z.object({
 export const computeClusterSchema = z.object({
   id: z.string(),
   name: z.string(),
+  // Spec §8 B4 migration adds compute_clusters.status. We model it as
+  // optional on the shared schema so existing selector consumers that read
+  // {id, name} aren't forced to handle the new field; the admin
+  // `features/admin/schemas.ts#clusterSchema` shape narrows it to required.
+  status: z.enum(["ENABLED", "DISABLED"]).optional(),
 });
 
 export type ComputeAllocationResource = z.infer<typeof computeAllocationResourceSchema>;
