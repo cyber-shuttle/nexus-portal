@@ -5,6 +5,7 @@ import {
   Coins,
   DollarSign,
   FileText,
+  FolderKanban,
   GitPullRequest,
   LayoutDashboard,
   LineChart,
@@ -35,6 +36,16 @@ export const portalNav: NavItem[] = [
     label: "Analytics",
     icon: LineChart,
     ability: { action: "read", subject: "AnalyticsResearcher" },
+  },
+  // Slot 3 per team-feedback spec §5.1 — between Analytics and Allocations.
+  // Every persona has `read Project` (CASL filters by membership) so the link
+  // shows for everyone signed in; admin sees the unscoped list, PI sees PI+
+  // member projects, researcher sees member-only.
+  {
+    href: "/projects",
+    label: "Projects",
+    icon: FolderKanban,
+    ability: { action: "read", subject: "Project" },
   },
   { href: "/allocations", label: "Allocations", icon: Server },
   { href: "/change-requests", label: "Change Requests", icon: GitPullRequest },
