@@ -1,3 +1,5 @@
+import type { ComplianceBand } from "@shared/api/aggregator";
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 // Structural usage point shape — keeps analytics independent of the `usage`
@@ -192,4 +194,78 @@ export function projectForecast(
     if (earliest === null || t < earliest) earliest = t;
   }
   return earliest === null ? null : new Date(earliest);
+}
+
+// --- Admin aggregations ---------------------------------------------------
+
+// `sitePace` is total used / total allocated across the site. Matches the
+// Site SU KPI on the admin analytics page (spec §6.3). Returns 0 when there
+// are no allocations.
+export function sitePace(totalUsed: number, totalAllocated: number): number {
+  if (totalAllocated <= 0) return 0;
+  return totalUsed / totalAllocated;
+}
+
+export type AdminProjectBurn = {
+  projectId: string;
+  projectName: string;
+  used: number;
+  allocated: number;
+  firstAllocationId: string | null;
+};
+
+// `topProjectsByBurn` sorts site-wide projects by used SU desc and trims to
+// the top `n`. Powers the Top Projects (burn) card (spec §6.3).
+export function topProjectsByBurn(
+  projects: AdminProjectBurn[],
+  n = 10,
+): AdminProjectBurn[] {
+  return projects.slice().sort((a, b) => b.used - a.used).slice(0, n);
+}
+
+export type AdminAtRiskRow = {
+  projectId: string;
+  projectName: string;
+  resourceId: string | null;
+  resourceName: string | null;
+  allocationId: string;
+  usedPct: number;
+  daysToExhaust: number | null;
+  endDate: Date | null;
+  ownerId: string;
+};
+
+// `atRiskAllocations` flags allocations whose forecast exhaust falls before
+// award end_date. Sorted by `daysToExhaust` asc so the most urgent rows
+// surface first (spec §6.3 At-risk allocations table).
+export function atRiskAllocations(rows: AdminAtRiskRow[]): AdminAtRiskRow[] {
+  return rows
+    .filter((r) => r.daysToExhaust !== null && r.endDate !== null)
+    .filter((r) => {
+      if (r.daysToExhaust === null || !r.endDate) return false;
+      const exhaustMs = Date.now() + r.daysToExhaust * DAY;
+      return exhaustMs < r.endDate.getTime();
+    })
+    .sort((a, b) => (a.daysToExhaust ?? Number.POSITIVE_INFINITY) - (b.daysToExhaust ?? Number.POSITIVE_INFINITY));
+}
+
+// `complianceCell` returns the {value, band} pair for a project/resource pair
+// or null when no allocation exists for that intersection. The band uses the
+// shared `bandForUsageRatio` so admin matches the UsageBar thresholds.
+export type ComplianceCellInput = {
+  used: number;
+  allocated: number;
+};
+
+export function complianceCell(
+  input: ComplianceCellInput | null,
+): { value: number; band: ComplianceBand } | null {
+  if (!input || input.allocated <= 0) return null;
+  const ratio = input.used / input.allocated;
+  let band: ComplianceBand;
+  if (!Number.isFinite(ratio) || ratio < 0.01) band = "empty";
+  else if (ratio >= 0.9) band = "hot";
+  else if (ratio >= 0.75) band = "warn";
+  else band = "ok";
+  return { value: ratio, band };
 }
