@@ -128,12 +128,8 @@ export function useSavedViewsToolbar({
     [updateMutation],
   );
 
-  // Apply-time chip; the active id is purely visual — we don't echo it
-  // through URL state because the user can edit range/groupBy after apply.
-  const [activeId, setActiveId] = React.useState<string | null>(null);
   const handleApply = React.useCallback(
     (view: SavedView) => {
-      setActiveId(view.id);
       writeViewToUrl(view);
       onApply?.(view);
     },
@@ -165,10 +161,24 @@ export function useSavedViewsToolbar({
       return;
     }
     autoAppliedRef.current = true;
-    setActiveId(defaultView.id);
     writeViewToUrl(defaultView);
     onApply?.(defaultView);
   }, [viewsQuery.isLoading, hasUrlState, defaultView, writeViewToUrl, onApply]);
+
+  // Derive the active chip from URL state so the press indicator only lights
+  // the chip whose snapshot still matches what's applied. The moment the user
+  // tweaks the range or a group-by chip the press goes away — there's no
+  // longer a "saved view" applied, just a manual edit. (A6 polish.)
+  const activeId = React.useMemo(
+    () =>
+      activeSavedViewId({
+        views,
+        searchParams,
+        range,
+        groupBy,
+      }),
+    [views, searchParams, range, groupBy],
+  );
 
   const chips = (
     <SavedViewChips
@@ -197,4 +207,90 @@ export function useSavedViewsToolbar({
     defaultView,
     isLoaded: !viewsQuery.isLoading,
   };
+}
+
+type ActiveLookup = {
+  views: SavedView[];
+  searchParams: URLSearchParams | ReadonlyURLSearchParams;
+  range: AnalyticsRange;
+  groupBy: string[];
+};
+
+// Compares each saved view's snapshot to the current URL state and returns
+// the id of the matching view, or null when nothing matches. We compare
+// preset names first (the common case for chip applies) and fall back to ISO
+// `from`/`to` for custom windows. Group-by arrays must match positionally —
+// trailing "all" slots are normalized away so a view saved with two slots
+// still matches when the page renders three.
+export function activeSavedViewId({
+  views,
+  searchParams,
+  range,
+  groupBy,
+}: ActiveLookup): string | null {
+  const urlPreset = searchParams.get("preset");
+  const urlGroupBy = trimTrailingAll(parseGroupByParam(searchParams.get("gb")));
+  for (const view of views) {
+    if (!groupByMatches(urlGroupBy, view.group_by, groupBy)) continue;
+    if (!rangeMatches(view, urlPreset, range)) continue;
+    return view.id;
+  }
+  return null;
+}
+
+type ReadonlyURLSearchParams = {
+  get(name: string): string | null;
+};
+
+function parseGroupByParam(raw: string | null): string[] {
+  if (!raw) return [];
+  return raw.split(",").map((s) => s.trim());
+}
+
+function trimTrailingAll(slots: string[]): string[] {
+  const out = slots.slice();
+  while (out.length > 0 && out[out.length - 1] === "all") out.pop();
+  return out;
+}
+
+function groupByMatches(
+  urlGroupBy: string[],
+  viewGroupBy: string[],
+  currentGroupBy: string[],
+): boolean {
+  // Prefer URL-derived slots; fall back to the container-resolved values when
+  // the URL has no `?gb=` (default-on-load path before the auto-apply landed).
+  const left = urlGroupBy.length > 0 ? urlGroupBy : trimTrailingAll(currentGroupBy);
+  const right = trimTrailingAll(viewGroupBy);
+  if (left.length !== right.length) return false;
+  for (let i = 0; i < left.length; i += 1) {
+    if (left[i] !== right[i]) return false;
+  }
+  return true;
+}
+
+function rangeMatches(
+  view: SavedView,
+  urlPreset: string | null,
+  currentRange: AnalyticsRange,
+): boolean {
+  // Preset views: match on preset name. `currentRange.preset` already reflects
+  // either the URL value or the default fallback, so we can use it directly.
+  if (view.range.preset && view.range.preset !== "custom") {
+    const effectivePreset = urlPreset ?? currentRange.preset;
+    return effectivePreset === view.range.preset;
+  }
+  // Custom views: match on absolute ISO endpoints. We compare millis so
+  // equivalent ISO strings (with/without ms) still match.
+  if (view.range.preset === "custom" || !view.range.preset) {
+    if (currentRange.preset !== "custom") return false;
+    const viewFrom = Date.parse(view.range.from);
+    const viewTo = Date.parse(view.range.to);
+    if (Number.isNaN(viewFrom) || Number.isNaN(viewTo)) return false;
+    return (
+      viewFrom === currentRange.from.getTime() &&
+      viewTo === currentRange.to.getTime()
+    );
+  }
+  return false;
 }
