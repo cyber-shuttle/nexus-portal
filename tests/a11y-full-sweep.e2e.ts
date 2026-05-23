@@ -6,6 +6,7 @@ const SEVERITIES = ["serious", "critical"] as const;
 
 const ADMIN_ROUTES = [
   "/home",
+  "/analytics",
   "/allocations",
   "/change-requests",
   "/proposals",
