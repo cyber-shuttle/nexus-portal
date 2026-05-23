@@ -43,13 +43,10 @@ export function ResourcesContainer() {
 
   return (
     <div className="space-y-6">
-      <header className="space-y-1">
-        <h1 className="font-display text-[28px] font-bold leading-tight">Resources</h1>
-        <p className="text-sm text-muted-foreground">
-          Site-wide rollup of compute resources across allocations. Click a row to inspect usage
-          trends.
-        </p>
-      </header>
+      <p className="text-sm text-muted-foreground">
+        Site-wide rollup of compute resources across allocations. Click a row to inspect usage
+        trends.
+      </p>
 
       <ResourcesTable
         rows={rows}
