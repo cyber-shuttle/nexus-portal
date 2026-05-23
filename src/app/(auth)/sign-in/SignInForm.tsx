@@ -1,13 +1,14 @@
 "use client";
 
 import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
+import { SignInErrorBanner } from "./SignInErrorBanner";
 
-const personas = [
+type Persona = "researcher" | "pi" | "admin";
+
+const personas: Array<{ id: Persona; email: string; label: string }> = [
   { id: "researcher", email: "researcher@nexus.local", label: "Researcher" },
   { id: "pi", email: "pi@nexus.local", label: "Principal Investigator" },
   { id: "admin", email: "admin@nexus.local", label: "Site Admin" },
@@ -16,20 +17,28 @@ const personas = [
 export function SignInForm() {
   const params = useSearchParams();
   const callbackUrl = params.get("callbackUrl") ?? "/home";
+  const errorParam = params.get("error");
+  const deniedEmail = params.get("email") ?? undefined;
 
-  const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const submit = async (loginEmail: string) => {
-    if (!loginEmail) {
-      setError("Email is required");
-      return;
-    }
+  const pick = async (persona: Persona) => {
     setError(null);
     setSubmitting(true);
+    // Auth mode is read at module-load via NEXT_PUBLIC_PORTAL_AUTH_MODE so
+    // a single deploy can flip dev↔oidc without rebuilding this component.
+    if (process.env.NEXT_PUBLIC_PORTAL_AUTH_MODE === "oidc") {
+      // Short-lived cookie carries the persona pick across the OIDC redirect;
+      // the jwt callback reads and clears it. Secure + SameSite=Lax matches
+      // NextAuth's own session-cookie posture.
+      document.cookie = `nexus_pending_persona=${persona}; Max-Age=300; Path=/; SameSite=Lax; Secure`;
+      await signIn("oidc", { callbackUrl });
+      return;
+    }
+    const preset = personas.find((p) => p.id === persona);
     const res = await signIn("credentials", {
-      email: loginEmail,
+      email: preset?.email ?? "",
       password: "dev",
       redirect: false,
       callbackUrl,
@@ -44,13 +53,15 @@ export function SignInForm() {
 
   return (
     <div className="flex flex-col gap-5">
+      {errorParam === "not_allowed" && <SignInErrorBanner email={deniedEmail} />}
+
       <div className="grid grid-cols-1 gap-2">
         {personas.map((p) => (
           <Button
             key={p.id}
             variant="outline"
             disabled={submitting}
-            onClick={() => void submit(p.email)}
+            onClick={() => void pick(p.id)}
             className="justify-start"
           >
             <span className="font-medium">{p.label}</span>
@@ -58,37 +69,7 @@ export function SignInForm() {
           </Button>
         ))}
       </div>
-
-      <div className="flex items-center gap-3 text-xs uppercase tracking-wide text-muted-foreground">
-        <div className="h-px flex-1 bg-border" />
-        <span>or any cluster user</span>
-        <div className="h-px flex-1 bg-border" />
-      </div>
-
-      <form
-        className="flex flex-col gap-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          void submit(email);
-        }}
-      >
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="user@your-cluster.edu"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            autoComplete="email"
-            disabled={submitting}
-          />
-        </div>
-        {error && <p className="text-sm text-destructive">{error}</p>}
-        <Button type="submit" disabled={submitting}>
-          {submitting ? "Signing in..." : "Continue"}
-        </Button>
-      </form>
+      {error && <p className="text-sm text-destructive">{error}</p>}
     </div>
   );
 }

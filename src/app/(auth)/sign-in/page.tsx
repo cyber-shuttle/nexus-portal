@@ -14,9 +14,7 @@ export default function SignInPage() {
             Nexus
           </span>
           <h1 className="text-xl font-semibold tracking-tight">Sign in</h1>
-          <p className="text-sm text-muted-foreground">
-            Pick a dev persona or enter any cluster email to continue.
-          </p>
+          <p className="text-sm text-muted-foreground">Pick your role to continue.</p>
         </div>
         <Suspense fallback={null}>
           <SignInForm />
