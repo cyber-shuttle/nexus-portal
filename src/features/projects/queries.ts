@@ -37,10 +37,14 @@ export function useProjectSearch(q: string) {
   });
 }
 
-export function useProjects(params: ListProjectsParams = {}) {
+// `enabled` lets callers gate the admin paged endpoint behind a persona check
+// so researcher/PI paths don't burn a /projects?paged=1 round-trip whose data
+// they would never read. Default true keeps existing call-sites intact.
+export function useProjects(params: ListProjectsParams = {}, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: projectKeys.list(params),
     queryFn: () => listProjects(params),
+    enabled: options?.enabled ?? true,
   });
 }
 

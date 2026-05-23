@@ -68,7 +68,12 @@ export function ProjectsListContainer({ userId, persona }: Props) {
   // allowed to see; CASL's `read Project` rule already filters down to the
   // same set on the abilities side. Admin uses the paged list endpoint;
   // researcher uses the member-derived endpoint; PI takes the union.
-  const adminQuery = useProjects({ limit: ROLLUP_FAN_OUT_CAP });
+  // Gate `useProjects` to admin only — researcher must never see the unscoped
+  // catalog leak through (TF1 fix-up Fix 2).
+  const adminQuery = useProjects(
+    { limit: ROLLUP_FAN_OUT_CAP },
+    { enabled: persona === "admin" },
+  );
   const piOwnedQuery = useProjectsAsPi(persona === "pi" ? userId : undefined);
   const memberQuery = useProjectsForUser(
     persona === "researcher" || persona === "pi" ? userId : undefined,
