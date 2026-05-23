@@ -78,4 +78,44 @@ describe("useUrlRange", () => {
     expect(url).toContain(`from=${encodeURIComponent(from.toISOString())}`);
     expect(url).toContain(`to=${encodeURIComponent(to.toISOString())}`);
   });
+
+  it("round-trips a preset chip through ?preset= (write then read)", () => {
+    // Write — setRange with a preset should drop from/to and only carry ?preset=.
+    const { result, rerender } = renderHook(() => useUrlRange({ now }));
+    act(() => {
+      result.current.setRange({
+        from: new Date(FIXED_NOW - 7 * DAY_MS),
+        to: new Date(FIXED_NOW),
+        preset: "7d",
+      });
+    });
+    const writtenUrl = replace.mock.calls[0]?.[0] as string;
+    expect(writtenUrl).toBe("?preset=7d");
+
+    // Read — feeding that URL back through the hook resolves to the same preset.
+    searchString = "preset=7d";
+    rerender();
+    expect(result.current.range.preset).toBe("7d");
+    expect(result.current.range.to.getTime()).toBe(FIXED_NOW);
+    expect(result.current.range.from.getTime()).toBe(FIXED_NOW - 7 * DAY_MS);
+  });
+
+  it("round-trips a custom window through ?preset=custom&from=&to= (write then read)", () => {
+    const from = new Date(FIXED_NOW - 12 * DAY_MS);
+    const to = new Date(FIXED_NOW - 2 * DAY_MS);
+    const { result, rerender } = renderHook(() => useUrlRange({ now }));
+    act(() => {
+      result.current.setRange({ from, to, preset: "custom" });
+    });
+    const writtenUrl = replace.mock.calls[0]?.[0] as string;
+    expect(writtenUrl).toContain("preset=custom");
+    expect(writtenUrl).toContain(`from=${encodeURIComponent(from.toISOString())}`);
+    expect(writtenUrl).toContain(`to=${encodeURIComponent(to.toISOString())}`);
+
+    searchString = writtenUrl.replace(/^\?/, "");
+    rerender();
+    expect(result.current.range.preset).toBe("custom");
+    expect(result.current.range.from.toISOString()).toBe(from.toISOString());
+    expect(result.current.range.to.toISOString()).toBe(to.toISOString());
+  });
 });

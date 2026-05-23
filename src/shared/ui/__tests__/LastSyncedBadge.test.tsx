@@ -26,9 +26,20 @@ describe("LastSyncedBadge", () => {
     expect(container.firstElementChild?.getAttribute("data-tint")).toBe("fresh");
   });
 
-  it("flips to stale tint between 1h and 24h", () => {
+  it("flips to stale tint between 1h and 24h and applies the amber color token", () => {
     const syncedAt = new Date(NOW.getTime() - 3 * 60 * 60 * 1000);
     const { container } = render(<LastSyncedBadge syncedAt={syncedAt} now={NOW} />);
+    const badge = container.firstElementChild;
+    expect(badge?.getAttribute("data-tint")).toBe("stale");
+    // Amber tint is sourced from `--nexus-amber-*` semantic tokens; assert
+    // the class is present so a stylesheet refactor that drops it fails here.
+    expect(badge?.className ?? "").toMatch(/var\(--nexus-amber-50\)/);
+    expect(badge?.className ?? "").toMatch(/var\(--nexus-amber-700\)/);
+  });
+
+  it("does not stay fresh once the sync crosses the 1h boundary", () => {
+    const just = new Date(NOW.getTime() - (60 * 60 * 1000 + 1));
+    const { container } = render(<LastSyncedBadge syncedAt={just} now={NOW} />);
     expect(container.firstElementChild?.getAttribute("data-tint")).toBe("stale");
   });
 
