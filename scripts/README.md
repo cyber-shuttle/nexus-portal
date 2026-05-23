@@ -1,5 +1,17 @@
 # Deploy scripts
 
+## Local build hygiene
+
+`pnpm clean` removes `.next`, `dist`, and `coverage` so the next build starts
+from a fresh page-collection cache. Use it as a workaround for the
+intermittent `next build` cache race that surfaces when `.next` was left in a
+half-written state by a previous run (e.g. an interrupted `pnpm dev`).
+
+`pnpm clean` is **not** part of `pnpm verify` — that would slow down every
+local run for a flake that's reproducible but not constant. Run it ad-hoc
+when verify trips on a page-collection error and the change set doesn't
+explain it.
+
 ## First-time setup (fresh VM)
 
 ```
