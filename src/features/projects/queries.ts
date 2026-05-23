@@ -111,11 +111,10 @@ export function useCreateProject() {
 export function useUpdateProject() {
   const client = useQueryClient();
   return useMutation({
+    // `projectKeys.all` is the prefix for every project query (list, detail,
+    // forUser, usageSummary, ...), so a single invalidation covers all of them.
     mutationFn: ({ id, payload }: { id: string; payload: UpdateProjectStatusPayload }) =>
       updateProjectStatus(id, payload),
-    onSuccess: (project) => {
-      client.invalidateQueries({ queryKey: projectKeys.all });
-      client.invalidateQueries({ queryKey: projectKeys.detail(project.id) });
-    },
+    onSuccess: () => client.invalidateQueries({ queryKey: projectKeys.all }),
   });
 }
