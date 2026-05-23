@@ -51,6 +51,7 @@ export function ProjectsListContainer({ userId, persona }: Props) {
   // URL-backed filter strip state so a reload preserves the cut.
   const search = searchParams.get("q") ?? "";
   const piFilter = searchParams.get("pi") ?? "";
+  const orgFilter = searchParams.get("org") ?? "";
   const statusFilter = statusFilterFromUrl(searchParams.get("status"));
 
   const updateParam = React.useCallback(
@@ -188,6 +189,8 @@ export function ProjectsListContainer({ userId, persona }: Props) {
       onStatusFilterChange={(next) => updateParam("status", next === "all" ? null : next)}
       piFilter={piFilter}
       onPiFilterChange={(next) => updateParam("pi", next)}
+      orgFilter={orgFilter}
+      onOrgFilterChange={(next) => updateParam("org", next)}
       headerCta={<NewProjectCta canCreate={canCreate} />}
       emptyCopy={emptyCopy}
     />

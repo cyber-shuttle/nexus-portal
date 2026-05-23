@@ -56,6 +56,11 @@ export type ProjectsListProps = {
   onStatusFilterChange: (next: ProjectStatus | "all") => void;
   piFilter: string;
   onPiFilterChange: (next: string) => void;
+  // Org filter (mapped to Project.origination — spec §6.1). Empty string =
+  // "all". Options are derived from the loaded row set so the dropdown only
+  // surfaces orgs present in the visible scope.
+  orgFilter: string;
+  onOrgFilterChange: (next: string) => void;
   // CTA + page-level chrome
   headerCta?: React.ReactNode;
   emptyCopy: ProjectsListEmptyCopy;
@@ -82,15 +87,29 @@ export function ProjectsList({
   onStatusFilterChange,
   piFilter,
   onPiFilterChange,
+  orgFilter,
+  onOrgFilterChange,
   headerCta,
   emptyCopy,
 }: ProjectsListProps) {
+  // Distinct origination values across the loaded row set. Sorted for stable
+  // dropdown ordering. Avoids a separate /organizations fetch — the rollup
+  // surface already has every project's origination string in hand.
+  const orgOptions = React.useMemo(() => {
+    const set = new Set<string>();
+    for (const row of rows) {
+      if (row.project.origination) set.add(row.project.origination);
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [rows]);
+
   const filtered = React.useMemo(() => {
     const needle = search.trim().toLowerCase();
     const piNeedle = piFilter.trim().toLowerCase();
     return rows
       .filter((row) => {
         if (statusFilter !== "all" && row.project.status !== statusFilter) return false;
+        if (orgFilter && row.project.origination !== orgFilter) return false;
         if (needle) {
           const haystack =
             `${row.project.title} ${row.project.originated_id}`.toLowerCase();
@@ -103,14 +122,14 @@ export function ProjectsList({
         return true;
       })
       .sort(defaultSort);
-  }, [rows, search, statusFilter, piFilter]);
+  }, [rows, search, statusFilter, piFilter, orgFilter]);
 
   const [page, setPage] = React.useState(1);
   const pageSize = 20;
   const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
 
   // Reset paging when filters narrow the result set.
-  const filterKey = `${search}|${statusFilter}|${piFilter}`;
+  const filterKey = `${search}|${statusFilter}|${piFilter}|${orgFilter}`;
   // biome-ignore lint/correctness/useExhaustiveDependencies: filter changes intentionally reset paging
   React.useEffect(() => {
     setPage(1);
@@ -234,6 +253,19 @@ export function ProjectsList({
             <option value="ACTIVE">Active</option>
             <option value="INACTIVE">Inactive</option>
             <option value="DELETED">Deleted</option>
+          </select>
+          <select
+            value={orgFilter}
+            onChange={(e) => onOrgFilterChange(e.target.value)}
+            aria-label="Filter by org"
+            className="h-9 rounded-md border bg-background px-3 text-sm"
+          >
+            <option value="">All orgs</option>
+            {orgOptions.map((org) => (
+              <option key={org} value={org}>
+                {org}
+              </option>
+            ))}
           </select>
         </div>
       </div>
