@@ -97,3 +97,55 @@ effect (A3 carry-over F3).
   approximation.
 
 Until that lands the portal must keep the "Approximate" caption visible.
+
+## Saved Views (Phase A4 — MSW-backed)
+
+Status: **MSW-backed in A4.** Personal-only in v1 (no team-shared
+views). Stored under `seed.savedViews` keyed by `user_id + persona`.
+
+### Resource shape — SavedView
+
+| Field | Type | Notes |
+|---|---|---|
+| `id` | string | Server-assigned. |
+| `user_id` | string | Owner — the only one who can read / update / delete. |
+| `name` | string | 1–80 chars. Unique per (user, persona). |
+| `persona` | enum | `researcher` \| `pi` \| `admin`. |
+| `range` | object | `{ from: ISO, to: ISO, preset }` — captured from URL state. |
+| `group_by` | string[] | Multi-slot URL `?gb=` value as parsed list. |
+| `filters` | object | Reserved for v2 — currently `{}`. |
+| `is_default` | bool | At most one default per (user, persona). |
+| `created_at` | RFC3339 | Server-assigned. |
+| `updated_at` | RFC3339 | Server-updates on PUT. |
+
+### Endpoint table
+
+| Verb | Path | Request | Response | Notes |
+|---|---|---|---|---|
+| GET | `/analytics/views` | query: `persona` | `SavedView[]` | Returns the caller's own views for the persona, sorted by created_at desc. |
+| POST | `/analytics/views` | body: `{ name, persona, range, group_by, filters?, is_default? }` | `SavedView` (201) | Caps at 5 per user per persona (returns 409 `{ error: "limit_reached" }` when over). Validates name uniqueness (returns 409 `{ error: "name_conflict" }`). When `is_default=true`, clears the default flag on the user's other views in the same persona. |
+| PUT | `/analytics/views/:id` | body: `{ name?, is_default? }` | `SavedView` | Owner-only. Returns 403 for non-owner, 404 for unknown id. Body must include at least one mutable field. |
+| DELETE | `/analytics/views/:id` | — | 204 | Owner-only. Returns 403 for non-owner, 404 for unknown id. |
+
+### Auth model
+
+- Identifies the caller via the same `x-nexus-user` header / `?user=`
+  query fallback as the `/me/*` handlers (MSW dev convention; the real
+  backend will use the bearer token). Documented in `auth.md`.
+- Personal-only in v1: no `shared_with_team`, no project-scoped views.
+  Team-shared views are a v2 follow-up.
+
+### v1 caveats
+
+- **Default-on-load behaviour:** the portal applies a single `is_default`
+  view on a fresh navigation when no analytics-state URL params are present
+  (`preset`, `from`, `to`, `gb` all absent). The auto-apply runs once per
+  page mount; subsequent changes to URL state take precedence within the
+  session.
+- **Cap = 5 per (user, persona).** UX choice, not a backend constraint —
+  can be lifted when the chip strip gains an overflow menu (A6+).
+- **`range` snapshot is fixed at save time.** A view saved with
+  `preset: "7d"` carries the literal `from/to` window at save time, not
+  "the last 7 days from now". An "update view to current URL state"
+  affordance is a v2 follow-up; the portal currently re-applies the
+  snapshotted window verbatim.
