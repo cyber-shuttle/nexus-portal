@@ -1,7 +1,10 @@
 // Boot the MSW node interceptor so server-side fetches in route handlers
-// share the same mock topology the browser worker uses. Test/dev only.
+// share the same mock topology the browser worker uses. Test/dev only —
+// in production, the server route must reach real upstreams (GitHub, etc.),
+// even when the browser still uses MSW for seed data.
 export async function register() {
   if (process.env.NEXT_RUNTIME !== "nodejs") return;
+  if (process.env.NODE_ENV === "production") return;
   if (process.env.NEXT_PUBLIC_PORTAL_USE_MSW !== "true") return;
   // Hide the specifier from webpack — msw/node's subpath exports trip the
   // bundler; new Function bypasses webpack and lets Node's loader resolve it.
