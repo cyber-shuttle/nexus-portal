@@ -1,6 +1,6 @@
 "use client";
 
-import { type PointerEvent as ReactPointerEvent, useEffect, useRef, useState } from "react";
+import { type PointerEvent as ReactPointerEvent, useRef } from "react";
 import type { Shape, Tool } from "./types";
 
 type Props = {
@@ -16,8 +16,6 @@ type Props = {
 // Single accent (portal destructive red) used for every non-redact primitive.
 const ACCENT = "oklch(0.62 0.22 25)";
 const REDACT = "#000";
-
-type TextDraft = { id: string; x: number; y: number; value: string };
 
 function newId(): string {
   return typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -39,17 +37,11 @@ export function FeedbackOverlay({
   // Mirror draft in a ref because React batches state across rapid pointer events.
   const draftRef = useRef<Shape | null>(draft);
   draftRef.current = draft;
-  const [textDraft, setTextDraft] = useState<TextDraft | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   const pushDraft = (next: Shape | null) => {
     draftRef.current = next;
     onDraftUpdate(next);
   };
-
-  useEffect(() => {
-    if (textDraft) inputRef.current?.focus();
-  }, [textDraft]);
 
   // Map a pointer event to image-natural coordinates via the SVG's CTM.
   const toLocal = (e: ReactPointerEvent<SVGSVGElement>): { x: number; y: number } => {
@@ -62,9 +54,16 @@ export function FeedbackOverlay({
   };
 
   const handlePointerDown = (e: ReactPointerEvent<SVGSVGElement>) => {
-    if (textDraft) return;
     const { x, y } = toLocal(e);
     const id = newId();
+    if (tool === "text") {
+      // window.prompt is a step back in polish but a giant step up in reliability —
+      // the inline-input approach had focus/positioning failures we couldn't pin down.
+      const text = window.prompt("Add a text label:");
+      const trimmed = text?.trim();
+      if (trimmed) onCommitShape({ id, type: "text", x, y, text: trimmed });
+      return;
+    }
     try {
       e.currentTarget.setPointerCapture(e.pointerId);
     } catch {
@@ -77,9 +76,6 @@ export function FeedbackOverlay({
       pushDraft({ id, type: "arrow", x1: x, y1: y, x2: x, y2: y });
     } else if (tool === "pen") {
       pushDraft({ id, type: "pen", d: `M ${x.toFixed(1)},${y.toFixed(1)}` });
-    } else if (tool === "text") {
-      setTextDraft({ id, x, y, value: "" });
-      drawingId.current = null;
     }
   };
 
@@ -124,29 +120,7 @@ export function FeedbackOverlay({
     pushDraft(null);
   };
 
-  const commitText = () => {
-    if (!textDraft) return;
-    const text = textDraft.value.trim();
-    if (text) onCommitShape({ id: textDraft.id, type: "text", x: textDraft.x, y: textDraft.y, text });
-    setTextDraft(null);
-  };
-
-  const cancelText = () => setTextDraft(null);
-
   const rendered = draft ? [...shapes, draft] : shapes;
-
-  // Position the inline text input over the click point in displayed-pixel space.
-  const textInputStyle = (() => {
-    if (!textDraft || !svgRef.current) return undefined;
-    const rect = svgRef.current.getBoundingClientRect();
-    const sx = rect.width / width;
-    const sy = rect.height / height;
-    return {
-      left: `${textDraft.x * sx}px`,
-      top: `${textDraft.y * sy}px`,
-      transform: "translate(-2px, -2px)",
-    };
-  })();
 
   return (
     <div className="pointer-events-none absolute inset-0">
@@ -247,28 +221,6 @@ export function FeedbackOverlay({
           );
         })}
       </svg>
-      {textDraft ? (
-        <input
-          ref={inputRef}
-          type="text"
-          aria-label="Annotation text"
-          value={textDraft.value}
-          onChange={(e) => setTextDraft({ ...textDraft, value: e.target.value })}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              commitText();
-            } else if (e.key === "Escape") {
-              e.preventDefault();
-              cancelText();
-            }
-          }}
-          onBlur={commitText}
-          placeholder="Type, ENTER to add"
-          style={textInputStyle}
-          className="pointer-events-auto absolute min-w-[180px] rounded border-2 border-[oklch(0.62_0.22_25)] bg-white px-2 py-1 text-sm text-black shadow-lg outline-none placeholder:text-neutral-400"
-        />
-      ) : null}
     </div>
   );
 }
