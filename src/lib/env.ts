@@ -25,6 +25,10 @@ export const serverSchema = z
       .regex(/^[^/\s]+\/[^/\s]+$/, "expected owner/repo")
       .default("lahirujayathilake/nexus-portal"),
     FEEDBACK_LABEL: z.string().min(1).default("suggestion"),
+    // When set, screenshot commits land on this branch instead of the repo's
+    // default. The branch must exist; the Contents API will not create an
+    // orphan branch on its own (it would fork from HEAD).
+    FEEDBACK_IMAGES_BRANCH: z.string().min(1).optional(),
 
     GITHUB_OAUTH_CLIENT_ID: z.string().optional(),
     GITHUB_OAUTH_CLIENT_SECRET: z.string().optional(),

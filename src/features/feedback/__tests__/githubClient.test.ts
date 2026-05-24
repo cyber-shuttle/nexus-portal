@@ -45,6 +45,23 @@ describe("commitImageToRepo", () => {
     expect(body).toEqual({ message: "msg", content: "BASE64DATA" });
   });
 
+  it("includes branch in body when passed", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      jsonResponse(201, {
+        content: { download_url: "https://raw.example/x.png", sha: "abc123" },
+      }),
+    );
+    await commitImageToRepo(CFG, "BASE64DATA", "x.png", "msg", "feedback-images");
+    const firstCall = fetchSpy.mock.calls[0];
+    if (!firstCall) throw new Error("fetch was not called");
+    const body = JSON.parse(String(firstCall[1]?.body));
+    expect(body).toEqual({
+      message: "msg",
+      content: "BASE64DATA",
+      branch: "feedback-images",
+    });
+  });
+
   it("throws GithubAuthError on 401", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
       jsonResponse(401, { message: "Bad credentials" }),

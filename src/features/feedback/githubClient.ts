@@ -108,16 +108,20 @@ export async function commitImageToRepo(
   pngBase64: string,
   filename: string,
   commitMessage: string,
+  branch?: string,
 ): Promise<CommitImageResult> {
   const url = `${BASE}/repos/${cfg.repo}/contents/.github/feedback-images/${filename}`;
+  // When branch is omitted the Contents API uses the repo's default; passing
+  // a name targets a pre-existing branch (the API would otherwise fork one
+  // from HEAD, defeating an intended-orphan setup).
+  const body: Record<string, unknown> = { message: commitMessage, content: pngBase64 };
+  if (branch) body.branch = branch;
   let res: Response;
   try {
     res = await fetch(url, {
       method: "PUT",
       headers: { ...HEADERS_BASE, Authorization: `Bearer ${cfg.token}` },
-      // Omit branch — Contents API uses the repo's default branch. Hardcoding
-      // a name silently creates a divergent branch if it doesn't exist.
-      body: JSON.stringify({ message: commitMessage, content: pngBase64 }),
+      body: JSON.stringify(body),
     });
   } catch (err) {
     throw new GithubNetworkError(err instanceof Error ? err.message : "fetch failed");

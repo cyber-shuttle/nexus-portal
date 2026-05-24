@@ -79,6 +79,7 @@ export async function POST(req: NextRequest) {
           payload.imagePngBase64,
           `${randomUUID()}.png`,
           `feedback: image for issue from ${payload.context.reporterEmail}`,
+          serverEnv.FEEDBACK_IMAGES_BRANCH,
         );
         rawUrl = result.rawUrl;
       } catch (err) {
