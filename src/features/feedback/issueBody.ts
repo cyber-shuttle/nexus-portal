@@ -16,6 +16,7 @@ export type IssueBodyInput = {
     shapes: Shape[];
   };
   context: FeedbackContext;
+  githubLogin?: string;
 };
 
 function formatOutline(outline: ComponentOutline): string {
@@ -41,13 +42,22 @@ function formatOutline(outline: ComponentOutline): string {
   return lines.join("\n");
 }
 
-function formatContextTable(ctx: FeedbackContext): string {
+function formatReporter(ctx: FeedbackContext, githubLogin?: string): string {
+  const emailLink = `[${ctx.reporterEmail}](mailto:${ctx.reporterEmail})`;
+  if (githubLogin) {
+    const handleLink = `[@${githubLogin}](https://github.com/${githubLogin})`;
+    return `${handleLink} (${emailLink})`;
+  }
+  return emailLink;
+}
+
+function formatContextTable(ctx: FeedbackContext, githubLogin?: string): string {
   return [
     "| | |",
     "|---|---|",
     `| Route | \`${ctx.route}\` |`,
     `| Persona | \`${ctx.persona}\` |`,
-    `| Reporter | \`${ctx.reporterEmail}\` |`,
+    `| Reporter | ${formatReporter(ctx, githubLogin)} |`,
     `| Viewport | ${ctx.viewport.w} × ${ctx.viewport.h} |`,
     `| Build | \`${ctx.buildSha}\` |`,
     `| Time | ${ctx.timestamp} |`,
@@ -93,7 +103,7 @@ function consoleErrorsBlock(errors: string[]): string {
 }
 
 export function issueBody(input: IssueBodyInput): string {
-  const { comment, imageRawUrl, annotations, context } = input;
+  const { comment, imageRawUrl, annotations, context, githubLogin } = input;
   const parts: string[] = [];
 
   if (imageRawUrl) {
@@ -101,7 +111,7 @@ export function issueBody(input: IssueBodyInput): string {
     parts.push("## Suggestion");
     parts.push(comment);
     parts.push("## Context");
-    parts.push(formatContextTable(context));
+    parts.push(formatContextTable(context, githubLogin));
     parts.push(outlineDetailsBlock(context.componentOutline));
     if (annotations) parts.push(annotationsDetailsBlock(annotations));
   } else {
@@ -111,7 +121,7 @@ export function issueBody(input: IssueBodyInput): string {
     parts.push(formatOutline(context.componentOutline));
     parts.push("```");
     parts.push("## Context");
-    parts.push(formatContextTable(context));
+    parts.push(formatContextTable(context, githubLogin));
   }
 
   const consoleBlock = consoleErrorsBlock(context.consoleErrors);

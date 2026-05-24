@@ -26,16 +26,23 @@ export const feedbackGithubHandlers = [
       );
     },
   ),
-  http.post("https://api.github.com/repos/:owner/:repo/issues", async ({ params }) => {
+  http.post("https://api.github.com/repos/:owner/:repo/issues", async ({ params, request }) => {
     const { owner, repo } = params as { owner: string; repo: string };
+    const auth = request.headers.get("authorization");
     const number = ++issueCounter;
+    // Echo the auth fingerprint back so parallel e2e tests can attribute a
+    // request to its caller without sharing global state.
+    const fp = auth ? `?auth=${encodeURIComponent(auth)}` : "";
     return HttpResponse.json(
       {
         number,
-        html_url: `https://github.com/${owner}/${repo}/issues/${number}`,
+        html_url: `https://github.com/${owner}/${repo}/issues/${number}${fp}`,
         title: "mock",
       },
       { status: 201 },
     );
   }),
+  http.get("https://api.github.com/user", () =>
+    HttpResponse.json({ login: "octocat-test", id: 1 }, { status: 200 }),
+  ),
 ];

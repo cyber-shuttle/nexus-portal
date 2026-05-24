@@ -5,6 +5,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import {
   commitImageToRepo,
   createIssue,
+  getAuthedUserLogin,
   GithubAuthError,
   GithubNotFoundError,
 } from "@/features/feedback/githubClient";
@@ -43,7 +44,15 @@ export async function POST(req: NextRequest) {
     }
     const payload = parsed.data;
 
-    if (!serverEnv.FEEDBACK_GITHUB_TOKEN) {
+    // Prefer the user's GitHub access token so the issue is attributed to them;
+    // fall back to the bot PAT only when no session token is available.
+    const sessionToken =
+      session.provider === "github" && typeof session.accessToken === "string"
+        ? session.accessToken
+        : undefined;
+    const token = sessionToken ?? serverEnv.FEEDBACK_GITHUB_TOKEN;
+
+    if (!token) {
       if (process.env.NODE_ENV === "production") {
         console.error("FEEDBACK_GITHUB_TOKEN missing in production");
         return NextResponse.json(
@@ -60,7 +69,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const cfg = { token: serverEnv.FEEDBACK_GITHUB_TOKEN, repo: serverEnv.FEEDBACK_GITHUB_REPO };
+    const cfg = { token, repo: serverEnv.FEEDBACK_GITHUB_REPO };
 
     let rawUrl: string | undefined;
     if (payload.imagePngBase64) {
@@ -77,6 +86,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    const githubLogin = sessionToken ? (await getAuthedUserLogin(sessionToken)) ?? undefined : undefined;
+
     try {
       const result = await createIssue(cfg, {
         title: issueTitle(payload.comment),
@@ -85,6 +96,7 @@ export async function POST(req: NextRequest) {
           imageRawUrl: rawUrl,
           annotations: payload.annotations,
           context: payload.context,
+          githubLogin,
         }),
         labels: [serverEnv.FEEDBACK_LABEL],
       });

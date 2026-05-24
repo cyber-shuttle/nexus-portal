@@ -23,7 +23,7 @@ Slots: card, card-header, button
 |---|---|
 | Route | \`/projects\` |
 | Persona | \`pi\` |
-| Reporter | \`pi@example.org\` |
+| Reporter | [pi@example.org](mailto:pi@example.org) |
 | Viewport | 1440 × 900 |
 | Build | \`abc123f\` |
 | Time | 2026-05-23T14:22:11Z |
@@ -53,7 +53,7 @@ The Active projects header is hard to scan.
 |---|---|
 | Route | \`/projects\` |
 | Persona | \`pi\` |
-| Reporter | \`pi@example.org\` |
+| Reporter | [pi@example.org](mailto:pi@example.org) |
 | Viewport | 1440 × 900 |
 | Build | \`abc123f\` |
 | Time | 2026-05-23T14:22:11Z |

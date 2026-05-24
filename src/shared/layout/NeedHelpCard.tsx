@@ -11,10 +11,15 @@ import { useSession } from "next-auth/react";
 const SUPPORT_MAILTO = "mailto:support@nexus.local?subject=Nexus%20Portal%20Help";
 
 export function NeedHelpCard() {
-  const { status } = useSession();
+  const { data: session, status } = useSession();
   const { openMode, isCapturing } = useFeedback();
   const signedIn = status === "authenticated";
-  const disabled = !signedIn || isCapturing;
+  const isGithub = session?.provider === "github";
+  const disabled = !signedIn || !isGithub || isCapturing;
+
+  const tooltipMessage = !signedIn
+    ? "Sign in to send feedback"
+    : "Sign in with GitHub to enable suggestions";
 
   const suggestionButton = (
     <Button
@@ -22,6 +27,8 @@ export function NeedHelpCard() {
       className="mt-2 w-full"
       onClick={() => void openMode()}
       disabled={disabled}
+      aria-label={disabled ? tooltipMessage : undefined}
+      title={disabled ? tooltipMessage : undefined}
       data-feedback-ignore
     >
       <MessageSquarePlus className="mr-2 h-4 w-4" />
@@ -46,13 +53,13 @@ export function NeedHelpCard() {
       >
         Get Support
       </Button>
-      {signedIn ? (
-        suggestionButton
-      ) : (
+      {disabled ? (
         <Tooltip>
           <TooltipTrigger render={(props) => <div {...props}>{suggestionButton}</div>} />
-          <TooltipContent>Sign in to send feedback</TooltipContent>
+          <TooltipContent>{tooltipMessage}</TooltipContent>
         </Tooltip>
+      ) : (
+        suggestionButton
       )}
     </div>
   );

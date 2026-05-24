@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { serverEnv } from "@/lib/env";
 import { SignInForm } from "./SignInForm";
 
 export const metadata = {
@@ -6,6 +7,9 @@ export const metadata = {
 };
 
 export default function SignInPage() {
+  const githubEnabled = !!(
+    serverEnv.GITHUB_OAUTH_CLIENT_ID && serverEnv.GITHUB_OAUTH_CLIENT_SECRET
+  );
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted px-6 py-12">
       <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-sm">
@@ -17,7 +21,7 @@ export default function SignInPage() {
           <p className="text-sm text-muted-foreground">Pick your role to continue.</p>
         </div>
         <Suspense fallback={null}>
-          <SignInForm />
+          <SignInForm githubEnabled={githubEnabled} />
         </Suspense>
       </div>
     </div>

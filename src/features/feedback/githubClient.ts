@@ -134,6 +134,23 @@ export async function commitImageToRepo(
   return { rawUrl, sha };
 }
 
+export async function getAuthedUserLogin(token: string): Promise<string | null> {
+  try {
+    const res = await fetch(`${BASE}/user`, {
+      headers: {
+        Accept: "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { login?: unknown };
+    return typeof data?.login === "string" && data.login.length > 0 ? data.login : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function createIssue(
   cfg: GithubClientConfig,
   input: CreateIssueInput,

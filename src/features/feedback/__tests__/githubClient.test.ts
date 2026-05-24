@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   commitImageToRepo,
   createIssue,
+  getAuthedUserLogin,
   GithubAuthError,
   GithubNetworkError,
   GithubNotFoundError,
@@ -134,5 +135,36 @@ describe("createIssue", () => {
     await expect(createIssue(CFG, { title: "t", body: "b", labels: [] })).rejects.toBeInstanceOf(
       GithubNetworkError,
     );
+  });
+});
+
+describe("getAuthedUserLogin", () => {
+  it("returns the login on 200", async () => {
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(jsonResponse(200, { login: "octocat", id: 1 }));
+    const login = await getAuthedUserLogin("tkn");
+    expect(login).toBe("octocat");
+    const firstCall = fetchSpy.mock.calls[0];
+    if (!firstCall) throw new Error("fetch was not called");
+    const [url, init] = firstCall;
+    expect(String(url)).toBe("https://api.github.com/user");
+    const headers = init?.headers as Record<string, string>;
+    expect(headers.Authorization).toBe("Bearer tkn");
+  });
+
+  it("returns null on non-2xx", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(jsonResponse(401, { message: "bad" }));
+    expect(await getAuthedUserLogin("tkn")).toBeNull();
+  });
+
+  it("returns null on fetch rejection", async () => {
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("network down"));
+    expect(await getAuthedUserLogin("tkn")).toBeNull();
+  });
+
+  it("returns null when login field is missing", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(jsonResponse(200, { id: 1 }));
+    expect(await getAuthedUserLogin("tkn")).toBeNull();
   });
 });

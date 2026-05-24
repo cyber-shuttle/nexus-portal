@@ -72,6 +72,25 @@ describe("issueBody — text-only", () => {
   });
 });
 
+describe("issueBody — reporter formatting", () => {
+  it("renders email-only when no githubLogin is provided", () => {
+    const body = issueBody({ comment: "Tiny note enough chars.", context: baseContext });
+    expect(body).toContain("| Reporter | [pi@example.org](mailto:pi@example.org) |");
+    expect(body).not.toMatch(/\[@[^\]]+\]\(https:\/\/github\.com/);
+  });
+
+  it("renders @login + email when githubLogin is provided", () => {
+    const body = issueBody({
+      comment: "Tiny note enough chars.",
+      context: baseContext,
+      githubLogin: "octocat",
+    });
+    expect(body).toContain(
+      "| Reporter | [@octocat](https://github.com/octocat) ([pi@example.org](mailto:pi@example.org)) |",
+    );
+  });
+});
+
 describe("issueBody — empty outline collapses", () => {
   it("omits empty outline lines", () => {
     const emptyOutlineCtx: FeedbackContext = {
