@@ -99,6 +99,7 @@ describe("jwt callback", () => {
     expect(token.myPiProjects).toEqual([]);
     expect(token.myPiAllocations).toEqual([]);
     expect(token.assignedAllocations).toEqual([]);
+    expect(token.provider).toBe("oidc");
     expect(cookieSet).toHaveBeenCalledWith(
       "nexus_pending_persona",
       "",
@@ -124,5 +125,174 @@ describe("jwt callback", () => {
       account: { provider: "oidc" },
     } as unknown as Parameters<typeof jwt>[0])) as Record<string, unknown>;
     expect(token.role).toBe("pi");
+  });
+
+  it("stamps provider='credentials' and copies user scopes on the credentials path", async () => {
+    const token = (await jwt({
+      token: {},
+      user: {
+        email: "researcher@nexus.local",
+        role: "user",
+        personId: "researcher@nexus.local",
+        myPiAllocations: ["a"],
+        myPiProjects: ["p"],
+        myMemberProjects: ["m"],
+        assignedAllocations: ["x"],
+      },
+      account: { provider: "credentials" },
+    } as unknown as Parameters<typeof jwt>[0])) as Record<string, unknown>;
+
+    expect(token.provider).toBe("credentials");
+    expect(token.role).toBe("user");
+    expect(token.personId).toBe("researcher@nexus.local");
+    expect(token.myPiAllocations).toEqual(["a"]);
+  });
+
+  it("stamps provider='github', defaults role='user', copies email/name, and zeros scopes", async () => {
+    const token = (await jwt({
+      token: {},
+      user: { email: "allowed@example.org", name: "Octo Cat" },
+      account: { provider: "github", access_token: "gh-token" },
+    } as unknown as Parameters<typeof jwt>[0])) as Record<string, unknown>;
+
+    expect(token.provider).toBe("github");
+    expect(token.role).toBe("user");
+    expect(token.email).toBe("allowed@example.org");
+    expect(token.name).toBe("Octo Cat");
+    expect(token.personId).toBe("allowed@example.org");
+    expect(token.myMemberProjects).toEqual([]);
+    expect(token.myPiProjects).toEqual([]);
+    expect(token.myPiAllocations).toEqual([]);
+    expect(token.assignedAllocations).toEqual([]);
+    expect(token.accessToken).toBe("gh-token");
+  });
+});
+
+describe("session callback", () => {
+  const session = callbacks?.session;
+  if (!session) throw new Error("session callback missing");
+
+  it("exposes token.provider on the session", async () => {
+    const result = (await session({
+      session: { user: {}, expires: "2099-01-01T00:00:00.000Z" },
+      token: { provider: "github", accessToken: "gh", role: "user" },
+    } as unknown as Parameters<typeof session>[0])) as unknown as Record<string, unknown>;
+    expect(result.provider).toBe("github");
+    expect(result.accessToken).toBe("gh");
+  });
+
+  it("leaves provider undefined when the token has none", async () => {
+    const result = (await session({
+      session: { user: {}, expires: "2099-01-01T00:00:00.000Z" },
+      token: {},
+    } as unknown as Parameters<typeof session>[0])) as unknown as Record<string, unknown>;
+    expect(result.provider).toBeUndefined();
+  });
+});
+
+describe("signIn callback — github", () => {
+  const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+  beforeEach(() => {
+    fetchSpy.mockReset();
+  });
+
+  function mockEmailsResponse(payload: unknown, status = 200) {
+    fetchSpy.mockResolvedValueOnce(
+      new Response(JSON.stringify(payload), {
+        status,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+  }
+
+  it("admits when a non-primary verified email is in the allowlist", async () => {
+    mockEmailsResponse([
+      { email: "personal@github.example", primary: true, verified: true },
+      { email: "allowed@example.org", primary: false, verified: true },
+    ]);
+    const result = await signIn({
+      user: { email: "personal@github.example" },
+      account: { provider: "github", access_token: "tkn" },
+    } as unknown as Parameters<typeof signIn>[0]);
+    expect(result).toBe(true);
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://api.github.com/user/emails",
+      expect.objectContaining({
+        headers: expect.objectContaining({ Authorization: "Bearer tkn" }),
+      }),
+    );
+  });
+
+  it("rejects when no verified email is in the allowlist", async () => {
+    mockEmailsResponse([
+      { email: "personal@github.example", primary: true, verified: true },
+      { email: "other@github.example", primary: false, verified: true },
+    ]);
+    const result = await signIn({
+      user: { email: "personal@github.example" },
+      account: { provider: "github", access_token: "tkn" },
+    } as unknown as Parameters<typeof signIn>[0]);
+    expect(result).toBe(
+      `/sign-in?error=not_allowed&email=${encodeURIComponent("personal@github.example")}`,
+    );
+  });
+
+  it("ignores unverified addresses even if they're in the allowlist", async () => {
+    mockEmailsResponse([
+      { email: "personal@github.example", primary: true, verified: true },
+      { email: "allowed@example.org", primary: false, verified: false },
+    ]);
+    const result = await signIn({
+      user: { email: "personal@github.example" },
+      account: { provider: "github", access_token: "tkn" },
+    } as unknown as Parameters<typeof signIn>[0]);
+    expect(result).toBe(
+      `/sign-in?error=not_allowed&email=${encodeURIComponent("personal@github.example")}`,
+    );
+  });
+
+  it("rejects when the /user/emails fetch errors (fail-closed)", async () => {
+    fetchSpy.mockRejectedValueOnce(new Error("network down"));
+    const result = await signIn({
+      user: { email: "personal@github.example" },
+      account: { provider: "github", access_token: "tkn" },
+    } as unknown as Parameters<typeof signIn>[0]);
+    expect(result).toBe(
+      `/sign-in?error=not_allowed&email=${encodeURIComponent("personal@github.example")}`,
+    );
+  });
+
+  it("rejects when GitHub returns a non-2xx (fail-closed)", async () => {
+    mockEmailsResponse({ message: "Bad credentials" }, 401);
+    const result = await signIn({
+      user: { email: "personal@github.example" },
+      account: { provider: "github", access_token: "tkn" },
+    } as unknown as Parameters<typeof signIn>[0]);
+    expect(result).toBe(
+      `/sign-in?error=not_allowed&email=${encodeURIComponent("personal@github.example")}`,
+    );
+  });
+
+  it("rejects without making a network call when the access token is missing", async () => {
+    const result = await signIn({
+      user: { email: "personal@github.example" },
+      account: { provider: "github" },
+    } as unknown as Parameters<typeof signIn>[0]);
+    expect(result).toBe(
+      `/sign-in?error=not_allowed&email=${encodeURIComponent("personal@github.example")}`,
+    );
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("admits when the primary email (returned by the user-info claim) is in the allowlist even if /user/emails omits it", async () => {
+    mockEmailsResponse([
+      { email: "other@github.example", primary: false, verified: true },
+    ]);
+    const result = await signIn({
+      user: { email: "allowed@example.org" },
+      account: { provider: "github", access_token: "tkn" },
+    } as unknown as Parameters<typeof signIn>[0]);
+    expect(result).toBe(true);
   });
 });

@@ -25,6 +25,9 @@ export const serverSchema = z
       .regex(/^[^/\s]+\/[^/\s]+$/, "expected owner/repo")
       .default("lahirujayathilake/nexus-portal"),
     FEEDBACK_LABEL: z.string().min(1).default("suggestion"),
+
+    GITHUB_OAUTH_CLIENT_ID: z.string().optional(),
+    GITHUB_OAUTH_CLIENT_SECRET: z.string().optional(),
   })
   .superRefine((env, ctx) => {
     // OIDC mode demands these four vars — otherwise NextAuth boots a

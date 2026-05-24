@@ -16,16 +16,56 @@ type CallbackOptions = {
   oidcEnabled: boolean;
 };
 
+type GitHubEmailEntry = { email?: string; verified?: boolean };
+
+async function fetchGithubVerifiedEmails(accessToken: string): Promise<string[]> {
+  const res = await fetch("https://api.github.com/user/emails", {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      Accept: "application/vnd.github+json",
+      "X-GitHub-Api-Version": "2022-11-28",
+    },
+  });
+  if (!res.ok) {
+    throw new Error(`github /user/emails returned ${res.status}`);
+  }
+  const body = (await res.json()) as GitHubEmailEntry[];
+  if (!Array.isArray(body)) return [];
+  return body
+    .filter((entry) => entry?.verified && typeof entry.email === "string")
+    .map((entry) => (entry.email as string).toLowerCase());
+}
+
 export function buildAuthCallbacks(options: CallbackOptions): NextAuthConfig["callbacks"] {
   const { allowedEmails, oidcEnabled } = options;
   return {
     async signIn({ user, account }) {
-      if (account?.provider !== "oidc") return true;
-      const email = user.email ?? "";
-      if (!isEmailAllowed(email, allowedEmails)) {
-        // NextAuth treats a string return as a redirect URL — bounce to the
-        // sign-in page with the email so the banner can show who was denied.
-        return `/sign-in?error=not_allowed&email=${encodeURIComponent(email)}`;
+      if (account?.provider === "oidc") {
+        const email = user.email ?? "";
+        if (!isEmailAllowed(email, allowedEmails)) {
+          // NextAuth treats a string return as a redirect URL — bounce to the
+          // sign-in page with the email so the banner can show who was denied.
+          return `/sign-in?error=not_allowed&email=${encodeURIComponent(email)}`;
+        }
+        return true;
+      }
+      if (account?.provider === "github") {
+        const primary = user.email ?? "";
+        const accessToken = account.access_token;
+        if (typeof accessToken !== "string" || accessToken.length === 0) {
+          // Without the token we cannot reach /user/emails — fail closed.
+          return `/sign-in?error=not_allowed&email=${encodeURIComponent(primary)}`;
+        }
+        try {
+          const verified = await fetchGithubVerifiedEmails(accessToken);
+          const candidates = primary ? [primary.toLowerCase(), ...verified] : verified;
+          const admitted = candidates.some((addr) => isEmailAllowed(addr, allowedEmails));
+          if (admitted) return true;
+          return `/sign-in?error=not_allowed&email=${encodeURIComponent(primary)}`;
+        } catch (err) {
+          console.error("github sign-in /user/emails failure", err);
+          return `/sign-in?error=not_allowed&email=${encodeURIComponent(primary)}`;
+        }
       }
       return true;
     },
@@ -33,6 +73,7 @@ export function buildAuthCallbacks(options: CallbackOptions): NextAuthConfig["ca
       if (account?.provider === "oidc" && user) {
         const cookieStore = await cookies();
         const persona = cookieStore.get("nexus_pending_persona")?.value;
+        token.provider = "oidc";
         token.role = personaToRole(persona);
         token.email = user.email ?? token.email;
         token.personId = user.email ?? token.personId;
@@ -45,7 +86,32 @@ export function buildAuthCallbacks(options: CallbackOptions): NextAuthConfig["ca
         // Single-use cookie: clear it so a future re-auth doesn't inherit a
         // stale persona pick from an earlier session.
         cookieStore.set("nexus_pending_persona", "", { maxAge: 0, path: "/" });
+      } else if (account?.provider === "github" && user) {
+        token.provider = "github";
+        token.role = "user";
+        token.email = user.email ?? token.email;
+        token.name = user.name ?? token.name;
+        token.personId = user.email ?? token.personId;
+        // GitHub-authed users haven't picked a portal persona — empty scopes
+        // mirror the OIDC default so CASL gates deny by default.
+        token.myMemberProjects = [];
+        token.myPiProjects = [];
+        token.myPiAllocations = [];
+        token.assignedAllocations = [];
+      } else if (account?.provider === "github-dev" && user) {
+        // Same discriminator as the real provider so downstream gates see one
+        // shape; access token comes from the dev short-circuit below.
+        token.provider = "github";
+        token.role = "user";
+        token.email = user.email ?? token.email;
+        token.name = user.name ?? token.name;
+        token.personId = user.email ?? token.personId;
+        token.myMemberProjects = [];
+        token.myPiProjects = [];
+        token.myPiAllocations = [];
+        token.assignedAllocations = [];
       } else if (user) {
+        token.provider = "credentials";
         token.role = user.role;
         token.personId = user.personId;
         token.myPiAllocations = user.myPiAllocations;
@@ -62,6 +128,7 @@ export function buildAuthCallbacks(options: CallbackOptions): NextAuthConfig["ca
     },
     async session({ session, token }) {
       if (token.accessToken) session.accessToken = token.accessToken;
+      if (token.provider) session.provider = token.provider;
       if (session.user) {
         session.user.role = token.role;
         session.user.personId = token.personId;

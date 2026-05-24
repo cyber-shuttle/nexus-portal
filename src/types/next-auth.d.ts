@@ -2,9 +2,12 @@ import "next-auth";
 import "next-auth/jwt";
 import type { Role } from "@/shared/casl/abilities";
 
+type AuthProviderKind = "github" | "oidc" | "credentials";
+
 declare module "next-auth" {
   interface Session {
     accessToken?: string;
+    provider?: AuthProviderKind;
     user: {
       id?: string;
       name?: string | null;
@@ -32,6 +35,7 @@ declare module "next-auth" {
 declare module "next-auth/jwt" {
   interface JWT {
     accessToken?: string;
+    provider?: AuthProviderKind;
     role?: Role;
     personId?: string;
     myPiAllocations?: string[];

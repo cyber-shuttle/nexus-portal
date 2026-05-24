@@ -119,6 +119,12 @@ NODE_ENV=production
 # FEEDBACK_GITHUB_TOKEN=
 # FEEDBACK_GITHUB_REPO=lahirujayathilake/nexus-portal
 # FEEDBACK_LABEL=suggestion
+# GitHub OAuth — when both vars are set, "Continue with GitHub" appears on
+# the sign-in page so suggestions are attributed to the submitter rather than
+# the bot. Register the OAuth app at https://github.com/settings/developers
+# with callback URL https://${DOMAIN}/api/auth/callback/github.
+# GITHUB_OAUTH_CLIENT_ID=
+# GITHUB_OAUTH_CLIENT_SECRET=
 ENV
   sudo chmod 600 "${APP_DIR}/.env"
 fi
