@@ -1,9 +1,10 @@
 "use client";
 
 import { Button } from "@/shared/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/ui/tooltip";
 import {
   ArrowUpRight,
-  EyeOff,
+  Eraser,
   Pen,
   Square,
   Trash2,
@@ -28,12 +29,17 @@ import { useFeedback } from "./FeedbackProvider";
 import { flattenToPng, shapesToJson } from "./serializer";
 import type { ComponentOutline, Shape, Tool } from "./types";
 
-const TOOLS: { id: Tool; label: string; Icon: typeof Square }[] = [
-  { id: "rect", label: "Rectangle", Icon: Square },
-  { id: "arrow", label: "Arrow", Icon: ArrowUpRight },
-  { id: "text", label: "Text", Icon: Type },
-  { id: "pen", label: "Pen", Icon: Pen },
-  { id: "redact", label: "Redact", Icon: EyeOff },
+const TOOLS: { id: Tool; label: string; hint: string; Icon: typeof Square }[] = [
+  { id: "rect", label: "Rectangle", hint: "Draw a rectangle outline", Icon: Square },
+  { id: "arrow", label: "Arrow", hint: "Draw an arrow", Icon: ArrowUpRight },
+  { id: "text", label: "Text", hint: "Click on the screen to add a text label", Icon: Type },
+  { id: "pen", label: "Pen", hint: "Free-draw on the screen", Icon: Pen },
+  {
+    id: "redact",
+    label: "Redact",
+    hint: "Black out a region to hide sensitive info before submitting",
+    Icon: Eraser,
+  },
 ];
 
 const MIN_COMMENT = 10;
@@ -292,18 +298,27 @@ export default function FeedbackPanel() {
         {screenshotActive ? (
           <div className="mb-3 flex items-center gap-2">
             <div className="flex items-center gap-1 rounded-md border border-border bg-muted/30 p-1">
-              {TOOLS.map(({ id, label, Icon }) => (
-                <Button
-                  key={id}
-                  type="button"
-                  variant={tool === id ? "default" : "ghost"}
-                  size="icon-sm"
-                  aria-label={label}
-                  aria-pressed={tool === id}
-                  onClick={() => setTool(id)}
-                >
-                  <Icon className="h-4 w-4" />
-                </Button>
+              {TOOLS.map(({ id, label, hint, Icon }) => (
+                <Tooltip key={id}>
+                  <TooltipTrigger
+                    render={
+                      <Button
+                        type="button"
+                        variant={tool === id ? "default" : "ghost"}
+                        size="icon-sm"
+                        aria-label={label}
+                        aria-pressed={tool === id}
+                        onClick={() => setTool(id)}
+                      >
+                        <Icon className="h-4 w-4" />
+                      </Button>
+                    }
+                  />
+                  <TooltipContent>
+                    <div className="font-medium">{label}</div>
+                    <div className="text-xs opacity-80">{hint}</div>
+                  </TooltipContent>
+                </Tooltip>
               ))}
             </div>
             <div className="flex-1" />

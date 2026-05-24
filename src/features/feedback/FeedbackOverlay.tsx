@@ -266,7 +266,7 @@ export function FeedbackOverlay({
           onBlur={commitText}
           placeholder="Type, ENTER to add"
           style={textInputStyle}
-          className="pointer-events-auto absolute min-w-[120px] rounded border border-border bg-background/95 px-1.5 py-0.5 text-xs text-foreground shadow"
+          className="pointer-events-auto absolute min-w-[180px] rounded border-2 border-[oklch(0.62_0.22_25)] bg-white px-2 py-1 text-sm text-black shadow-lg outline-none placeholder:text-neutral-400"
         />
       ) : null}
     </div>
