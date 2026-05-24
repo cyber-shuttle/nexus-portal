@@ -115,7 +115,9 @@ export async function commitImageToRepo(
     res = await fetch(url, {
       method: "PUT",
       headers: { ...HEADERS_BASE, Authorization: `Bearer ${cfg.token}` },
-      body: JSON.stringify({ message: commitMessage, content: pngBase64, branch: "master" }),
+      // Omit branch — Contents API uses the repo's default branch. Hardcoding
+      // a name silently creates a divergent branch if it doesn't exist.
+      body: JSON.stringify({ message: commitMessage, content: pngBase64 }),
     });
   } catch (err) {
     throw new GithubNetworkError(err instanceof Error ? err.message : "fetch failed");

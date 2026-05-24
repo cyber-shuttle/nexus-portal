@@ -41,7 +41,7 @@ describe("commitImageToRepo", () => {
     const headers = init?.headers as Record<string, string>;
     expect(headers.Authorization).toBe(`Bearer ${CFG.token}`);
     const body = JSON.parse(String(init?.body));
-    expect(body).toEqual({ message: "msg", content: "BASE64DATA", branch: "master" });
+    expect(body).toEqual({ message: "msg", content: "BASE64DATA" });
   });
 
   it("throws GithubAuthError on 401", async () => {
