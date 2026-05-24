@@ -98,6 +98,15 @@ export default function FeedbackPanel() {
     closeMode();
   }, [closeMode, isDirty]);
 
+  // Stash the latest attemptClose in a ref so the mount effect below can read
+  // it without re-running on every isDirty flip — otherwise typing the first
+  // character tears down + re-mounts the dialog and steals focus from the
+  // textarea.
+  const attemptCloseRef = useRef(attemptClose);
+  useEffect(() => {
+    attemptCloseRef.current = attemptClose;
+  }, [attemptClose]);
+
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
@@ -105,7 +114,7 @@ export default function FeedbackPanel() {
     dialog.showModal();
     const onCancel = (e: Event) => {
       e.preventDefault();
-      attemptClose();
+      attemptCloseRef.current();
     };
     dialog.addEventListener("cancel", onCancel);
     return () => {
@@ -113,7 +122,7 @@ export default function FeedbackPanel() {
       if (dialog.open) dialog.close();
       previouslyFocused.current?.focus?.();
     };
-  }, [attemptClose]);
+  }, []);
 
   useEffect(() => {
     const onKey = (e: globalThis.KeyboardEvent) => {
