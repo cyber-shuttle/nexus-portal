@@ -2,7 +2,7 @@ import { updatePreferencesPayloadSchema } from "@features/auth/schemas";
 import { http, HttpResponse } from "msw";
 import { derivePersonaScopes } from "@/shared/auth/personaScopes";
 import { persistSeed, seed } from "../seed";
-import { path } from "./_utils";
+import { aliasUserId, path } from "./_utils";
 
 const DEFAULT_PREFS = {
   timezone: "UTC",
@@ -12,11 +12,11 @@ const DEFAULT_PREFS = {
 
 function currentUserId(request: Request): string {
   const url = new URL(request.url);
-  return (
+  const raw =
     url.searchParams.get("user") ??
     request.headers.get("x-nexus-user") ??
-    "researcher@nexus.local"
-  );
+    "researcher@nexus.local";
+  return aliasUserId(raw);
 }
 
 export const userHandlers = [

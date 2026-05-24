@@ -5,7 +5,7 @@ import {
 import type { ChangeRequestStatus, ComputeAllocationChangeRequest } from "@shared/api/domain";
 import { http, HttpResponse } from "msw";
 import { persistSeed, seed } from "../seed";
-import { path, paginate } from "./_utils";
+import { aliasUserId, path, paginate } from "./_utils";
 
 function newId(prefix: string): string {
   const rand = globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2);
@@ -47,7 +47,8 @@ export const changeRequestHandlers = [
 
   http.get(path("/users/:id/change-requests"), ({ params, request }) => {
     const url = new URL(request.url);
-    const rows = seed.changeRequests.filter((c) => c.requester_id === params.id);
+    const userId = aliasUserId(params.id as string);
+    const rows = seed.changeRequests.filter((c) => c.requester_id === userId);
     return HttpResponse.json(paginate(rows, url));
   }),
 

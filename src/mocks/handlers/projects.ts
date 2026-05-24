@@ -7,7 +7,7 @@ import {
   updateProjectStatusPayloadSchema,
 } from "@features/projects/schemas";
 import { getProjectsForUserSeed, persistSeed, seed } from "../seed";
-import { path } from "./_utils";
+import { aliasUserId, path } from "./_utils";
 
 // Query-param contract for GET /projects?paged=1 — kept narrow on purpose so
 // the MSW handler rejects malformed requests the same way a Zod-strict
@@ -216,14 +216,15 @@ export const projectHandlers = [
   // Phase 2 portal-only convenience until the backend exposes a "projects
   // where I am PI" endpoint. Documented in docs/backend-contracts/users.md.
   http.get(path("/users/:id/projects-as-pi"), ({ params }) => {
-    const projects = seed.projects.filter((p) => p.project_pi_id === params.id);
+    const userId = aliasUserId(params.id as string);
+    const projects = seed.projects.filter((p) => p.project_pi_id === userId);
     return HttpResponse.json(projects);
   }),
 
   // Spec §8 B2 — membership-derived projects for a user. Researchers consume
   // this for /projects; PIs consume it as their member-projects axis.
   http.get(path("/users/:id/projects"), ({ params }) => {
-    const projects = getProjectsForUserSeed(params.id as string);
+    const projects = getProjectsForUserSeed(aliasUserId(params.id as string));
     return HttpResponse.json(projects);
   }),
 ];

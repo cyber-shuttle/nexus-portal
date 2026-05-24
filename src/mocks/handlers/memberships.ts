@@ -10,7 +10,7 @@ import type {
 import { http, HttpResponse } from "msw";
 import { z } from "zod";
 import { persistSeed, seed } from "../seed";
-import { path, paginate } from "./_utils";
+import { aliasUserId, path, paginate } from "./_utils";
 
 const statusUpdateSchema = z.object({
   membership_status: z.enum(["ACTIVE", "INACTIVE", "DELETED"]),
@@ -36,7 +36,8 @@ export const membershipHandlers = [
 
   http.get(path("/users/:id/compute-allocation-memberships"), ({ params, request }) => {
     const url = new URL(request.url);
-    const rows = seed.memberships.filter((m) => m.user_id === params.id);
+    const userId = aliasUserId(params.id as string);
+    const rows = seed.memberships.filter((m) => m.user_id === userId);
     return HttpResponse.json(paginate(rows, url));
   }),
 
