@@ -1,0 +1,114 @@
+import { randomUUID } from "node:crypto";
+import { serverEnv } from "@/lib/env";
+import { auth } from "@/shared/auth/auth";
+import { type NextRequest, NextResponse } from "next/server";
+import {
+  commitImageToRepo,
+  createIssue,
+  GithubAuthError,
+  GithubNotFoundError,
+} from "@/features/feedback/githubClient";
+import { issueBody, issueTitle } from "@/features/feedback/issueBody";
+import { FeedbackPayloadSchema } from "@/features/feedback/types";
+
+export const runtime = "nodejs";
+
+export async function POST(req: NextRequest) {
+  try {
+    const session = await auth();
+    if (!session?.user?.email) {
+      return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+    }
+
+    let json: unknown;
+    try {
+      json = await req.json();
+    } catch {
+      return NextResponse.json({ ok: false, error: "invalid json" }, { status: 400 });
+    }
+    // Stamp the authenticated email before validation — the client may send a
+    // placeholder that fails the schema, and we never trust its identity claim.
+    if (json && typeof json === "object" && "context" in json) {
+      const ctx = (json as { context?: unknown }).context;
+      if (ctx && typeof ctx === "object") {
+        (ctx as { reporterEmail?: string }).reporterEmail = session.user.email;
+      }
+    }
+    const parsed = FeedbackPayloadSchema.safeParse(json);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { ok: false, error: "invalid payload", issues: parsed.error.flatten() },
+        { status: 400 },
+      );
+    }
+    const payload = parsed.data;
+
+    if (!serverEnv.FEEDBACK_GITHUB_TOKEN) {
+      if (process.env.NODE_ENV === "production") {
+        console.error("FEEDBACK_GITHUB_TOKEN missing in production");
+        return NextResponse.json(
+          { ok: false, error: "feedback service not configured" },
+          { status: 503 },
+        );
+      }
+      console.warn("FEEDBACK_GITHUB_TOKEN not set — returning mock issue URL (dev only)");
+      const mockId = randomUUID();
+      return NextResponse.json({
+        ok: true,
+        issueUrl: `https://github.com/${serverEnv.FEEDBACK_GITHUB_REPO}/issues/MOCK-${mockId}`,
+        issueNumber: 0,
+      });
+    }
+
+    const cfg = { token: serverEnv.FEEDBACK_GITHUB_TOKEN, repo: serverEnv.FEEDBACK_GITHUB_REPO };
+
+    let rawUrl: string | undefined;
+    if (payload.imagePngBase64) {
+      try {
+        const result = await commitImageToRepo(
+          cfg,
+          payload.imagePngBase64,
+          `${randomUUID()}.png`,
+          `feedback: image for issue from ${payload.context.reporterEmail}`,
+        );
+        rawUrl = result.rawUrl;
+      } catch (err) {
+        return translateGithubError(err, "image commit failed");
+      }
+    }
+
+    try {
+      const result = await createIssue(cfg, {
+        title: issueTitle(payload.comment),
+        body: issueBody({
+          comment: payload.comment,
+          imageRawUrl: rawUrl,
+          annotations: payload.annotations,
+          context: payload.context,
+        }),
+        labels: [serverEnv.FEEDBACK_LABEL],
+      });
+      return NextResponse.json({
+        ok: true,
+        issueUrl: result.issueUrl,
+        issueNumber: result.issueNumber,
+      });
+    } catch (err) {
+      return translateGithubError(err, "issue creation failed");
+    }
+  } catch (err) {
+    console.error("feedback route unexpected error:", err);
+    return NextResponse.json({ ok: false, error: "internal error" }, { status: 500 });
+  }
+}
+
+function translateGithubError(err: unknown, context: string): NextResponse {
+  console.error(`feedback route ${context}:`, err);
+  if (err instanceof GithubAuthError) {
+    return NextResponse.json({ ok: false, error: "service misconfigured" }, { status: 503 });
+  }
+  if (err instanceof GithubNotFoundError) {
+    return NextResponse.json({ ok: false, error: "repo not found" }, { status: 503 });
+  }
+  return NextResponse.json({ ok: false, error: "github upstream error" }, { status: 502 });
+}

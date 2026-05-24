@@ -7,6 +7,7 @@ import { changeRequestHandlers } from "./change-requests";
 import { clientHandlers } from "./clients";
 import { clusterHandlers } from "./clusters";
 import { diffHandlers } from "./diffs";
+import { feedbackGithubHandlers } from "./feedback-github";
 import { identityHandlers } from "./identities";
 import { jobsHandlers } from "./jobs";
 import { membershipHandlers } from "./memberships";
@@ -36,4 +37,5 @@ export const handlers: HttpHandler[] = [
   ...amieHandlers,
   ...jobsHandlers,
   ...analyticsViewsHandlers,
+  ...feedbackGithubHandlers,
 ];

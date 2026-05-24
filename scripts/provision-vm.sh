@@ -113,6 +113,12 @@ NODE_ENV=production
 # OIDC_CLIENT_ID=
 # OIDC_CLIENT_SECRET=
 # NEXUS_ALLOWED_EMAILS=
+# Feedback widget — required in production. Fine-grained PAT scoped to
+# FEEDBACK_GITHUB_REPO with issues:write + contents:write. Server boot will
+# fail-fast if NODE_ENV=production and FEEDBACK_GITHUB_TOKEN is missing.
+# FEEDBACK_GITHUB_TOKEN=
+# FEEDBACK_GITHUB_REPO=lahirujayathilake/nexus-portal
+# FEEDBACK_LABEL=suggestion
 ENV
   sudo chmod 600 "${APP_DIR}/.env"
 fi

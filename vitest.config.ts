@@ -21,6 +21,9 @@ export default defineConfig({
       "@shared": path.resolve(rootDir, "./src/shared"),
       "@lib": path.resolve(rootDir, "./src/lib"),
       "@mocks": path.resolve(rootDir, "./src/mocks"),
+      // Stub the "server-only" guard in unit tests; production code keeps the
+      // import as a build-time barrier against client bundling.
+      "server-only": path.resolve(rootDir, "./vitest.server-only-stub.ts"),
     },
   },
 });

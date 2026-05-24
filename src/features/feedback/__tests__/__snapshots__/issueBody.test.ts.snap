@@ -1,0 +1,107 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`issueBody — text-only > matches the snapshot and omits image + annotations 1`] = `
+"## Suggestion
+
+The Active projects header is hard to scan.
+
+\`\`\`
+
+Page: Projects
+H1: Projects
+H2: Active projects (3)
+H2: Archived
+Nav-active: Projects   Nav-siblings: Overview · Analytics · Allocations
+Buttons: New project · Export
+Slots: card, card-header, button
+
+\`\`\`
+
+## Context
+
+| | |
+|---|---|
+| Route | \`/projects\` |
+| Persona | \`pi\` |
+| Reporter | \`pi@example.org\` |
+| Viewport | 1440 × 900 |
+| Build | \`abc123f\` |
+| Time | 2026-05-23T14:22:11Z |
+| User-Agent | \`Mozilla/5.0 test\` |
+
+<details><summary>Recent client console errors (last 10)</summary>
+
+\`\`\`
+2026-05-23T14:21:58Z [error] Failed to fetch /api/v1/projects/123 (404)
+\`\`\`
+
+</details>
+
+— filed via Nexus Portal feedback widget"
+`;
+
+exports[`issueBody — with screenshot > matches the snapshot 1`] = `
+"![annotated suggestion](https://raw.example/x.png)
+
+## Suggestion
+
+The Active projects header is hard to scan.
+
+## Context
+
+| | |
+|---|---|
+| Route | \`/projects\` |
+| Persona | \`pi\` |
+| Reporter | \`pi@example.org\` |
+| Viewport | 1440 × 900 |
+| Build | \`abc123f\` |
+| Time | 2026-05-23T14:22:11Z |
+| User-Agent | \`Mozilla/5.0 test\` |
+
+<details><summary>Component outline (auto-captured)</summary>
+
+\`\`\`
+Page: Projects
+H1: Projects
+H2: Active projects (3)
+H2: Archived
+Nav-active: Projects   Nav-siblings: Overview · Analytics · Allocations
+Buttons: New project · Export
+Slots: card, card-header, button
+\`\`\`
+
+</details>
+
+<details><summary>Annotation metadata</summary>
+
+\`\`\`json
+{
+  "schemaVersion": 1,
+  "imageWidth": 1440,
+  "imageHeight": 900,
+  "shapes": [
+    {
+      "id": "r1",
+      "type": "rect",
+      "x": 10,
+      "y": 20,
+      "w": 100,
+      "h": 50
+    }
+  ]
+}
+\`\`\`
+
+</details>
+
+<details><summary>Recent client console errors (last 10)</summary>
+
+\`\`\`
+2026-05-23T14:21:58Z [error] Failed to fetch /api/v1/projects/123 (404)
+\`\`\`
+
+</details>
+
+— filed via Nexus Portal feedback widget"
+`;
