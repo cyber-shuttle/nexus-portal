@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { loginAs } from "./fixtures/personas";
+import { loginAsGithubUser } from "./fixtures/personas";
 
 const SAMPLE_COMMENT = "This screen needs better spacing for readability."; // > 25 chars
 
@@ -27,9 +27,11 @@ async function drawOnOverlay(
   await page.mouse.up();
 }
 
-test.describe("feedback mode (Suggestion mode)", () => {
+// Serial keeps github-attributed submissions out of MSW's concurrent fetch
+// pool — parallel submits race the dev-mode interceptor and miss intercepts.
+test.describe.serial("feedback mode (Suggestion mode)", () => {
   test("happy path: capture screenshot, annotate, submit", async ({ page }) => {
-    await loginAs(page, "researcher");
+    await loginAsGithubUser(page, "researcher");
     await page.goto("/projects");
     await expect(page.getByRole("heading", { name: /^Projects$/ })).toBeVisible();
 
@@ -60,7 +62,7 @@ test.describe("feedback mode (Suggestion mode)", () => {
   });
 
   test("text-only path: remove screenshot, submit text + outline", async ({ page }) => {
-    await loginAs(page, "researcher");
+    await loginAsGithubUser(page, "researcher");
     await page.goto("/projects");
     await expect(page.getByRole("heading", { name: /^Projects$/ })).toBeVisible();
 
@@ -86,7 +88,7 @@ test.describe("feedback mode (Suggestion mode)", () => {
   });
 
   test("validation: submit gated by 10-char minimum comment", async ({ page }) => {
-    await loginAs(page, "researcher");
+    await loginAsGithubUser(page, "researcher");
     await page.goto("/projects");
     await expect(page.getByRole("heading", { name: /^Projects$/ })).toBeVisible();
 
@@ -104,7 +106,7 @@ test.describe("feedback mode (Suggestion mode)", () => {
   });
 
   test("POST payload carries componentOutline.navActive === 'Projects'", async ({ page }) => {
-    await loginAs(page, "researcher");
+    await loginAsGithubUser(page, "researcher");
     await page.goto("/projects");
     await expect(page.getByRole("heading", { name: /^Projects$/ })).toBeVisible();
 
