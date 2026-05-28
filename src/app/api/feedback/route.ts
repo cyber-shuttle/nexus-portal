@@ -37,8 +37,32 @@ export async function POST(req: NextRequest) {
     }
     const parsed = FeedbackPayloadSchema.safeParse(json);
     if (!parsed.success) {
+      const flat = parsed.error.flatten();
+      const shape = json && typeof json === "object" ? Object.keys(json) : [];
+      const ctx =
+        json && typeof json === "object" && "context" in json && json.context && typeof json.context === "object"
+          ? Object.fromEntries(
+              Object.entries(json.context as Record<string, unknown>).map(([k, v]) => [
+                k,
+                typeof v === "string"
+                  ? `string(${v.length})`
+                  : Array.isArray(v)
+                    ? `array(${v.length})`
+                    : v && typeof v === "object"
+                      ? `object{${Object.keys(v).join(",")}}`
+                      : typeof v,
+              ]),
+            )
+          : null;
+      console.error(
+        "feedback validation FAILED — topShape=%j ctxShape=%j fieldErrors=%j formErrors=%j",
+        shape,
+        ctx,
+        flat.fieldErrors,
+        flat.formErrors,
+      );
       return NextResponse.json(
-        { ok: false, error: "invalid payload", issues: parsed.error.flatten() },
+        { ok: false, error: "invalid payload", issues: flat },
         { status: 400 },
       );
     }
