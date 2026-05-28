@@ -12,7 +12,7 @@ import {
   Undo2,
   X,
 } from "lucide-react";
-import { signIn, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import {
   type ChangeEvent,
@@ -24,7 +24,6 @@ import {
 } from "react";
 import { toast } from "sonner";
 import { buildFeedbackContext } from "./buildContext";
-import { blobUrlToDataUrl, saveDraft } from "./draftStorage";
 import { FeedbackOverlay } from "./FeedbackOverlay";
 import { useFeedback } from "./FeedbackProvider";
 import { flattenToPng, shapesToJson } from "./serializer";
@@ -177,31 +176,10 @@ export default function FeedbackPanel() {
 
   const onSubmit = async () => {
     if (!canSubmit) return;
-    // Lazy auth: any signed-in user can compose; we only ask for GitHub when
-    // they actually try to file the issue. The draft is stashed to sessionStorage
-    // before the redirect so the user lands back on a pre-populated panel.
-    const hasGithubSession =
-      session?.provider === "github" && typeof session?.accessToken === "string";
-    if (!hasGithubSession) {
-      let screenshotDataUrl: string | null = null;
-      if (screenshotActive && capturedImageUrl) {
-        try {
-          screenshotDataUrl = await blobUrlToDataUrl(capturedImageUrl);
-        } catch {
-          // Best effort — submitting without the image is still valid.
-        }
-      }
-      saveDraft({
-        comment,
-        shapes,
-        screenshotDropped,
-        screenshotDataUrl,
-        capturedOutline: capturedOutline ?? null,
-      });
-      toast.message("Sign in with GitHub to file your suggestion. Your draft is saved.");
-      await signIn("github", { callbackUrl: window.location.href });
-      return;
-    }
+    // The server route picks the bearer: session token when signed in via
+    // GitHub (per-user attribution), bot PAT otherwise. Either way the POST
+    // succeeds; the banner + issue creation no longer depend on the OAuth
+    // round-trip which proved too fragile in practice.
     setSubmitting(true);
     setSubmitError(null);
     try {
