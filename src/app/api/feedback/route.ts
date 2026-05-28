@@ -38,26 +38,21 @@ export async function POST(req: NextRequest) {
     const parsed = FeedbackPayloadSchema.safeParse(json);
     if (!parsed.success) {
       const flat = parsed.error.flatten();
-      const shape = json && typeof json === "object" ? Object.keys(json) : [];
-      const ctx =
-        json && typeof json === "object" && "context" in json && json.context && typeof json.context === "object"
-          ? Object.fromEntries(
-              Object.entries(json.context as Record<string, unknown>).map(([k, v]) => [
-                k,
-                typeof v === "string"
-                  ? `string(${v.length})`
-                  : Array.isArray(v)
-                    ? `array(${v.length})`
-                    : v && typeof v === "object"
-                      ? `object{${Object.keys(v).join(",")}}`
-                      : typeof v,
-              ]),
-            )
+      const describe = (v: unknown): string => {
+        if (v === null) return "null";
+        if (v === undefined) return "undefined";
+        if (typeof v === "string") return `string(${v.length}) head=${JSON.stringify(v.slice(0, 40))}`;
+        if (Array.isArray(v)) return `array(${v.length})`;
+        if (typeof v === "object") return `object{${Object.keys(v).join(",")}}`;
+        return typeof v;
+      };
+      const top =
+        json && typeof json === "object"
+          ? Object.fromEntries(Object.entries(json as Record<string, unknown>).map(([k, v]) => [k, describe(v)]))
           : null;
       console.error(
-        "feedback validation FAILED — topShape=%j ctxShape=%j fieldErrors=%j formErrors=%j",
-        shape,
-        ctx,
+        "feedback validation FAILED — topShape=%j fieldErrors=%j formErrors=%j",
+        top,
         flat.fieldErrors,
         flat.formErrors,
       );
