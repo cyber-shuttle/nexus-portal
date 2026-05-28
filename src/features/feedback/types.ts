@@ -77,7 +77,9 @@ export const FeedbackPayloadSchema = z.object({
   comment: z.string().min(10).max(5000),
   // ~2MB cap on the base64 image (~1.5MB raw). Larger PNGs get rejected
   // up-front so the GH Contents API never sees an oversized commit.
-  imagePngBase64: z.string().min(100).max(2_800_000).optional(),
+  // ~10 MB base64 ≈ 7.5 MB binary. Headroom for Retina full-viewport captures
+  // while staying well under GitHub Contents API's 100 MB-per-file limit.
+  imagePngBase64: z.string().min(100).max(10_000_000).optional(),
   annotations: z
     .object({
       schemaVersion: z.literal(1),
