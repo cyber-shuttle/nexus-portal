@@ -12,7 +12,7 @@ import {
   Undo2,
   X,
 } from "lucide-react";
-import { useSession } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import {
   type ChangeEvent,
@@ -166,6 +166,17 @@ export default function FeedbackPanel() {
 
   const onSubmit = async () => {
     if (!canSubmit) return;
+    // Lazy auth: any signed-in user can compose; we only ask for GitHub when
+    // they actually try to file the issue, so the panel doesn't gate behind a
+    // provider switch. State is lost on redirect — same trade-off as the
+    // previous front-page button.
+    const hasGithubSession =
+      session?.provider === "github" && typeof session?.accessToken === "string";
+    if (!hasGithubSession) {
+      toast.message("Sign in with GitHub to file your suggestion.");
+      await signIn("github", { callbackUrl: window.location.href });
+      return;
+    }
     setSubmitting(true);
     setSubmitError(null);
     try {

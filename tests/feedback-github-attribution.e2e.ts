@@ -74,16 +74,28 @@ test.describe.serial("feedback github attribution", () => {
     expect(url.searchParams.get("auth")).toBe("Bearer dev-token");
   });
 
-  test("credentials session disables Suggestion mode with the GitHub-prompt tooltip", async ({
+  test("credentials session can open Suggestion mode but Submit redirects to GitHub OAuth", async ({
     page,
   }) => {
     await loginAs(page, "researcher");
     await page.goto("/home");
-    const suggestion = page.getByRole("button", {
-      name: /Sign in with GitHub to enable suggestions/i,
-    });
+    const suggestion = page.getByRole("button", { name: /^Suggestion mode$/i });
     await expect(suggestion).toBeVisible();
-    await expect(suggestion).toBeDisabled();
-    await expect(suggestion).toContainText(/Suggestion mode/i);
+    await expect(suggestion).toBeEnabled();
+
+    const dialog = await openFeedbackPanel(page);
+    const screenshot = dialog.getByRole("img", { name: /Captured screen/i });
+    await expect(screenshot).toBeVisible({ timeout: 15_000 });
+    await dialog.getByLabel(/Tell us what you'd suggest/i).fill(SAMPLE_COMMENT);
+
+    // Without a github session the Submit button kicks off the GitHub OAuth
+    // dance — we intercept the redirect at the NextAuth signin endpoint to
+    // avoid an actual round-trip to github.com in CI.
+    const signinRequest = page.waitForRequest(
+      (req) => req.url().includes("/api/auth/signin/github"),
+      { timeout: 15_000 },
+    );
+    await dialog.getByRole("button", { name: /^Submit$/ }).click();
+    await signinRequest;
   });
 });

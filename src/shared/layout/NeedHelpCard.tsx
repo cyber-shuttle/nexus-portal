@@ -11,15 +11,12 @@ import { useSession } from "next-auth/react";
 const SUPPORT_MAILTO = "mailto:support@nexus.local?subject=Nexus%20Portal%20Help";
 
 export function NeedHelpCard() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const { openMode, isCapturing } = useFeedback();
   const signedIn = status === "authenticated";
-  const isGithub = session?.provider === "github";
-  const disabled = !signedIn || !isGithub || isCapturing;
+  const disabled = !signedIn || isCapturing;
 
-  const tooltipMessage = !signedIn
-    ? "Sign in to send feedback"
-    : "Sign in with GitHub to enable suggestions";
+  const tooltipMessage = "Sign in to send feedback";
 
   const suggestionButton = (
     <Button

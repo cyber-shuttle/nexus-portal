@@ -14,11 +14,7 @@ const personas: Array<{ id: Persona; email: string; label: string }> = [
   { id: "admin", email: "admin@nexus.local", label: "Site Admin" },
 ];
 
-export type SignInFormProps = {
-  githubEnabled: boolean;
-};
-
-export function SignInForm({ githubEnabled }: SignInFormProps) {
+export function SignInForm() {
   const params = useSearchParams();
   const callbackUrl = params.get("callbackUrl") ?? "/home";
   const errorParam = params.get("error");
@@ -55,12 +51,6 @@ export function SignInForm({ githubEnabled }: SignInFormProps) {
     window.location.assign(res.url ?? callbackUrl);
   };
 
-  const continueWithGithub = async () => {
-    setError(null);
-    setSubmitting(true);
-    await signIn("github", { callbackUrl });
-  };
-
   return (
     <div className="flex flex-col gap-5">
       {errorParam === "not_allowed" && <SignInErrorBanner email={deniedEmail} />}
@@ -79,30 +69,6 @@ export function SignInForm({ githubEnabled }: SignInFormProps) {
           </Button>
         ))}
       </div>
-
-      {githubEnabled && (
-        <>
-          <hr className="border-border" />
-          <div className="flex flex-col gap-2">
-            <Button
-              variant="outline"
-              disabled={submitting}
-              onClick={() => void continueWithGithub()}
-              className="justify-center"
-            >
-              Continue with GitHub
-            </Button>
-            <p className="text-xs text-muted-foreground">
-              Required to enable Suggestion mode and have your feedback attributed to your GitHub
-              account.
-            </p>
-            <p className="text-[11px] text-muted-foreground/80">
-              We only request <code>repo</code> scope to file issues in nexus-portal. We never read
-              or write any other repository.
-            </p>
-          </div>
-        </>
-      )}
 
       {error && <p className="text-sm text-destructive">{error}</p>}
     </div>
