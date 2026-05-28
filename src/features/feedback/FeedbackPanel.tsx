@@ -24,6 +24,7 @@ import {
 } from "react";
 import { toast } from "sonner";
 import { buildFeedbackContext } from "./buildContext";
+import { blobUrlToDataUrl, saveDraft } from "./draftStorage";
 import { FeedbackOverlay } from "./FeedbackOverlay";
 import { useFeedback } from "./FeedbackProvider";
 import { flattenToPng, shapesToJson } from "./serializer";
@@ -75,6 +76,8 @@ export default function FeedbackPanel() {
     captureError,
     closeMode,
     snapshotConsoleEntries,
+    restoredDraft,
+    consumeRestoredDraft,
   } = useFeedback();
   const { data: session } = useSession();
   const pathname = usePathname();
@@ -82,13 +85,21 @@ export default function FeedbackPanel() {
   const imgRef = useRef<HTMLImageElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
   const [tool, setTool] = useState<Tool>("rect");
-  const [shapes, setShapes] = useState<Shape[]>([]);
+  const [shapes, setShapes] = useState<Shape[]>(() => restoredDraft?.shapes ?? []);
   const [draft, setDraft] = useState<Shape | null>(null);
-  const [comment, setComment] = useState("");
-  const [screenshotDropped, setScreenshotDropped] = useState(false);
+  const [comment, setComment] = useState(() => restoredDraft?.comment ?? "");
+  const [screenshotDropped, setScreenshotDropped] = useState(
+    () => restoredDraft?.screenshotDropped ?? false,
+  );
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [imageDims, setImageDims] = useState<{ w: number; h: number } | null>(null);
+
+  // Single-shot: the panel claimed the restored draft, clear it so a future
+  // remount does not re-seed.
+  useEffect(() => {
+    if (restoredDraft) consumeRestoredDraft();
+  }, [restoredDraft, consumeRestoredDraft]);
 
   const screenshotActive = !!capturedImageUrl && !screenshotDropped;
   const screenshotFailed = !capturedImageUrl && !!captureError;
@@ -167,13 +178,27 @@ export default function FeedbackPanel() {
   const onSubmit = async () => {
     if (!canSubmit) return;
     // Lazy auth: any signed-in user can compose; we only ask for GitHub when
-    // they actually try to file the issue, so the panel doesn't gate behind a
-    // provider switch. State is lost on redirect — same trade-off as the
-    // previous front-page button.
+    // they actually try to file the issue. The draft is stashed to sessionStorage
+    // before the redirect so the user lands back on a pre-populated panel.
     const hasGithubSession =
       session?.provider === "github" && typeof session?.accessToken === "string";
     if (!hasGithubSession) {
-      toast.message("Sign in with GitHub to file your suggestion.");
+      let screenshotDataUrl: string | null = null;
+      if (screenshotActive && capturedImageUrl) {
+        try {
+          screenshotDataUrl = await blobUrlToDataUrl(capturedImageUrl);
+        } catch {
+          // Best effort — submitting without the image is still valid.
+        }
+      }
+      saveDraft({
+        comment,
+        shapes,
+        screenshotDropped,
+        screenshotDataUrl,
+        capturedOutline: capturedOutline ?? null,
+      });
+      toast.message("Sign in with GitHub to file your suggestion. Your draft is saved.");
       await signIn("github", { callbackUrl: window.location.href });
       return;
     }
