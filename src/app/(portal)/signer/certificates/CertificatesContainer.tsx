@@ -19,7 +19,7 @@ const TIME_RANGES: Record<string, number> = {
 export function CertificatesContainer() {
   const { data: session } = useSession();
   const ability = useAbility();
-  const isAdmin = session?.user?.role === "admin";
+  const isAdmin = session?.systemRole === "admin";
   const userEmail = session?.user?.email ?? "";
 
   const [page, setPage] = React.useState(1);

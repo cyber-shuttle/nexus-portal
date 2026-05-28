@@ -15,7 +15,7 @@ export function ClientsContainer() {
   const { data: session } = useSession();
   const ability = useAbility();
   const userId = session?.user?.id ?? "";
-  const isAdmin = session?.user?.role === "admin";
+  const isAdmin = session?.systemRole === "admin";
   const piAllocationIds = session?.user?.myPiAllocations ?? [];
 
   const [page, setPage] = React.useState(1);

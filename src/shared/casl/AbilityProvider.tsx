@@ -3,28 +3,17 @@
 import { AbilityProvider as CaslAbilityProvider, useAbility as useCaslAbility } from "@casl/react";
 import { useSession } from "next-auth/react";
 import { type ReactNode, useMemo } from "react";
-import { type AppAbility, defineAbilityForRole } from "./abilities";
+import { type AppAbility, defineAbility } from "./abilities";
 
 export function AbilityProvider({ children }: { children: ReactNode }) {
   const { data: session } = useSession();
-  const role = session?.user?.role ?? "guest";
 
   const ability = useMemo(
-    () =>
-      defineAbilityForRole(role, {
-        userId: session?.user?.id,
-        myPiAllocations: session?.user?.myPiAllocations,
-        myPiProjects: session?.user?.myPiProjects,
-        myMemberProjects: session?.user?.myMemberProjects,
-        assignedAllocations: session?.user?.assignedAllocations,
-      }),
+    () => defineAbility(session),
+    // Re-derive whenever any axis input shifts. session identity is stable per
+    // NextAuth refresh, so this list captures all real changes.
     [
-      role,
-      session?.user?.id,
-      session?.user?.myPiAllocations,
-      session?.user?.myPiProjects,
-      session?.user?.myMemberProjects,
-      session?.user?.assignedAllocations,
+      session,
     ],
   );
 

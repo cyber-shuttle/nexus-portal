@@ -8,8 +8,11 @@ export const metadata: Metadata = {
   title: "Home · Nexus Portal",
 };
 
-function personaFromRole(role: string | undefined): HomePersona {
-  if (role === "admin") return "admin";
+function personaFor(
+  role: string | undefined,
+  systemRole: string | null | undefined,
+): HomePersona {
+  if (systemRole === "admin") return "admin";
   if (role === "pi" || role === "co_pi" || role === "allocation_manager") return "pi";
   return "researcher";
 }
@@ -20,7 +23,7 @@ export default async function HomePage() {
   if (!userId) redirect("/sign-in");
 
   const firstName = session?.user?.name?.split(" ")[0] ?? "there";
-  const persona = personaFromRole(session?.user?.role);
+  const persona = personaFor(session?.user?.role, session?.systemRole);
 
   return (
     <div className="space-y-6">

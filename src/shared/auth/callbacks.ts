@@ -1,12 +1,15 @@
 import { isEmailAllowed } from "@/lib/allowlist";
+import { fetchSystemRole, type SystemRoleResponse } from "@/shared/auth/systemRole";
 import type { Role } from "@/shared/casl/abilities";
 import type { NextAuthConfig } from "next-auth";
 import { cookies } from "next/headers";
 
 // Persona pick from the sign-in card is held in a short-lived cookie across
-// the OIDC redirect, then mapped to a Role. Default to least-privilege.
+// the OIDC redirect, then mapped to an allocation Role. The system axis
+// (admin) is sourced from the backend on every sign-in — the persona cookie
+// only drives allocation-axis selection, so persona='admin' yields the
+// least-privilege allocation role.
 export function personaToRole(persona: string | undefined): Role {
-  if (persona === "admin") return "admin";
   if (persona === "pi") return "pi";
   return "user";
 }
@@ -14,6 +17,9 @@ export function personaToRole(persona: string | undefined): Role {
 type CallbackOptions = {
   allowedEmails: string | undefined;
   oidcEnabled: boolean;
+  coreApiBaseUrl: string;
+  // Override hook for tests. Production wires the real fetcher.
+  fetchSystemRoleImpl?: (userId: string, baseUrl: string) => Promise<SystemRoleResponse>;
 };
 
 type GitHubEmailEntry = { email?: string; verified?: boolean };
@@ -37,7 +43,8 @@ async function fetchGithubVerifiedEmails(accessToken: string): Promise<string[]>
 }
 
 export function buildAuthCallbacks(options: CallbackOptions): NextAuthConfig["callbacks"] {
-  const { allowedEmails, oidcEnabled } = options;
+  const { allowedEmails, oidcEnabled, coreApiBaseUrl } = options;
+  const fetchSystemRoleFn = options.fetchSystemRoleImpl ?? fetchSystemRole;
   return {
     async signIn({ user, account }) {
       if (account?.provider === "oidc") {
@@ -118,17 +125,46 @@ export function buildAuthCallbacks(options: CallbackOptions): NextAuthConfig["ca
         token.myPiProjects = user.myPiProjects;
         token.myMemberProjects = user.myMemberProjects;
         token.assignedAllocations = user.assignedAllocations;
+        // Dev personas carry the system axis directly on the user object —
+        // no backend exists to fetch from in this branch.
+        token.systemRole = user.systemRole ?? null;
       }
       if (account?.access_token) {
         token.accessToken = account.access_token;
       } else if (!token.accessToken && !oidcEnabled) {
         token.accessToken = "dev-token";
       }
+      // System role is DB-authoritative for IdP-backed providers; the core
+      // API is the only source of truth and the portal never falls back to
+      // IdP claims on failure.
+      const usesBackendForSystemRole =
+        account?.provider === "oidc" ||
+        account?.provider === "github" ||
+        account?.provider === "github-dev";
+      if (user && usesBackendForSystemRole) {
+        if (!token.personId) {
+          token.systemRole = null;
+        } else {
+          try {
+            const result = await fetchSystemRoleFn(token.personId, coreApiBaseUrl);
+            token.systemRole = result.role;
+          } catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            console.warn(`system-role fetch failed; signing in with no scopes: ${message}`);
+            token.systemRole = null;
+            token.myPiAllocations = [];
+            token.myPiProjects = [];
+            token.myMemberProjects = [];
+            token.assignedAllocations = [];
+          }
+        }
+      }
       return token;
     },
     async session({ session, token }) {
       if (token.accessToken) session.accessToken = token.accessToken;
       if (token.provider) session.provider = token.provider;
+      session.systemRole = token.systemRole ?? null;
       if (session.user) {
         session.user.role = token.role;
         session.user.personId = token.personId;

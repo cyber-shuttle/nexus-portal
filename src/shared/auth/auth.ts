@@ -1,17 +1,19 @@
 import { serverEnv } from "@/lib/env";
 import { buildAuthCallbacks } from "@/shared/auth/callbacks";
 import { derivePersonaScopes } from "@/shared/auth/personaScopes";
-import type { Role } from "@/shared/casl/abilities";
+import type { Role, SystemRole } from "@/shared/casl/abilities";
 import NextAuth, { type NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import GitHub from "next-auth/providers/github";
 import Keycloak from "next-auth/providers/keycloak";
 import { z } from "zod";
 
-const devPersonas: Record<string, { name: string; role: Role }> = {
+const devPersonas: Record<string, { name: string; role: Role; systemRole?: SystemRole }> = {
   "researcher@nexus.local": { name: "Riya Researcher", role: "user" },
   "pi@nexus.local": { name: "Pat PI", role: "pi" },
-  "admin@nexus.local": { name: "Avery Admin", role: "admin" },
+  // Dev mode has no backend to source the system axis from, so the persona
+  // object is authoritative for systemRole on the credentials path.
+  "admin@nexus.local": { name: "Avery Admin", role: "user", systemRole: "admin" },
 };
 
 const credentialsSchema = z.object({
@@ -39,6 +41,7 @@ const credentialsProvider = Credentials({
         email,
         name: preset.name,
         role: preset.role,
+        systemRole: preset.systemRole ?? null,
         myPiAllocations: scopes.myPiAllocations,
         myPiProjects: scopes.myPiProjects,
         myMemberProjects: scopes.myMemberProjects,
@@ -120,6 +123,7 @@ export const authConfig: NextAuthConfig = {
   callbacks: buildAuthCallbacks({
     allowedEmails: serverEnv.NEXUS_ALLOWED_EMAILS,
     oidcEnabled,
+    coreApiBaseUrl: serverEnv.CORE_API_BASE_URL,
   }),
 };
 

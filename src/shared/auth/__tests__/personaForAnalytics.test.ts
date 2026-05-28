@@ -1,17 +1,28 @@
 import type { Session } from "next-auth";
 import { describe, expect, it } from "vitest";
+import type { SystemRole } from "@/shared/casl/abilities";
 import { personaForAnalytics } from "../personaForAnalytics";
 
-function makeSession(overrides: Partial<Session["user"]>): Session {
+function makeSession(
+  overrides: Partial<Session["user"]> & { systemRole?: SystemRole | null } = {},
+): Session {
+  const { systemRole, ...userOverrides } = overrides;
   return {
     expires: "9999-01-01",
-    user: { id: "u-1", role: "user", myPiAllocations: [], assignedAllocations: [], ...overrides },
+    systemRole: systemRole ?? null,
+    user: {
+      id: "u-1",
+      role: "user",
+      myPiAllocations: [],
+      assignedAllocations: [],
+      ...userOverrides,
+    },
   } as Session;
 }
 
 describe("personaForAnalytics", () => {
-  it("resolves admin role to admin persona", () => {
-    expect(personaForAnalytics(makeSession({ role: "admin" }))).toBe("admin");
+  it("resolves systemRole=admin to admin analytics persona", () => {
+    expect(personaForAnalytics(makeSession({ systemRole: "admin" }))).toBe("admin");
   });
 
   it("resolves allocation_manager to admin persona", () => {
@@ -42,5 +53,13 @@ describe("personaForAnalytics", () => {
 
   it("returns researcher when session is null", () => {
     expect(personaForAnalytics(null)).toBe("researcher");
+  });
+
+  it("system admin who is also a PI resolves to admin (system axis wins)", () => {
+    expect(
+      personaForAnalytics(
+        makeSession({ role: "pi", myPiAllocations: ["alloc-1"], systemRole: "admin" }),
+      ),
+    ).toBe("admin");
   });
 });

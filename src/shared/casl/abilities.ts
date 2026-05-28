@@ -1,6 +1,8 @@
 import { AbilityBuilder, type MongoAbility, createMongoAbility } from "@casl/ability";
+import type { Session } from "next-auth";
 
-export type Role = "guest" | "user" | "pi" | "co_pi" | "allocation_manager" | "admin";
+export type Role = "guest" | "user" | "pi" | "co_pi" | "allocation_manager";
+export type SystemRole = "admin";
 
 export type AppAbility = MongoAbility;
 
@@ -15,12 +17,30 @@ export type AbilityContext = {
   assignedAllocations?: string[];
 };
 
-export function defineAbilityForRole(role: Role, ctx: AbilityContext = {}): AppAbility {
-  const { can, build } = new AbilityBuilder<AppAbility>(createMongoAbility);
+type Can = AbilityBuilder<AppAbility>["can"];
+type Cannot = AbilityBuilder<AppAbility>["cannot"];
 
-  if (role === "guest") {
-    return build();
+export function defineAbility(session: Session | null | undefined): AppAbility {
+  const builder = new AbilityBuilder<AppAbility>(createMongoAbility);
+
+  const role = session?.user?.role ?? "guest";
+  applyAllocationRules(builder.can, builder.cannot, role, {
+    userId: session?.user?.id,
+    myPiAllocations: session?.user?.myPiAllocations,
+    myPiProjects: session?.user?.myPiProjects,
+    myMemberProjects: session?.user?.myMemberProjects,
+    assignedAllocations: session?.user?.assignedAllocations,
+  });
+
+  if (session?.systemRole === "admin") {
+    applyAdminRules(builder.can, builder.cannot);
   }
+
+  return builder.build();
+}
+
+function applyAllocationRules(can: Can, _cannot: Cannot, role: Role, ctx: AbilityContext): void {
+  if (role === "guest") return;
 
   can("read", "Profile");
 
@@ -33,11 +53,11 @@ export function defineAbilityForRole(role: Role, ctx: AbilityContext = {}): AppA
     can("create", "ChangeRequest");
     can("read", "AnalyticsResearcher", { userId: ctx.userId ?? "__none__" });
     // Project read is membership-scoped for every signed-in persona — admin
-    // overrides via `manage all` below, PI extends with `manage Project` on
-    // owned rows. Researchers see only projects they belong to.
+    // overrides via `manage all` (system axis), PI extends with `manage Project`
+    // on owned rows. Researchers see only projects they belong to.
     can("read", "Project", { id: { $in: ctx.myMemberProjects ?? [] } });
     // Cluster read is universal (every persona enumerates clusters in their
-    // allocation forms); cluster `manage` is admin-only and lives below.
+    // allocation forms); cluster `manage` is admin-only (system axis).
     can("read", "Cluster");
   }
 
@@ -73,18 +93,16 @@ export function defineAbilityForRole(role: Role, ctx: AbilityContext = {}): AppA
     });
     can("read", "Membership");
   }
+}
 
-  if (role === "admin") {
-    can("manage", "all");
-    // Explicit so the rule is greppable; `manage all` already covers it.
-    can("manage", "Analytics");
-    // Same rationale for Project + Cluster — kept explicit so anyone
-    // grepping the codebase finds the admin grants alongside the persona
-    // ones in the same block.
-    can("manage", "Project");
-    can("create", "Project");
-    can("manage", "Cluster");
-  }
-
-  return build();
+function applyAdminRules(can: Can, _cannot: Cannot): void {
+  can("manage", "all");
+  // Explicit so the rule is greppable; `manage all` already covers it.
+  can("manage", "Analytics");
+  // Same rationale for Project + Cluster — kept explicit so anyone
+  // grepping the codebase finds the admin grants alongside the persona
+  // ones in the same module.
+  can("manage", "Project");
+  can("create", "Project");
+  can("manage", "Cluster");
 }

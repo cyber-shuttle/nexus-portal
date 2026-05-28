@@ -31,8 +31,11 @@ import { toast } from "sonner";
 
 type Persona = "user" | "pi" | "allocation_manager" | "admin";
 
-function personaFromRole(role: string | undefined): Persona {
-  if (role === "admin") return "admin";
+function personaFor(
+  role: string | undefined,
+  systemRole: string | null | undefined,
+): Persona {
+  if (systemRole === "admin") return "admin";
   if (role === "allocation_manager") return "allocation_manager";
   if (role === "pi" || role === "co_pi") return "pi";
   return "user";
@@ -41,7 +44,7 @@ function personaFromRole(role: string | undefined): Persona {
 export function ChangeRequestsListContainer() {
   const { data: session } = useSession();
   const ability = useAbility();
-  const persona = personaFromRole(session?.user?.role);
+  const persona = personaFor(session?.user?.role, session?.systemRole);
   const userId = session?.user?.id ?? "";
 
   const adminQuery = useAdminChangeRequests({
