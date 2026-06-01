@@ -74,7 +74,7 @@ test.describe.serial("feedback github attribution", () => {
     expect(url.searchParams.get("auth")).toBe("Bearer dev-token");
   });
 
-  test("credentials session submits via the bot fallback path", async ({ page }) => {
+  test("credentials session redirects to GitHub OAuth on Submit", async ({ page }) => {
     await loginAs(page, "researcher");
     await page.goto("/home");
     const suggestion = page.getByRole("button", { name: /^Suggestion mode$/i });
@@ -86,12 +86,14 @@ test.describe.serial("feedback github attribution", () => {
     await expect(screenshot).toBeVisible({ timeout: 15_000 });
     await dialog.getByLabel(/Tell us what you'd suggest/i).fill(SAMPLE_COMMENT);
 
-    const feedbackResponse = page.waitForResponse(
-      (res) => res.url().endsWith("/api/feedback") && res.request().method() === "POST",
+    // Without a github session the Submit click stashes the draft and kicks
+    // off the GitHub OAuth dance. Intercept at the NextAuth signin endpoint
+    // to avoid an actual round-trip to github.com in CI.
+    const signinRequest = page.waitForRequest(
+      (req) => req.url().includes("/api/auth/signin/github"),
       { timeout: 15_000 },
     );
     await dialog.getByRole("button", { name: /^Submit$/ }).click();
-    const res = await feedbackResponse;
-    expect(res.ok()).toBe(true);
+    await signinRequest;
   });
 });
