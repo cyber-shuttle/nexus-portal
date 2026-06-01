@@ -23,7 +23,7 @@ export const serverSchema = z
     FEEDBACK_GITHUB_REPO: z
       .string()
       .regex(/^[^/\s]+\/[^/\s]+$/, "expected owner/repo")
-      .default("lahirujayathilake/nexus-portal"),
+      .default("cyber-shuttle/nexus-portal"),
     FEEDBACK_LABEL: z.string().min(1).default("suggestion"),
     // When set, screenshot commits land on this branch instead of the repo's
     // default. The branch must exist; the Contents API will not create an

@@ -117,7 +117,7 @@ NODE_ENV=production
 # FEEDBACK_GITHUB_REPO with issues:write + contents:write. Server boot will
 # fail-fast if NODE_ENV=production and FEEDBACK_GITHUB_TOKEN is missing.
 # FEEDBACK_GITHUB_TOKEN=
-# FEEDBACK_GITHUB_REPO=lahirujayathilake/nexus-portal
+# FEEDBACK_GITHUB_REPO=cyber-shuttle/nexus-portal
 # FEEDBACK_LABEL=suggestion
 # Optional: keep screenshot commits off main by routing them to a dedicated
 # pre-existing branch (must be created on the remote first). Recommended.
