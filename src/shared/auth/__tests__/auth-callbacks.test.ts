@@ -224,103 +224,13 @@ describe("signIn callback — github", () => {
     fetchSpy.mockReset();
   });
 
-  function mockEmailsResponse(payload: unknown, status = 200) {
-    fetchSpy.mockResolvedValueOnce(
-      new Response(JSON.stringify(payload), {
-        status,
-        headers: { "content-type": "application/json" },
-      }),
-    );
-  }
-
-  it("admits when a non-primary verified email is in the allowlist", async () => {
-    mockEmailsResponse([
-      { email: "personal@github.example", primary: true, verified: true },
-      { email: "allowed@example.org", primary: false, verified: true },
-    ]);
+  it("admits any github account without an allowlist check or network call", async () => {
     const result = await signIn({
-      user: { email: "personal@github.example" },
+      user: { email: "anyone@github.example" },
       account: { provider: "github", access_token: "tkn" },
     } as unknown as Parameters<typeof signIn>[0]);
     expect(result).toBe(true);
-    expect(fetchSpy).toHaveBeenCalledWith(
-      "https://api.github.com/user/emails",
-      expect.objectContaining({
-        headers: expect.objectContaining({ Authorization: "Bearer tkn" }),
-      }),
-    );
-  });
-
-  it("rejects when no verified email is in the allowlist", async () => {
-    mockEmailsResponse([
-      { email: "personal@github.example", primary: true, verified: true },
-      { email: "other@github.example", primary: false, verified: true },
-    ]);
-    const result = await signIn({
-      user: { email: "personal@github.example" },
-      account: { provider: "github", access_token: "tkn" },
-    } as unknown as Parameters<typeof signIn>[0]);
-    expect(result).toBe(
-      `/sign-in?error=not_allowed&email=${encodeURIComponent("personal@github.example")}`,
-    );
-  });
-
-  it("ignores unverified addresses even if they're in the allowlist", async () => {
-    mockEmailsResponse([
-      { email: "personal@github.example", primary: true, verified: true },
-      { email: "allowed@example.org", primary: false, verified: false },
-    ]);
-    const result = await signIn({
-      user: { email: "personal@github.example" },
-      account: { provider: "github", access_token: "tkn" },
-    } as unknown as Parameters<typeof signIn>[0]);
-    expect(result).toBe(
-      `/sign-in?error=not_allowed&email=${encodeURIComponent("personal@github.example")}`,
-    );
-  });
-
-  it("rejects when the /user/emails fetch errors (fail-closed)", async () => {
-    fetchSpy.mockRejectedValueOnce(new Error("network down"));
-    const result = await signIn({
-      user: { email: "personal@github.example" },
-      account: { provider: "github", access_token: "tkn" },
-    } as unknown as Parameters<typeof signIn>[0]);
-    expect(result).toBe(
-      `/sign-in?error=not_allowed&email=${encodeURIComponent("personal@github.example")}`,
-    );
-  });
-
-  it("rejects when GitHub returns a non-2xx (fail-closed)", async () => {
-    mockEmailsResponse({ message: "Bad credentials" }, 401);
-    const result = await signIn({
-      user: { email: "personal@github.example" },
-      account: { provider: "github", access_token: "tkn" },
-    } as unknown as Parameters<typeof signIn>[0]);
-    expect(result).toBe(
-      `/sign-in?error=not_allowed&email=${encodeURIComponent("personal@github.example")}`,
-    );
-  });
-
-  it("rejects without making a network call when the access token is missing", async () => {
-    const result = await signIn({
-      user: { email: "personal@github.example" },
-      account: { provider: "github" },
-    } as unknown as Parameters<typeof signIn>[0]);
-    expect(result).toBe(
-      `/sign-in?error=not_allowed&email=${encodeURIComponent("personal@github.example")}`,
-    );
     expect(fetchSpy).not.toHaveBeenCalled();
-  });
-
-  it("admits when the primary email (returned by the user-info claim) is in the allowlist even if /user/emails omits it", async () => {
-    mockEmailsResponse([
-      { email: "other@github.example", primary: false, verified: true },
-    ]);
-    const result = await signIn({
-      user: { email: "allowed@example.org" },
-      account: { provider: "github", access_token: "tkn" },
-    } as unknown as Parameters<typeof signIn>[0]);
-    expect(result).toBe(true);
   });
 });
 
