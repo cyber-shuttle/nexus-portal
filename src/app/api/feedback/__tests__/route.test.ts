@@ -119,4 +119,48 @@ describe("POST /api/feedback — token selection", () => {
     expect(issueArg.body).toContain("real@nexus.local");
     expect(issueArg.body).not.toContain("spoofed@evil.org");
   });
+
+  it("always uses the bot PAT for the image commit, even when a user token is present", async () => {
+    authMock.mockResolvedValue({
+      user: { email: "researcher@nexus.local" },
+      provider: "github",
+      accessToken: "user-github-token",
+    });
+    // serverEnv is parsed at module load; the FEEDBACK_GITHUB_TOKEN cached
+    // from the first test in this file is what the route actually sees.
+    vi.stubEnv("FEEDBACK_GITHUB_TOKEN", "bot-pat-fallback-xxxxxxxxxx");
+
+    await postFeedback({
+      ...VALID_PAYLOAD,
+      imagePngBase64: "x".repeat(200),
+    });
+
+    expect(commitImageToRepoMock).toHaveBeenCalledOnce();
+    const imageCfg = commitImageToRepoMock.mock.calls[0]?.[0] as { token: string };
+    expect(imageCfg.token).toBe("bot-pat-fallback-xxxxxxxxxx");
+    // Issue still attributed to the user
+    const issueCfg = createIssueMock.mock.calls[0]?.[0] as { token: string };
+    expect(issueCfg.token).toBe("user-github-token");
+  });
+
+  it("files the issue without a screenshot if the image commit throws", async () => {
+    authMock.mockResolvedValue({
+      user: { email: "researcher@nexus.local" },
+      provider: "github",
+      accessToken: "user-github-token",
+    });
+    vi.stubEnv("FEEDBACK_GITHUB_TOKEN", "bot-pat-fallback-xxxxxxxxxx");
+    commitImageToRepoMock.mockRejectedValueOnce(new Error("upload boom"));
+
+    const res = await postFeedback({
+      ...VALID_PAYLOAD,
+      imagePngBase64: "x".repeat(200),
+    });
+
+    expect(res.status).toBe(200);
+    expect(createIssueMock).toHaveBeenCalledOnce();
+    const issueArg = createIssueMock.mock.calls[0]?.[1] as { body: string };
+    // Body should not reference a screenshot URL since upload failed
+    expect(issueArg.body).not.toMatch(/raw\.example/);
+  });
 });
