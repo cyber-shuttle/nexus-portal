@@ -75,7 +75,7 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
     setCapturedImageUrl(draft.screenshotDataUrl);
     setCapturedOutline(draft.capturedOutline);
     setPanelOpen(true);
-    toast.message("Welcome back — click Submit to file your suggestion.");
+    toast.message("Welcome back — filing your suggestion…");
   }, [status, session?.provider]);
 
   const consumeRestoredDraft = useCallback(() => {
