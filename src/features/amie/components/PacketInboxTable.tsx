@@ -103,6 +103,8 @@ export function PacketInboxTable({
     {
       key: "received",
       header: "Received",
+      sortable: true,
+      sortValue: (row) => new Date(row.received_at),
       cell: (row) => (
         <span className="text-xs text-muted-foreground tabular-nums">
           {formatDate(row.received_at)}
@@ -112,16 +114,22 @@ export function PacketInboxTable({
     {
       key: "amie_id",
       header: "AMIE ID",
+      sortable: true,
+      sortValue: (row) => row.amie_id,
       cell: (row) => <span className="font-mono text-sm">{row.amie_id}</span>,
     },
     {
       key: "type",
       header: "Type",
+      sortable: true,
+      sortValue: (row) => row.type,
       cell: (row) => <span className="text-sm">{row.type}</span>,
     },
     {
       key: "status",
       header: "Status",
+      sortable: true,
+      sortValue: (row) => row.status,
       cell: (row) => (
         <PacketStatusBadge status={row.status} ageHours={ageHoursOf(row.received_at)} />
       ),
@@ -129,11 +137,16 @@ export function PacketInboxTable({
     {
       key: "source",
       header: "Source",
+      sortable: true,
+      sortValue: (row) => row.source,
       cell: (row) => <span className="text-xs text-muted-foreground">{row.source}</span>,
     },
     {
       key: "linked",
       header: "Linked entity",
+      sortable: true,
+      sortValue: (row) =>
+        row.linked_entity ? `${row.linked_entity.type}:${row.linked_entity.display_id ?? row.linked_entity.id}` : null,
       cell: (row) =>
         row.linked_entity ? (
           <span className="text-xs text-muted-foreground">
@@ -146,6 +159,8 @@ export function PacketInboxTable({
     {
       key: "updated",
       header: "Last updated",
+      sortable: true,
+      sortValue: (row) => new Date(row.updated_at),
       cell: (row) => (
         <span className="text-xs text-muted-foreground tabular-nums">
           {formatDate(row.updated_at)}

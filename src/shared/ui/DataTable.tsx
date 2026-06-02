@@ -2,8 +2,10 @@
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/shared/ui/button";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, ChevronsUpDown, ChevronUp } from "lucide-react";
 import * as React from "react";
+
+export type DataTableSortValue = string | number | Date | null | undefined;
 
 export type DataTableColumn<T> = {
   key: string;
@@ -15,7 +17,13 @@ export type DataTableColumn<T> = {
   // checkbox, a button, a link). The DataTable will then skip wrapping the cell
   // in its keyboard-activation <button>, which would otherwise nest controls.
   interactive?: boolean;
+  // Mark the column header as a sort toggle. Requires `sortValue`. The toggle
+  // cycles none → asc → desc → none.
+  sortable?: boolean;
+  sortValue?: (row: T) => DataTableSortValue;
 };
+
+type SortState = { key: string; direction: "asc" | "desc" } | null;
 
 export type DataTablePagination = {
   page: number;
@@ -37,6 +45,27 @@ export type DataTableProps<T> = {
   className?: string;
 };
 
+function compareSortable(
+  a: DataTableSortValue,
+  b: DataTableSortValue,
+  direction: "asc" | "desc",
+): number {
+  // Nullish values always sort last regardless of direction so a missing
+  // entry doesn't bubble to the top under desc.
+  if (a == null && b == null) return 0;
+  if (a == null) return 1;
+  if (b == null) return -1;
+  let cmp = 0;
+  if (a instanceof Date && b instanceof Date) {
+    cmp = a.getTime() - b.getTime();
+  } else if (typeof a === "number" && typeof b === "number") {
+    cmp = a - b;
+  } else {
+    cmp = String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: "base" });
+  }
+  return direction === "asc" ? cmp : -cmp;
+}
+
 export function DataTable<T>({
   columns,
   rows,
@@ -47,6 +76,31 @@ export function DataTable<T>({
   pagination,
   className,
 }: DataTableProps<T>) {
+  const [sortState, setSortState] = React.useState<SortState>(null);
+
+  const sortedRows = React.useMemo(() => {
+    if (!sortState) return rows;
+    const col = columns.find((c) => c.key === sortState.key);
+    if (!col?.sortValue) return rows;
+    const sortValue = col.sortValue;
+    return [...rows]
+      .map((row, i) => ({ row, i }))
+      .sort((a, b) => {
+        const cmp = compareSortable(sortValue(a.row), sortValue(b.row), sortState.direction);
+        // Preserve original order for equal keys so re-sorts feel stable.
+        return cmp !== 0 ? cmp : a.i - b.i;
+      })
+      .map((entry) => entry.row);
+  }, [rows, sortState, columns]);
+
+  const cycleSort = (key: string) => {
+    setSortState((prev) => {
+      if (!prev || prev.key !== key) return { key, direction: "asc" };
+      if (prev.direction === "asc") return { key, direction: "desc" };
+      return null;
+    });
+  };
+
   return (
     <div
       className={cn(
@@ -59,24 +113,58 @@ export function DataTable<T>({
           {caption ? <caption className="sr-only">{caption}</caption> : null}
           <thead className="bg-muted text-xs font-medium uppercase tracking-wide text-muted-foreground">
             <tr>
-              {columns.map((col) => (
-                <th
-                  key={col.key}
-                  scope="col"
-                  style={col.width ? { width: col.width } : undefined}
-                  className={cn(
-                    "px-4 py-3 font-medium",
-                    col.align === "right" && "text-right",
-                    col.align === "center" && "text-center",
-                  )}
-                >
-                  {col.header}
-                </th>
-              ))}
+              {columns.map((col) => {
+                const isSorted = sortState?.key === col.key;
+                const ariaSort: React.AriaAttributes["aria-sort"] = isSorted
+                  ? sortState.direction === "asc"
+                    ? "ascending"
+                    : "descending"
+                  : col.sortable
+                    ? "none"
+                    : undefined;
+                return (
+                  <th
+                    key={col.key}
+                    scope="col"
+                    style={col.width ? { width: col.width } : undefined}
+                    aria-sort={ariaSort}
+                    className={cn(
+                      "px-4 py-3 font-medium",
+                      col.align === "right" && "text-right",
+                      col.align === "center" && "text-center",
+                    )}
+                  >
+                    {col.sortable && col.sortValue ? (
+                      <button
+                        type="button"
+                        onClick={() => cycleSort(col.key)}
+                        className={cn(
+                          "inline-flex items-center gap-1 rounded-sm text-xs font-medium uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                          col.align === "right" && "flex-row-reverse",
+                          col.align === "center" && "justify-center",
+                        )}
+                      >
+                        <span>{col.header}</span>
+                        {isSorted ? (
+                          sortState.direction === "asc" ? (
+                            <ChevronUp className="h-3.5 w-3.5 text-foreground" aria-hidden />
+                          ) : (
+                            <ChevronDown className="h-3.5 w-3.5 text-foreground" aria-hidden />
+                          )
+                        ) : (
+                          <ChevronsUpDown className="h-3.5 w-3.5 opacity-40" aria-hidden />
+                        )}
+                      </button>
+                    ) : (
+                      col.header
+                    )}
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody>
-            {rows.length === 0 ? (
+            {sortedRows.length === 0 ? (
               <tr>
                 <td colSpan={columns.length} className="px-4 py-12 text-center">
                   {empty ?? (
@@ -87,7 +175,7 @@ export function DataTable<T>({
                 </td>
               </tr>
             ) : (
-              rows.map((row, index) => (
+              sortedRows.map((row, index) => (
                 <tr
                   key={rowKey(row, index)}
                   // Row hover bg removed per spec §7.6 — the keyboard target
