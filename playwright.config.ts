@@ -33,6 +33,11 @@ export default defineConfig({
       NEXT_PUBLIC_PORTAL_USE_MSW: "true",
       NEXTAUTH_SECRET: "dev-secret-do-not-use-in-prod",
       NEXTAUTH_URL: baseURL,
+      // Register the GitHub provider with dummy creds so FeedbackPanel's
+      // lazy signIn("github") on Submit actually fires the network call
+      // tests assert on. Tests intercept before any github.com round-trip.
+      GITHUB_OAUTH_CLIENT_ID: "test-client-id",
+      GITHUB_OAUTH_CLIENT_SECRET: "test-client-secret",
     },
   },
 });
