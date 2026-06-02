@@ -73,21 +73,22 @@ describe("issueBody — text-only", () => {
 });
 
 describe("issueBody — reporter formatting", () => {
-  it("renders email-only when no githubLogin is provided", () => {
+  it("renders 'anonymous' when no githubLogin is provided (repo is public; no email leak)", () => {
     const body = issueBody({ comment: "Tiny note enough chars.", context: baseContext });
-    expect(body).toContain("| Reporter | [pi@example.org](mailto:pi@example.org) |");
-    expect(body).not.toMatch(/\[@[^\]]+\]\(https:\/\/github\.com/);
+    expect(body).toContain("| Reporter | anonymous |");
+    expect(body).not.toContain("pi@example.org");
+    expect(body).not.toContain("mailto:");
   });
 
-  it("renders @login + email when githubLogin is provided", () => {
+  it("renders @login only when githubLogin is provided — never the email", () => {
     const body = issueBody({
       comment: "Tiny note enough chars.",
       context: baseContext,
       githubLogin: "octocat",
     });
-    expect(body).toContain(
-      "| Reporter | [@octocat](https://github.com/octocat) ([pi@example.org](mailto:pi@example.org)) |",
-    );
+    expect(body).toContain("| Reporter | [@octocat](https://github.com/octocat) |");
+    expect(body).not.toContain("pi@example.org");
+    expect(body).not.toContain("mailto:");
   });
 });
 

@@ -103,7 +103,7 @@ describe("POST /api/feedback — token selection", () => {
     expect(createIssueMock).not.toHaveBeenCalled();
   });
 
-  it("stamps reporterEmail from the session, ignoring the client claim", async () => {
+  it("stamps reporterEmail from the session and never leaks any email into the issue body", async () => {
     authMock.mockResolvedValue({
       user: { email: "real@nexus.local" },
       provider: "github",
@@ -115,9 +115,12 @@ describe("POST /api/feedback — token selection", () => {
       context: { ...VALID_PAYLOAD.context, reporterEmail: "spoofed@evil.org" },
     });
 
+    // Repo is public; the issue body intentionally omits the email entirely.
+    // Attribution comes from the GitHub handle, not the email.
     const issueArg = createIssueMock.mock.calls[0]?.[1] as { body: string };
-    expect(issueArg.body).toContain("real@nexus.local");
+    expect(issueArg.body).not.toContain("real@nexus.local");
     expect(issueArg.body).not.toContain("spoofed@evil.org");
+    expect(issueArg.body).not.toContain("mailto:");
   });
 
   it("always uses the bot PAT for the image commit, even when a user token is present", async () => {
