@@ -113,19 +113,26 @@ NODE_ENV=production
 # OIDC_CLIENT_ID=
 # OIDC_CLIENT_SECRET=
 # NEXUS_ALLOWED_EMAILS=
-# Feedback widget — required in production. Fine-grained PAT scoped to
-# FEEDBACK_GITHUB_REPO with issues:write + contents:write. Server boot will
-# fail-fast if NODE_ENV=production and FEEDBACK_GITHUB_TOKEN is missing.
+# Feedback widget. Default path: per-user GitHub OAuth (set the two
+# GITHUB_OAUTH_* vars below). When a user clicks Submit without a github
+# session, the widget redirects through GitHub OAuth and the issue is filed
+# under the user's own GitHub identity — no bot PAT needed.
+#
+# FEEDBACK_GITHUB_TOKEN is an optional fallback for environments that want
+# a bot-attributed write path (e.g., anonymous portals). Leave unset to
+# require per-user attribution.
 # FEEDBACK_GITHUB_TOKEN=
 # FEEDBACK_GITHUB_REPO=cyber-shuttle/nexus-portal
 # FEEDBACK_LABEL=suggestion
-# Optional: keep screenshot commits off main by routing them to a dedicated
-# pre-existing branch (must be created on the remote first). Recommended.
+# Optional: route screenshot commits to a dedicated pre-existing branch.
+# Keeps the default branch's log clean. The branch must already exist on
+# the remote (Contents API won't create an orphan; it forks from HEAD).
 # FEEDBACK_IMAGES_BRANCH=feedback-images
-# GitHub OAuth — when both vars are set, "Continue with GitHub" appears on
-# the sign-in page so suggestions are attributed to the submitter rather than
-# the bot. Register the OAuth app at https://github.com/settings/developers
-# with callback URL https://${DOMAIN}/api/auth/callback/github.
+# GitHub OAuth — required for the default (PAT-free) feedback path. Register
+# the OAuth app at https://github.com/settings/developers with callback URL
+# https://${DOMAIN}/api/auth/callback/github. When the repo lives in an
+# organization with OAuth app access restrictions enabled, the app must
+# also be approved at the org level.
 # GITHUB_OAUTH_CLIENT_ID=
 # GITHUB_OAUTH_CLIENT_SECRET=
 ENV

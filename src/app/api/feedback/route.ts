@@ -73,13 +73,20 @@ export async function POST(req: NextRequest) {
 
     if (!token) {
       if (process.env.NODE_ENV === "production") {
-        console.error("FEEDBACK_GITHUB_TOKEN missing in production");
+        // PAT-free mode is the default in production — this branch only fires
+        // when the UI POSTed without a github session (it should have triggered
+        // the lazy OAuth redirect first).
+        console.error(
+          "no GitHub credential available — session.provider=%s, FEEDBACK_GITHUB_TOKEN set=%s",
+          session.provider,
+          Boolean(serverEnv.FEEDBACK_GITHUB_TOKEN),
+        );
         return NextResponse.json(
           { ok: false, error: "feedback service not configured" },
           { status: 503 },
         );
       }
-      console.warn("FEEDBACK_GITHUB_TOKEN not set — returning mock issue URL (dev only)");
+      console.warn("no github credential available — returning mock issue URL (dev only)");
       const mockId = randomUUID();
       return NextResponse.json({
         ok: true,
