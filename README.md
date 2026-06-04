@@ -18,6 +18,10 @@ Backend lives at `../airavata-custos/` (sibling directory). UX reference is the 
 - Feature-based folder layout that mirrors the `core/` and `connectors/` capability grouping in `airavata-custos`
 - Every commit must leave `pnpm build` and `pnpm dev` green
 
+## /admin/traces
+
+Admin-only request flow viewer for Custos. Lists every captured trace, opens a side-drawer with Overview / Waterfall / Raw JSON / Linked entities tabs, and exposes a one-click Retry for failed flows. Spec: `../airavata-custos/docs/internal/portal/2026-06-03-tracing-admin-ui.md`; the backend contract mirror is at `docs/backend-contracts/traces.md`. Today the routes are served by MSW fixtures — flip to live by adding `traces*` and `audit-events` to `PORTAL_LIVE_ENDPOINTS`. Accessibility posture: axe-core clean across the list and drawer e2e suites, full keyboard navigation in the waterfall (arrow keys move selection, right opens the detail panel, left closes it). Per-phase gate reports live under `docs/tracing-ui-gates/phase-1.md` … `phase-6.md`; the end-of-goal hand-off Commit Plan lives at `docs/tracing-ui-gates/commit-plan.md`.
+
 ## Git
 
 Local-only repo. **Do not push to a remote.**
