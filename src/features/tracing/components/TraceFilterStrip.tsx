@@ -35,11 +35,13 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const MAX_RANGE_DAYS = 365;
 
 // Chip variant per status — mirrors StatusBadge tokens (token-only, never
-// raw bg-nexus-*-NNN) and the styling-alignment status color map.
+// raw bg-nexus-*-NNN) and the styling-alignment status color map. Cancelled
+// rides foreground tint so the active state stays distinct from the inactive
+// chip background on dark mode (plain `bg-muted` was indistinguishable).
 const STATUS_CHIP_STYLES: Record<number, string> = {
   0: "bg-[color:var(--nexus-green-50)] text-[color:var(--nexus-green-700)]",
   1: "bg-[color:var(--nexus-red-50)] text-[color:var(--nexus-red-700)]",
-  2: "bg-muted text-muted-foreground",
+  2: "bg-foreground/15 text-foreground",
   3: "bg-[color:var(--nexus-amber-50)] text-[color:var(--nexus-amber-700)]",
 };
 

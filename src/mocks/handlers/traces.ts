@@ -105,10 +105,27 @@ export const tracesHandlers = [
       return HttpResponse.json({ error: "invalid trace id" }, { status: 400 });
     }
     const fixture = detailIndex.get(traceId);
-    if (!fixture) {
-      return HttpResponse.json({ error: "trace not found" }, { status: 404 });
+    if (fixture) return HttpResponse.json(fixture);
+    // List fixture has more rows than detail fixtures — synthesize a minimal
+    // detail from the list row so every clickable row resolves to something
+    // renderable.
+    const listRow = listFixture.traces.find((t) => t.trace_id === traceId);
+    if (listRow) {
+      return HttpResponse.json({
+        trace: listRow,
+        spans: [
+          {
+            span_id: traceId.slice(0, 16),
+            name: listRow.root_name,
+            kind: 1,
+            status: listRow.status,
+            start_time: listRow.started_at,
+            end_time: listRow.ended_at ?? null,
+          },
+        ],
+      });
     }
-    return HttpResponse.json(fixture);
+    return HttpResponse.json({ error: "trace not found" }, { status: 404 });
   }),
 
   // Retry handler — matches backend status codes (§11.3):
