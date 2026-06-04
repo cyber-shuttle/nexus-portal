@@ -32,6 +32,9 @@ export type DataTablePagination = {
   onPageChange: (page: number) => void;
   onPageSizeChange?: (size: number) => void;
   pageSizeOptions?: number[];
+  // Hard-disable Next beyond `page >= totalPages` — used when the backend
+  // caps cumulative offset (e.g. tracing's 1M offset ceiling).
+  nextDisabled?: boolean;
 };
 
 export type DataTableProps<T> = {
@@ -270,6 +273,7 @@ function DataTablePager({ pagination }: { pagination: DataTablePagination }) {
     onPageChange,
     onPageSizeChange,
     pageSizeOptions = [10, 20, 50, 100],
+    nextDisabled,
   } = pagination;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const start = total === 0 ? 0 : (page - 1) * pageSize + 1;
@@ -325,7 +329,7 @@ function DataTablePager({ pagination }: { pagination: DataTablePagination }) {
             variant="outline"
             size="sm"
             onClick={() => onPageChange(Math.min(totalPages, page + 1))}
-            disabled={page >= totalPages}
+            disabled={page >= totalPages || Boolean(nextDisabled)}
           >
             Next
           </Button>
