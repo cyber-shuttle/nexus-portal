@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import {
+  Activity,
   BadgeCheck,
   ClipboardList,
   Coins,
@@ -78,6 +79,13 @@ export const portalNav: NavItem[] = [
     icon: ClipboardList,
     group: "admin",
     ability: { action: "manage", subject: "AmiePacket" },
+  },
+  {
+    href: "/admin/traces",
+    label: "Tracing",
+    icon: Activity,
+    group: "admin",
+    ability: { action: "read", subject: "Trace" },
   },
   {
     href: "/admin/resources",

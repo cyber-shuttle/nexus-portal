@@ -105,4 +105,6 @@ function applyAdminRules(can: Can, _cannot: Cannot): void {
   can("manage", "Project");
   can("create", "Project");
   can("manage", "Cluster");
+  can("read", "Trace");
+  can("retry", "Trace");
 }

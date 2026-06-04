@@ -1,0 +1,125 @@
+{
+  "trace": {
+    "trace_id": "b4c2da3e405f6b7c8d9e0f1234567890",
+    "root_name": "amie.process_event:request_project_create",
+    "source": "amie",
+    "status": 0,
+    "started_at": "2026-06-03T14:19:01.000Z",
+    "ended_at": "2026-06-03T14:19:02.250Z",
+    "span_count": 10,
+    "root_event": {
+      "type": "request_project_create",
+      "data": {
+        "project": "BIO130001",
+        "pi_username": "alice"
+      }
+    }
+  },
+  "spans": [
+    {
+      "span_id": "0000000000000001",
+      "name": "amie.process_event:request_project_create",
+      "kind": 1,
+      "status": 0,
+      "start_time": "2026-06-03T14:19:01.000Z",
+      "end_time": "2026-06-03T14:19:02.250Z",
+      "attributes": {
+        "amie.event_id": "evt-1",
+        "amie.packet_id": "pkt-1",
+        "amie.event_type": "request_project_create",
+        "source": "amie"
+      }
+    },
+    {
+      "span_id": "0000000000000002",
+      "parent_span_id": "0000000000000001",
+      "name": "amie.handle:request_project_create",
+      "kind": 0,
+      "status": 0,
+      "start_time": "2026-06-03T14:19:01.012Z",
+      "end_time": "2026-06-03T14:19:01.812Z",
+      "attributes": null
+    },
+    {
+      "span_id": "0000000000000003",
+      "parent_span_id": "0000000000000002",
+      "name": "domain.project.create",
+      "kind": 0,
+      "status": 0,
+      "start_time": "2026-06-03T14:19:01.015Z",
+      "end_time": "2026-06-03T14:19:01.075Z"
+    },
+    {
+      "span_id": "0000000000000004",
+      "parent_span_id": "0000000000000002",
+      "name": "bus.publish:project.create",
+      "kind": 3,
+      "status": 0,
+      "start_time": "2026-06-03T14:19:01.078Z",
+      "end_time": "2026-06-03T14:19:01.080Z"
+    },
+    {
+      "span_id": "0000000000000005",
+      "parent_span_id": "0000000000000002",
+      "name": "bus.subscribe:project.create",
+      "kind": 4,
+      "status": 0,
+      "start_time": "2026-06-03T14:19:01.081Z",
+      "end_time": "2026-06-03T14:19:01.781Z"
+    },
+    {
+      "span_id": "0000000000000006",
+      "parent_span_id": "0000000000000005",
+      "name": "comanage.ensure_posix",
+      "kind": 2,
+      "status": 0,
+      "start_time": "2026-06-03T14:19:01.085Z",
+      "end_time": "2026-06-03T14:19:01.770Z",
+      "attributes": {
+        "comanage.co_id": "co-1",
+        "comanage.email": "alice@example.org"
+      }
+    },
+    {
+      "span_id": "0000000000000007",
+      "parent_span_id": "0000000000000006",
+      "name": "comanage.lookup",
+      "kind": 2,
+      "status": 0,
+      "start_time": "2026-06-03T14:19:01.090Z",
+      "end_time": "2026-06-03T14:19:01.170Z"
+    },
+    {
+      "span_id": "0000000000000008",
+      "parent_span_id": "0000000000000006",
+      "name": "comanage.create_person",
+      "kind": 2,
+      "status": 0,
+      "start_time": "2026-06-03T14:19:01.175Z",
+      "end_time": "2026-06-03T14:19:01.265Z"
+    },
+    {
+      "span_id": "0000000000000009",
+      "parent_span_id": "0000000000000002",
+      "name": "amie.reply",
+      "kind": 0,
+      "status": 0,
+      "start_time": "2026-06-03T14:19:01.815Z",
+      "end_time": "2026-06-03T14:19:02.195Z"
+    },
+    {
+      "span_id": "000000000000000a",
+      "parent_span_id": "0000000000000009",
+      "name": "http.POST /amie/reply",
+      "kind": 2,
+      "status": 0,
+      "start_time": "2026-06-03T14:19:01.820Z",
+      "end_time": "2026-06-03T14:19:02.190Z",
+      "attributes": {
+        "http.method": "POST",
+        "http.route": "/amie/reply",
+        "http.status_code": 200
+      }
+    }
+  ]
+}

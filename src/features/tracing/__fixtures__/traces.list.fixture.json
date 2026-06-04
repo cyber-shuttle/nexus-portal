@@ -1,0 +1,61 @@
+{
+  "traces": [
+    {
+      "trace_id": "a3b1c92d3f4e5a6b7c8d9e0f12345678",
+      "root_name": "amie.process_event:request_account_create",
+      "source": "amie",
+      "status": 1,
+      "started_at": "2026-06-03T14:21:32.412Z",
+      "ended_at": "2026-06-03T14:21:33.612Z",
+      "span_count": 14,
+      "root_event": {
+        "type": "request_account_create",
+        "data": { "username": "alice" }
+      }
+    },
+    {
+      "trace_id": "b4c2da3e405f6b7c8d9e0f1234567890",
+      "root_name": "amie.process_event:request_project_create",
+      "source": "amie",
+      "status": 0,
+      "started_at": "2026-06-03T14:19:01.000Z",
+      "ended_at": "2026-06-03T14:19:02.250Z",
+      "span_count": 10,
+      "root_event": {
+        "type": "request_project_create",
+        "data": { "project": "BIO130001" }
+      }
+    },
+    {
+      "trace_id": "c5d3eb4f516a7b8c9d0e1f2345678901",
+      "root_name": "http.POST /users",
+      "source": "http",
+      "status": 0,
+      "started_at": "2026-06-03T14:15:30.000Z",
+      "ended_at": "2026-06-03T14:15:30.042Z",
+      "span_count": 3,
+      "root_event": null
+    },
+    {
+      "trace_id": "d6e4fc5062716c7d8e9f02345678abcd",
+      "root_name": "comanage.ensure_posix",
+      "source": "comanage",
+      "status": 2,
+      "started_at": "2026-06-03T14:10:00.000Z",
+      "ended_at": "2026-06-03T14:10:00.580Z",
+      "span_count": 5,
+      "root_event": null
+    },
+    {
+      "trace_id": "e7f50d617382b7c8d9e0f1234567abef",
+      "root_name": "slurm.sync_associations",
+      "source": "slurm",
+      "status": 3,
+      "started_at": "2026-06-02T09:00:00.000Z",
+      "span_count": 2
+    }
+  ],
+  "total": 5,
+  "limit": 50,
+  "offset": 0
+}

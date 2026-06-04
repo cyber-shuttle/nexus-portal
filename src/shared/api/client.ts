@@ -1,3 +1,5 @@
+import { recordTraceId } from "./last-trace-id";
+
 export class ApiError extends Error {
   constructor(
     public readonly status: number,
@@ -61,6 +63,10 @@ export async function apiFetch<T = unknown>(path: string, init: ApiFetchInit = {
   if (!headers.has("accept")) headers.set("accept", "application/json");
 
   const response = await fetch(url, { ...init, body, headers });
+  // Backend HTTP middleware sets X-Trace-Id on every response (see tracing
+  // spec §11.4). Capture into the singleton so callers can deep-link.
+  const traceId = response.headers.get("x-trace-id");
+  if (traceId) recordTraceId(traceId);
   const parsed = await parseBody(response);
 
   if (!response.ok) {
