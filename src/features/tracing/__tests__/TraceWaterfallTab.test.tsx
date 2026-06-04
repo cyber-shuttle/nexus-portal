@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const replace = vi.fn();
 let currentSearch = new URLSearchParams();
+let historyReplace: ReturnType<typeof vi.spyOn>;
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace, push: vi.fn() }),
@@ -20,6 +21,14 @@ vi.mock("next/dynamic", () => ({
 
 import { TraceWaterfallTab } from "../components/TraceWaterfallTab";
 
+// Pull the new URL out of a window.history.replaceState call. JSDOM follows
+// the spec signature: (state, unused, url?).
+function lastHistoryUrl(spy: ReturnType<typeof vi.spyOn>): string {
+  const calls = spy.mock.calls;
+  const last = calls[calls.length - 1] ?? [];
+  return String((last as unknown[])[2] ?? "");
+}
+
 beforeEach(() => {
   replace.mockReset();
   currentSearch = new URLSearchParams();
@@ -27,9 +36,12 @@ beforeEach(() => {
     configurable: true,
     value: vi.fn(),
   });
+  window.history.replaceState({}, "", "/admin/traces");
+  historyReplace = vi.spyOn(window.history, "replaceState");
 });
 
 afterEach(() => {
+  historyReplace.mockRestore();
   vi.restoreAllMocks();
 });
 
@@ -81,7 +93,7 @@ describe("TraceWaterfallTab", () => {
     expect(within(list).getAllByRole("treeitem").length).toBe(spans.length);
   });
 
-  it("calls router.replace with ?span=<id> on row click", () => {
+  it("writes ?span=<id> via shallow history on row click", () => {
     const { trace, spans } = amieFailedFixture;
     render(
       <TraceWaterfallTab
@@ -92,9 +104,8 @@ describe("TraceWaterfallTab", () => {
     );
     const rows = screen.getAllByRole("treeitem");
     rows[1]?.click();
-    expect(replace).toHaveBeenCalled();
-    const arg = replace.mock.calls[0]?.[0] as string;
-    expect(arg).toMatch(/span=/);
+    expect(historyReplace).toHaveBeenCalled();
+    expect(lastHistoryUrl(historyReplace)).toMatch(/span=/);
   });
 
   it("moves selection via ArrowDown/ArrowUp keys", () => {
@@ -109,11 +120,9 @@ describe("TraceWaterfallTab", () => {
     const rows = screen.getAllByRole("treeitem");
     rows[0]?.focus();
     fireEvent.keyDown(rows[0] as HTMLElement, { key: "ArrowDown" });
-    expect(replace).toHaveBeenCalled();
-    const firstArg = replace.mock.calls[0]?.[0] as string;
-    // Second visible row's span_id should be in the URL.
-    const params = new URLSearchParams(firstArg.replace(/^\?/, ""));
-    expect(params.get("span")).toBeTruthy();
+    expect(historyReplace).toHaveBeenCalled();
+    const url = new URL(lastHistoryUrl(historyReplace), "http://localhost");
+    expect(url.searchParams.get("span")).toBeTruthy();
   });
 
   it("clears selection on ArrowLeft", () => {
@@ -126,13 +135,12 @@ describe("TraceWaterfallTab", () => {
       />,
     );
     // Without a `?span=` in the URL the drill panel stays closed, so the rows
-    // are still queryable. ArrowLeft calls router.replace with no `span=`.
+    // are still queryable. ArrowLeft writes a new URL without `span=`.
     const rows = screen.getAllByRole("treeitem");
     rows[0]?.focus();
     fireEvent.keyDown(rows[0] as HTMLElement, { key: "ArrowLeft" });
-    expect(replace).toHaveBeenCalled();
-    const arg = replace.mock.calls.at(-1)?.[0] as string;
-    expect(arg).not.toContain("span=");
+    expect(historyReplace).toHaveBeenCalled();
+    expect(lastHistoryUrl(historyReplace)).not.toContain("span=");
   });
 
   it("renders EmptyState when spans is empty", () => {
@@ -236,9 +244,8 @@ describe("TraceWaterfallTab", () => {
     expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalledWith({
       block: "nearest",
     });
-    // And it sets the selection (URL replace called with ?span=<targetId>).
-    expect(replace).toHaveBeenCalled();
-    const arg = replace.mock.calls[0]?.[0] as string;
-    expect(arg).toContain(`span=${targetId}`);
+    // And it sets the selection (shallow history write contains ?span=<targetId>).
+    expect(historyReplace).toHaveBeenCalled();
+    expect(lastHistoryUrl(historyReplace)).toContain(`span=${targetId}`);
   });
 });

@@ -1,9 +1,13 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import {
+  replaceShallowSearchParams,
+  useShallowSearchParams,
+} from "@/shared/hooks/useShallowSearchParams";
 import { useAbility } from "@shared/casl/AbilityProvider";
 import { ExternalLinkIcon } from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import type * as React from "react";
 import { shortHex } from "../utils";
 
@@ -19,7 +23,7 @@ export type ViewTraceLinkProps = {
 export function ViewTraceLink({ traceId, spanId, variant = "text" }: ViewTraceLinkProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const searchParams = useShallowSearchParams();
   const ability = useAbility();
 
   if (!traceId || !ability.can("read", "Trace")) return null;
@@ -41,7 +45,7 @@ export function ViewTraceLink({ traceId, spanId, variant = "text" }: ViewTraceLi
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (onAdminTraces) router.replace(target, { scroll: false });
+    if (onAdminTraces) replaceShallowSearchParams(params);
     else router.push(target);
   };
 

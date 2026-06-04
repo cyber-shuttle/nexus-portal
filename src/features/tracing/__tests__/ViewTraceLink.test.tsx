@@ -6,6 +6,7 @@ const replace = vi.fn();
 const push = vi.fn();
 let pathnameMock = "/admin/amie/packets";
 let searchParamsMock = new URLSearchParams();
+let historyReplace: ReturnType<typeof vi.spyOn>;
 
 vi.mock("@shared/casl/AbilityProvider", () => ({
   useAbility: () => ({ can }),
@@ -24,9 +25,12 @@ beforeEach(() => {
   can.mockReturnValue(true);
   pathnameMock = "/admin/amie/packets";
   searchParamsMock = new URLSearchParams();
+  window.history.replaceState({}, "", "/admin/traces");
+  historyReplace = vi.spyOn(window.history, "replaceState");
 });
 
 afterEach(() => {
+  historyReplace.mockRestore();
   vi.restoreAllMocks();
 });
 
@@ -72,31 +76,37 @@ describe("ViewTraceLink", () => {
     expect(replace).not.toHaveBeenCalled();
   });
 
-  it("on /admin/traces, click replaces with ?trace=<id>", async () => {
+  it("on /admin/traces, click updates the URL with ?trace=<id> via shallow history", async () => {
     pathnameMock = "/admin/traces";
     const { ViewTraceLink } = await import("../components/ViewTraceLink");
     render(<ViewTraceLink traceId={TRACE_ID} />);
 
     fireEvent.click(screen.getByRole("link", { name: /View trace/i }));
 
-    expect(replace).toHaveBeenCalledWith(`/admin/traces?trace=${TRACE_ID}`, { scroll: false });
+    expect(historyReplace).toHaveBeenCalledTimes(1);
+    const target = String(historyReplace.mock.calls[0]?.[2] ?? "");
+    expect(target).toBe(`/admin/traces?trace=${TRACE_ID}`);
     expect(push).not.toHaveBeenCalled();
+    expect(replace).not.toHaveBeenCalled();
   });
 
   it("on /admin/traces, click preserves existing filter search params", async () => {
     pathnameMock = "/admin/traces";
-    searchParamsMock = new URLSearchParams(
-      "status=error&source=amie&from=2026-06-01&q=alloc&limit=50",
-    );
+    const initialQuery = "status=error&source=amie&from=2026-06-01&q=alloc&limit=50";
+    searchParamsMock = new URLSearchParams(initialQuery);
+    // useShallowSearchParams takes window.location.search as the post-mount
+    // source of truth; mirror the mocked params into the real URL bar so the
+    // hook's effect observes them.
+    window.history.replaceState({}, "", `/admin/traces?${initialQuery}`);
+    historyReplace.mockClear();
     const { ViewTraceLink } = await import("../components/ViewTraceLink");
     render(<ViewTraceLink traceId={TRACE_ID} spanId="1000000000000001" />);
 
     fireEvent.click(screen.getByRole("link", { name: /View trace/i }));
 
-    expect(replace).toHaveBeenCalledTimes(1);
-    const [target, opts] = replace.mock.calls[0] ?? [];
-    expect(opts).toEqual({ scroll: false });
-    const url = new URL(String(target), "http://localhost");
+    expect(historyReplace).toHaveBeenCalledTimes(1);
+    const target = String(historyReplace.mock.calls[0]?.[2] ?? "");
+    const url = new URL(target, "http://localhost");
     expect(url.pathname).toBe("/admin/traces");
     expect(url.searchParams.get("status")).toBe("error");
     expect(url.searchParams.get("source")).toBe("amie");

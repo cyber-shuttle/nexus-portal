@@ -1,9 +1,13 @@
 "use client";
 
+import {
+  replaceShallowSearchParams,
+  useShallowSearchParams,
+} from "@/shared/hooks/useShallowSearchParams";
 import { LastSyncedBadge } from "@/shared/ui/LastSyncedBadge";
 import { Button } from "@/shared/ui/button";
 import { AlertTriangle } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import * as React from "react";
 import { useTraces } from "../queries";
 import { TraceDetailDrawer } from "./TraceDetailDrawer";
@@ -21,7 +25,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 export function TraceListContainer({ initialTraceId }: { initialTraceId?: string } = {}) {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useShallowSearchParams();
 
   const filters = React.useMemo(() => parseFilters(searchParams), [searchParams]);
 
@@ -68,10 +72,9 @@ export function TraceListContainer({ initialTraceId }: { initialTraceId?: string
       // Preserve the drawer's `trace` param so changing filters never closes
       // the open drawer.
       if (traceParam) params.set("trace", traceParam);
-      const query = params.toString();
-      router.replace(query ? `?${query}` : "?", { scroll: false });
+      replaceShallowSearchParams(params);
     },
-    [router, traceParam],
+    [traceParam],
   );
 
   const investigateFailing = React.useCallback(() => {
@@ -85,15 +88,15 @@ export function TraceListContainer({ initialTraceId }: { initialTraceId?: string
 
   const openDrawer = React.useCallback(
     (traceId: string) => {
-      // Use a search-param update (router.replace) instead of router.push to
-      // the [traceId] route — that would re-mount this container on every
-      // row click and flash the list. Deep links into /admin/traces/{id}
-      // still work via initialTraceId.
+      // Shallow URL update — Next App Router's router.replace would force an
+      // RSC roundtrip on every row click, leaving the drawer animation waiting
+      // hundreds of ms. Deep links into /admin/traces/{id} still work via
+      // initialTraceId on the deep-link route page.
       const params = new URLSearchParams(searchParams.toString());
       params.set("trace", traceId);
-      router.replace(`?${params.toString()}`, { scroll: false });
+      replaceShallowSearchParams(params);
     },
-    [router, searchParams],
+    [searchParams],
   );
 
   const closeDrawer = React.useCallback(() => {
@@ -108,8 +111,7 @@ export function TraceListContainer({ initialTraceId }: { initialTraceId?: string
     // Drop drawer-scoped params so reopening a different trace starts clean.
     params.delete("span");
     params.delete("tab");
-    const next = params.toString();
-    router.replace(next ? `?${next}` : "?", { scroll: false });
+    replaceShallowSearchParams(params);
   }, [initialTraceId, router, searchParams]);
 
   return (

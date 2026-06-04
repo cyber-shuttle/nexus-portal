@@ -1,12 +1,15 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import {
+  replaceShallowSearchParams,
+  useShallowSearchParams,
+} from "@/shared/hooks/useShallowSearchParams";
 import { ErrorState } from "@/shared/ui/ErrorState";
 import { SideDrawer } from "@/shared/ui/SideDrawer";
 import { StatusBadge } from "@/shared/ui/StatusBadge";
 import { TabsRouter } from "@/shared/ui/TabsRouter";
 import { Skeleton } from "@/shared/ui/skeleton";
-import { useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
 import { useTrace } from "../queries";
 import type { Trace } from "../types";
@@ -25,8 +28,7 @@ export type TraceDetailDrawerProps = {
 };
 
 export function TraceDetailDrawer({ traceId, open, onClose }: TraceDetailDrawerProps) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useShallowSearchParams();
   const { data, isLoading, error, refetch } = useTrace(open && traceId ? traceId : undefined);
 
   // Switch tabs by updating the URL `tab` search-param so the active tab
@@ -40,9 +42,9 @@ export function TraceDetailDrawer({ traceId, open, onClose }: TraceDetailDrawerP
       // ?span= only makes sense in the waterfall; drop it elsewhere so a
       // tab round-trip doesn't smuggle a stale selection back in.
       else if (tab !== "waterfall") params.delete("span");
-      router.replace(`?${params.toString()}`, { scroll: false });
+      replaceShallowSearchParams(params);
     },
-    [router, searchParams],
+    [searchParams],
   );
 
   const [retryOpen, setRetryOpen] = React.useState(false);

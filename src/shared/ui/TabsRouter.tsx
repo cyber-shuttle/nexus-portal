@@ -1,8 +1,11 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import {
+  replaceShallowSearchParams,
+  useShallowSearchParams,
+} from "@/shared/hooks/useShallowSearchParams";
 import { Tabs as TabsPrimitive } from "@base-ui/react/tabs";
-import { useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
 
 export type TabsRouterTab = {
@@ -31,8 +34,7 @@ export function TabsRouter({
   className,
   rightSlot,
 }: TabsRouterProps) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useShallowSearchParams();
   const activeRaw = searchParams.get(searchParam);
   const active = tabs.some((t) => t.value === activeRaw) ? (activeRaw as string) : defaultValue;
 
@@ -41,8 +43,7 @@ export function TabsRouter({
     const params = new URLSearchParams(searchParams.toString());
     if (value === defaultValue) params.delete(searchParam);
     else params.set(searchParam, value);
-    const next = params.toString();
-    router.replace(next ? `?${next}` : "?", { scroll: false });
+    replaceShallowSearchParams(params);
   };
 
   // Plain ReactNode (React elements include `$$typeof`) vs the per-tab record

@@ -1,8 +1,11 @@
 "use client";
 
+import {
+  replaceShallowSearchParams,
+  useShallowSearchParams,
+} from "@/shared/hooks/useShallowSearchParams";
 import { EmptyState } from "@/shared/ui/EmptyState";
 import { Button } from "@/shared/ui/button";
-import { useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
 import type { Span, WaterfallNode } from "../types";
 import { buildParentKeyMap, buildSpanTree, computeSiblingP95, flattenTree } from "../utils";
@@ -26,8 +29,7 @@ export function TraceWaterfallTab({
   rootEnd,
   scrollToSpanId,
 }: TraceWaterfallTabProps) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useShallowSearchParams();
   const selectedSpan = searchParams.get("span");
 
   const tree = React.useMemo(() => buildSpanTree(spans, MAX_DEPTH), [spans]);
@@ -65,10 +67,9 @@ export function TraceWaterfallTab({
       const params = new URLSearchParams(searchParams.toString());
       if (spanId) params.set("span", spanId);
       else params.delete("span");
-      const q = params.toString();
-      router.replace(q ? `?${q}` : "?", { scroll: false });
+      replaceShallowSearchParams(params);
     },
-    [router, searchParams],
+    [searchParams],
   );
 
   // Honor an external scroll target (Phase 3 attempts strip "jump") on first
