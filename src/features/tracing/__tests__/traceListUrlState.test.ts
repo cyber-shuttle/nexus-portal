@@ -1,92 +1,147 @@
+import { describe, expect, it } from "vitest";
 import {
   DEFAULT_FILTERS,
+  type ListFilters,
+  hasActiveFilters,
   parseFilters,
   serializeFilters,
+  statusFiltersToApi,
+  windowToFromTo,
 } from "@features/tracing/components/traceListUrlState";
-import { describe, expect, it } from "vitest";
 
-function from(s: string): URLSearchParams {
-  return new URLSearchParams(s);
+function p(qs: string): URLSearchParams {
+  return new URLSearchParams(qs);
 }
 
-describe("traceListUrlState", () => {
-  it("omits defaults from the serialized URL", () => {
-    const params = serializeFilters(DEFAULT_FILTERS);
-    expect(params.toString()).toBe("");
+describe("traceListUrlState — parseFilters", () => {
+  it("returns defaults when params are empty", () => {
+    expect(parseFilters(p(""))).toEqual(DEFAULT_FILTERS);
   });
 
-  it("sorts status numerically and source alphabetically so cache keys are stable", () => {
-    const a = serializeFilters({
+  it("drops bogus status / source / window values", () => {
+    const params = p("status=bogus&source=evil&window=42y&pageSize=7");
+    const f = parseFilters(params);
+    // bogus status filtered → empty array (not the defaults)
+    expect(f.status).toEqual([]);
+    expect(f.source).toEqual([]);
+    expect(f.window).toBe("30d");
+    expect(f.pageSize).toBe(50);
+  });
+
+  it("falls back page < 1 to 1, page invalid to 1", () => {
+    expect(parseFilters(p("page=0")).page).toBe(1);
+    expect(parseFilters(p("page=-3")).page).toBe(1);
+    expect(parseFilters(p("page=abc")).page).toBe(1);
+    expect(parseFilters(p("page=4")).page).toBe(4);
+  });
+
+  it("accepts only 25/50/100 for pageSize", () => {
+    expect(parseFilters(p("pageSize=25")).pageSize).toBe(25);
+    expect(parseFilters(p("pageSize=100")).pageSize).toBe(100);
+    expect(parseFilters(p("pageSize=37")).pageSize).toBe(50);
+  });
+
+  it("preserves the order of repeated source values", () => {
+    const f = parseFilters(p("source=amie&source=slurm"));
+    expect(f.source).toEqual(["amie", "slurm"]);
+  });
+
+  it("trims the q query", () => {
+    expect(parseFilters(p("q=%20alice%20")).q).toBe("alice");
+  });
+});
+
+describe("traceListUrlState — serializeFilters", () => {
+  it("omits all defaults", () => {
+    expect(serializeFilters(DEFAULT_FILTERS).toString()).toBe("");
+  });
+
+  it("emits status entries when changed", () => {
+    const filters: ListFilters = { ...DEFAULT_FILTERS, status: ["ok", "error"] };
+    const qs = serializeFilters(filters).toString();
+    expect(qs).toContain("status=ok");
+    expect(qs).toContain("status=error");
+  });
+
+  it("does not emit status when it equals the default", () => {
+    const qs = serializeFilters({ ...DEFAULT_FILTERS, status: ["error"] }).toString();
+    expect(qs).toBe("");
+  });
+
+  it("emits window/page/pageSize only when off-default", () => {
+    const filters: ListFilters = {
       ...DEFAULT_FILTERS,
-      status: [3, 1, 0],
-      source: ["slurm", "amie", "http"],
-    });
-    const b = serializeFilters({
-      ...DEFAULT_FILTERS,
-      status: [1, 0, 3],
-      source: ["http", "amie", "slurm"],
-    });
-    expect(a.toString()).toBe(b.toString());
-    expect(a.getAll("status")).toEqual(["0", "1", "3"]);
-    expect(a.getAll("source")).toEqual(["amie", "http", "slurm"]);
-  });
-
-  it("falls back to preset=30d when the URL preset is invalid", () => {
-    expect(parseFilters(from("preset=bogus")).preset).toBe("30d");
-    expect(parseFilters(from("")).preset).toBe("30d");
-  });
-
-  it("falls back to limit=50 / offset=0 when the URL values are non-numeric", () => {
-    const p = parseFilters(from("limit=abc&offset=-1"));
-    expect(p.limit).toBe(50);
-    expect(p.offset).toBe(0);
-  });
-
-  it("filters out-of-range status values from the URL", () => {
-    const p = parseFilters(from("status=0&status=999&status=2&status=-1"));
-    expect(p.status).toEqual([0, 2]);
-  });
-
-  it("filters unknown sources from the URL (matches the filter strip whitelist)", () => {
-    const p = parseFilters(from("source=amie&source=core&source=slurm"));
-    expect(p.source).toEqual(["amie", "slurm"]);
-  });
-
-  it("round-trips filters through serialize → parse", () => {
-    const original = {
-      ...DEFAULT_FILTERS,
-      status: [1, 3],
-      source: ["amie", "comanage"],
-      preset: "custom" as const,
-      from: "2026-05-01T00:00:00.000Z",
-      to: "2026-05-31T23:59:59.999Z",
-      q: "trace-foo",
-      limit: 100,
-      offset: 100,
+      window: "24h",
+      page: 3,
+      pageSize: 100,
     };
-    const params = serializeFilters(original);
-    const parsed = parseFilters(params);
-    expect(parsed).toEqual({
-      status: [1, 3],
+    const qs = serializeFilters(filters);
+    expect(qs.get("window")).toBe("24h");
+    expect(qs.get("page")).toBe("3");
+    expect(qs.get("pageSize")).toBe("100");
+  });
+});
+
+describe("traceListUrlState — round-trip", () => {
+  it("parse(serialize(filters)) === filters for typical edits", () => {
+    const f: ListFilters = {
+      status: ["error", "ok"],
       source: ["amie", "comanage"],
-      preset: "custom",
-      from: "2026-05-01T00:00:00.000Z",
-      to: "2026-05-31T23:59:59.999Z",
-      q: "trace-foo",
-      limit: 100,
-      offset: 100,
-    });
+      window: "7d",
+      q: "alice",
+      page: 2,
+      pageSize: 25,
+    };
+    const out = parseFilters(serializeFilters(f));
+    expect(new Set(out.status)).toEqual(new Set(f.status));
+    expect(new Set(out.source)).toEqual(new Set(f.source));
+    expect(out.window).toBe(f.window);
+    expect(out.q).toBe(f.q);
+    expect(out.page).toBe(f.page);
+    expect(out.pageSize).toBe(f.pageSize);
+  });
+});
+
+describe("traceListUrlState — hasActiveFilters", () => {
+  it("is false for defaults", () => {
+    expect(hasActiveFilters(DEFAULT_FILTERS)).toBe(false);
   });
 
-  it("omits custom from/to when preset is not custom", () => {
-    const params = serializeFilters({
-      ...DEFAULT_FILTERS,
-      preset: "7d",
-      from: "2026-05-01T00:00:00.000Z",
-      to: "2026-05-31T23:59:59.999Z",
-    });
-    expect(params.get("from")).toBeNull();
-    expect(params.get("to")).toBeNull();
-    expect(params.get("preset")).toBe("7d");
+  it("is true when status differs, source set, window changed, or q present", () => {
+    expect(hasActiveFilters({ ...DEFAULT_FILTERS, status: ["ok"] })).toBe(true);
+    expect(hasActiveFilters({ ...DEFAULT_FILTERS, source: ["amie"] })).toBe(true);
+    expect(hasActiveFilters({ ...DEFAULT_FILTERS, window: "24h" })).toBe(true);
+    expect(hasActiveFilters({ ...DEFAULT_FILTERS, q: "x" })).toBe(true);
+  });
+});
+
+describe("traceListUrlState — windowToFromTo", () => {
+  it("anchors to/from at now and now − N days", () => {
+    const now = Date.parse("2026-06-05T12:00:00.000Z");
+    const r24 = windowToFromTo("24h", now);
+    expect(r24.to).toBe("2026-06-05T12:00:00.000Z");
+    expect(r24.from).toBe("2026-06-04T12:00:00.000Z");
+    const r7 = windowToFromTo("7d", now);
+    expect(r7.from).toBe("2026-05-29T12:00:00.000Z");
+    const r30 = windowToFromTo("30d", now);
+    expect(r30.from).toBe("2026-05-06T12:00:00.000Z");
+  });
+});
+
+describe("traceListUrlState — statusFiltersToApi", () => {
+  it("maps ok→0, error→1, orphaned→3", () => {
+    const { apiStatus, inProgressOnly } = statusFiltersToApi(["ok", "error", "orphaned"]);
+    expect(new Set(apiStatus)).toEqual(new Set([0, 1, 3]));
+    expect(inProgressOnly).toBe(false);
+  });
+
+  it("strips in-progress from the wire and flags it when sole filter", () => {
+    const sole = statusFiltersToApi(["in-progress"]);
+    expect(sole.apiStatus).toEqual([]);
+    expect(sole.inProgressOnly).toBe(true);
+
+    const mixed = statusFiltersToApi(["in-progress", "error"]);
+    expect(mixed.apiStatus).toEqual([1]);
+    expect(mixed.inProgressOnly).toBe(false);
   });
 });

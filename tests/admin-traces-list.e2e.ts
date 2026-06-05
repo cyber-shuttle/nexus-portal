@@ -4,53 +4,66 @@ import { loginAs } from "./fixtures/personas";
 
 const SEVERITIES = ["serious", "critical"] as const;
 
-test.describe("admin tracing list page", () => {
-  test("admin lands on /admin/traces, filters by status, and opens a trace", async ({
-    page,
-  }) => {
+test.describe("admin traces list (Phase B)", () => {
+  test("renders the page, default error filter, and at least one error row", async ({ page }) => {
     await loginAs(page, "admin");
     await page.goto("/admin/traces");
 
-    await expect(page.getByRole("heading", { name: /^Tracing$/ })).toBeVisible({
+    await expect(page.getByRole("heading", { name: /^Traces$/ })).toBeVisible({
       timeout: 20_000,
     });
 
-    // Trend chart and at least one table row must render from MSW fixtures.
-    await expect(page.getByLabel(/Trace counts per day grouped by status/i)).toBeVisible({
-      timeout: 15_000,
-    });
-    const firstRow = page.locator("tbody tr").first();
-    await expect(firstRow).toBeVisible({ timeout: 15_000 });
+    // Default filter has the error chip pressed.
+    await expect(page.getByRole("button", { name: /^error$/i })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
 
-    // Click the "error" status chip and verify the URL gains the filter.
-    await page.getByRole("button", { name: /^error$/ }).click();
-    await expect(page).toHaveURL(/[?&]status=1\b/);
-
-    // Click "View" on the first remaining row — Phase 3 opens the drawer
-    // via a `?trace=<id>` search-param update (avoids a route flash);
-    // deep-link `/admin/traces/<id>` still works for inbound cross-links.
-    await page
-      .locator("tbody tr")
-      .first()
-      .getByRole("button", { name: /^View$/ })
-      .click();
-    await expect(page).toHaveURL(/[?&]trace=[0-9a-f]{32}/, { timeout: 15_000 });
+    // The list fixture contains at least one error trace (status=1).
+    const errorRows = page.locator('[data-testid^="trace-row-"][data-tone="error"]');
+    await expect(errorRows.first()).toBeVisible({ timeout: 20_000 });
   });
 
-  test("admin tracing list passes axe-core sweep", async ({ page }) => {
+  test("toggling to the ok pill updates the URL and re-fetches", async ({ page }) => {
     await loginAs(page, "admin");
     await page.goto("/admin/traces");
-    await expect(page.getByRole("heading", { name: /^Tracing$/ })).toBeVisible({
+    await expect(page.getByRole("heading", { name: /^Traces$/ })).toBeVisible({
       timeout: 20_000,
     });
-    // Wait for the trend chart aria-label to render — a deterministic marker
-    // that the page has finished its async paint, replacing networkidle.
-    await expect(page.getByLabel(/Trace counts per day grouped by status/i)).toBeVisible({
-      timeout: 15_000,
+
+    // Turn off error, turn on ok → URL ends up with ?status=ok.
+    await page.getByRole("button", { name: /^error$/i }).click();
+    await page.getByRole("button", { name: /^ok$/i }).click();
+
+    await expect(page).toHaveURL(/[?&]status=ok\b/, { timeout: 10_000 });
+
+    // The table either shows ok rows or the filtered-empty copy. We only
+    // assert that the loading skeleton goes away.
+    await expect(page.getByTestId("trace-table-loading")).toHaveCount(0, { timeout: 15_000 });
+  });
+
+  test("clicking a row pushes ?trace=<id> (drawer is deferred to Phase C)", async ({ page }) => {
+    await loginAs(page, "admin");
+    await page.goto("/admin/traces");
+    await expect(page.getByRole("heading", { name: /^Traces$/ })).toBeVisible({
+      timeout: 20_000,
     });
-    // Park the mouse off-canvas so a stray Recharts hover tooltip doesn't
-    // surface during the scan.
-    await page.mouse.move(0, 0);
+
+    const firstRow = page.locator('[data-testid^="trace-row-"]').first();
+    await expect(firstRow).toBeVisible({ timeout: 20_000 });
+    await firstRow.click();
+
+    await expect(page).toHaveURL(/[?&]trace=[0-9a-f]{32}\b/, { timeout: 10_000 });
+  });
+
+  test("axe: no serious or critical violations on the list page", async ({ page }) => {
+    await loginAs(page, "admin");
+    await page.goto("/admin/traces");
+    await expect(page.getByRole("heading", { name: /^Traces$/ })).toBeVisible({
+      timeout: 20_000,
+    });
+    await page.waitForLoadState("networkidle");
+
     const results = await new AxeBuilder({ page })
       .options({ resultTypes: ["violations"] })
       .analyze();

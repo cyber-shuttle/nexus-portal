@@ -1,163 +1,179 @@
-import listFixture from "@features/tracing/__fixtures__/traces.list.fixture.json";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { TraceTable } from "../components/TraceTable";
-import type { Trace } from "../types";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { TraceTable } from "@features/tracing/components/TraceTable";
+import type { Trace } from "@features/tracing/types";
 
-const toastSuccess = vi.fn();
-const toastError = vi.fn();
-
-vi.mock("sonner", () => ({
-  toast: {
-    success: (...args: unknown[]) => toastSuccess(...args),
-    error: (...args: unknown[]) => toastError(...args),
-  },
-}));
-
-const writeText = vi.fn().mockResolvedValue(undefined);
-
-beforeEach(() => {
-  toastSuccess.mockReset();
-  toastError.mockReset();
-  writeText.mockReset();
-  writeText.mockResolvedValue(undefined);
-  Object.defineProperty(navigator, "clipboard", {
-    configurable: true,
-    value: { writeText },
-  });
+const baseTrace = (over: Partial<Trace>): Trace => ({
+  trace_id: "0123456789abcdef0123456789abcdef",
+  root_name: "amie.process_event:request_account_create",
+  source: "amie",
+  status: 0,
+  started_at: new Date(Date.now() - 60_000).toISOString(),
+  ended_at: new Date().toISOString(),
+  span_count: 4,
+  root_event: null,
+  ...over,
 });
-
-afterEach(() => {
-  vi.restoreAllMocks();
-});
-
-const fixtureTraces = listFixture.traces as unknown as Trace[];
-const firstTrace = fixtureTraces[0] as Trace;
 
 describe("TraceTable", () => {
-  it("renders one row per fixture trace and the expected columns", () => {
-    render(
-      <TraceTable
-        traces={fixtureTraces}
-        total={fixtureTraces.length}
-        limit={50}
-        offset={0}
-        loading={false}
-        hasFilters={false}
-        error={null}
-        onPageChange={() => {}}
-        onView={() => {}}
-        onRetry={() => {}}
-      />,
-    );
-    expect(screen.getByText(/^Started$/)).toBeInTheDocument();
-    expect(screen.getByText(/^Trace ID$/)).toBeInTheDocument();
-    expect(screen.getByText(/^Root operation$/)).toBeInTheDocument();
-    expect(screen.getByText(/^Source$/)).toBeInTheDocument();
-    expect(screen.getByText(/^Duration$/)).toBeInTheDocument();
-    expect(screen.getByText(/^Status$/)).toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: /^View$/ }).length).toBe(fixtureTraces.length);
+  beforeEach(() => {
+    Object.assign(navigator, { clipboard: { writeText: vi.fn().mockResolvedValue(undefined) } });
   });
 
-  it("calls onView with the trace_id when the View button is clicked", () => {
+  it("renders header and row columns", () => {
+    render(
+      <TraceTable
+        traces={[baseTrace({ trace_id: "a".repeat(32) })]}
+        total={1}
+        page={1}
+        pageSize={50}
+        onView={() => {}}
+        onPageChange={() => {}}
+        onPageSizeChange={() => {}}
+      />,
+    );
+    expect(screen.getByText("Started")).toBeInTheDocument();
+    expect(screen.getByText("Trace ID")).toBeInTheDocument();
+    expect(screen.getByText("Root action")).toBeInTheDocument();
+    expect(screen.getByText("Source")).toBeInTheDocument();
+    expect(screen.getByText("Spans")).toBeInTheDocument();
+  });
+
+  it("error rows include the red left rail", () => {
+    const errored = baseTrace({
+      trace_id: "b".repeat(32),
+      status: 1,
+      root_event: { error: "ComanageProvisioningFailed: 404" },
+    });
+    render(
+      <TraceTable
+        traces={[errored]}
+        total={1}
+        page={1}
+        pageSize={50}
+        onView={() => {}}
+        onPageChange={() => {}}
+        onPageSizeChange={() => {}}
+      />,
+    );
+    const row = screen.getByTestId(`trace-row-${errored.trace_id}`);
+    expect(row.getAttribute("data-tone")).toBe("error");
+    expect(row.querySelector('[data-testid="error-rail"]')).not.toBeNull();
+    expect(screen.getByText(/ComanageProvisioningFailed/)).toBeInTheDocument();
+  });
+
+  it("clicking the row triggers onView", () => {
     const onView = vi.fn();
+    const t = baseTrace({ trace_id: "c".repeat(32) });
     render(
       <TraceTable
-        traces={fixtureTraces}
-        total={fixtureTraces.length}
-        limit={50}
-        offset={0}
-        loading={false}
-        hasFilters={false}
-        error={null}
-        onPageChange={() => {}}
+        traces={[t]}
+        total={1}
+        page={1}
+        pageSize={50}
         onView={onView}
-        onRetry={() => {}}
+        onPageChange={() => {}}
+        onPageSizeChange={() => {}}
       />,
     );
-    const firstView = screen.getAllByRole("button", { name: /^View$/ })[0] as HTMLElement;
-    fireEvent.click(firstView);
-    expect(onView).toHaveBeenCalledWith(firstTrace.trace_id);
+    fireEvent.click(screen.getByTestId(`trace-row-${t.trace_id}`));
+    expect(onView).toHaveBeenCalledWith(t.trace_id);
   });
 
-  it("copies the full trace_id to clipboard and surfaces a toast", async () => {
+  it("clicking the trace ID copy button does NOT trigger onView", () => {
+    const onView = vi.fn();
+    const t = baseTrace({ trace_id: "d".repeat(32) });
     render(
       <TraceTable
-        traces={fixtureTraces}
-        total={fixtureTraces.length}
-        limit={50}
-        offset={0}
-        loading={false}
-        hasFilters={false}
-        error={null}
+        traces={[t]}
+        total={1}
+        page={1}
+        pageSize={50}
+        onView={onView}
         onPageChange={() => {}}
-        onView={() => {}}
-        onRetry={() => {}}
+        onPageSizeChange={() => {}}
       />,
     );
-    const copyBtn = screen.getByRole("button", {
-      name: new RegExp(`Copy trace ID ${firstTrace.trace_id}`),
-    });
-    fireEvent.click(copyBtn);
-    await waitFor(() => {
-      expect(writeText).toHaveBeenCalledWith(firstTrace.trace_id);
-    });
-    await waitFor(() => {
-      expect(toastSuccess).toHaveBeenCalled();
-    });
+    fireEvent.click(screen.getByRole("button", { name: /copy trace ID/i }));
+    expect(onView).not.toHaveBeenCalled();
   });
 
-  it("renders an empty state when no traces and no filters", () => {
+  it("disables Prev on page 1 and Next on the final page", () => {
+    render(
+      <TraceTable
+        traces={[baseTrace({ trace_id: "e".repeat(32) })]}
+        total={1}
+        page={1}
+        pageSize={50}
+        onView={() => {}}
+        onPageChange={() => {}}
+        onPageSizeChange={() => {}}
+      />,
+    );
+    expect(screen.getByRole("button", { name: /previous page/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /next page/i })).toBeDisabled();
+  });
+
+  it("enables Next when more pages exist", () => {
+    render(
+      <TraceTable
+        traces={[baseTrace({ trace_id: "f".repeat(32) })]}
+        total={120}
+        page={1}
+        pageSize={50}
+        onView={() => {}}
+        onPageChange={() => {}}
+        onPageSizeChange={() => {}}
+      />,
+    );
+    expect(screen.getByRole("button", { name: /next page/i })).not.toBeDisabled();
+    expect(screen.getByRole("button", { name: /previous page/i })).toBeDisabled();
+  });
+
+  it("renders a loading skeleton when loading", () => {
     render(
       <TraceTable
         traces={[]}
         total={0}
-        limit={50}
-        offset={0}
-        loading={false}
-        hasFilters={false}
-        error={null}
-        onPageChange={() => {}}
+        page={1}
+        pageSize={50}
+        loading
         onView={() => {}}
-        onRetry={() => {}}
+        onPageChange={() => {}}
+        onPageSizeChange={() => {}}
       />,
     );
-    expect(screen.getByText(/no traces yet/i)).toBeInTheDocument();
+    expect(screen.getByTestId("trace-table-loading")).toBeInTheDocument();
   });
 
-  it("renders the filtered empty-state copy when filters are active", () => {
+  it("shows the active-filters empty copy when hasActiveFilters", () => {
     render(
       <TraceTable
         traces={[]}
         total={0}
-        limit={50}
-        offset={0}
-        loading={false}
-        hasFilters={true}
-        error={null}
-        onPageChange={() => {}}
+        page={1}
+        pageSize={50}
+        hasActiveFilters
         onView={() => {}}
-        onRetry={() => {}}
+        onPageChange={() => {}}
+        onPageSizeChange={() => {}}
       />,
     );
-    expect(screen.getByText(/no traces match these filters/i)).toBeInTheDocument();
+    expect(screen.getByTestId("trace-table-empty").textContent).toMatch(/No traces match/i);
   });
 
-  it("disables the Next button when offset + limit would exceed the 1M cap", () => {
+  it("shows the unfiltered empty copy when no filters", () => {
     render(
       <TraceTable
-        traces={fixtureTraces}
-        total={2_000_000}
-        limit={100}
-        offset={999_950}
-        loading={false}
-        hasFilters={false}
-        error={null}
-        onPageChange={() => {}}
+        traces={[]}
+        total={0}
+        page={1}
+        pageSize={50}
         onView={() => {}}
-        onRetry={() => {}}
+        onPageChange={() => {}}
+        onPageSizeChange={() => {}}
       />,
     );
-    expect(screen.getByRole("button", { name: /^Next$/ })).toBeDisabled();
+    expect(screen.getByTestId("trace-table-empty").textContent).toMatch(/No traces yet/i);
   });
 });

@@ -1,225 +1,276 @@
 "use client";
 
-import { ErrorState } from "@/shared/ui/ErrorState";
-import { buttonVariants } from "@/shared/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
-import { Skeleton } from "@/shared/ui/skeleton";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/ui/tooltip";
-import Link from "next/link";
+import { cn } from "@/lib/utils";
+import { ErrorState } from "@shared/ui/ErrorState";
+import { Skeleton } from "@shared/ui/skeleton";
+import { Box, ExternalLink, LayoutGrid, Package, Server, User, Users } from "lucide-react";
 import * as React from "react";
 import { useAuditEventsForTrace } from "../queries";
-import type { AuditEventsResponse, LinkedEntity, LinkedEntityField, Span, Trace } from "../types";
-import { extractLinkedEntities, formatAbsoluteUtc, formatRelative, shortHex } from "../utils";
+import type { AuditEventsResponse, Span, Trace } from "../types";
+import { formatAbsoluteUtc, formatRelative, getEntityRefs } from "../utils";
+import { CopyValue } from "./primitives/CopyValue";
+import { SourcePill } from "./primitives/SourcePill";
 
 export type TraceLinkedEntitiesTabProps = {
   trace: Trace;
   spans: Span[];
 };
 
+type EntityKindCfg = {
+  Icon: typeof Package;
+  bg: string;
+  fg: string;
+  // null means there is no known portal route yet — render muted fallback copy.
+  routeFor: ((id: string) => string) | null;
+};
+
+const KIND_CONFIG: Record<string, EntityKindCfg> = {
+  "AMIE packet": {
+    Icon: Package,
+    bg: "var(--nexus-blue-50)",
+    fg: "var(--nexus-blue-700)",
+    routeFor: (id) => `/admin/amie/packets/${encodeURIComponent(id)}`,
+  },
+  User: {
+    Icon: User,
+    bg: "var(--muted)",
+    fg: "var(--muted-foreground)",
+    routeFor: null,
+  },
+  Project: {
+    Icon: LayoutGrid,
+    bg: "var(--muted)",
+    fg: "var(--muted-foreground)",
+    routeFor: (id) => `/projects/${encodeURIComponent(id)}`,
+  },
+  "CO person": {
+    Icon: Users,
+    bg: "var(--nexus-purple-50)",
+    fg: "var(--nexus-purple-700)",
+    routeFor: null,
+  },
+  Allocation: {
+    Icon: Box,
+    bg: "var(--muted)",
+    fg: "var(--muted-foreground)",
+    routeFor: (id) => `/allocations/${encodeURIComponent(id)}`,
+  },
+  "Cluster account": {
+    Icon: Server,
+    bg: "var(--nexus-amber-50)",
+    fg: "var(--nexus-amber-700)",
+    routeFor: null,
+  },
+};
+
+const FALLBACK_CFG: EntityKindCfg = {
+  Icon: Box,
+  bg: "var(--muted)",
+  fg: "var(--muted-foreground)",
+  routeFor: null,
+};
+
 export function TraceLinkedEntitiesTab({ trace, spans }: TraceLinkedEntitiesTabProps) {
-  const entities = React.useMemo(() => extractLinkedEntities(spans), [spans]);
+  const entityRefs = React.useMemo(() => getEntityRefs(spans), [spans]);
   const auditQuery = useAuditEventsForTrace(trace.trace_id);
 
   return (
-    <div className="space-y-6">
-      <section aria-labelledby="trace-linked-entities" className="space-y-3">
-        <h3 id="trace-linked-entities" className="text-sm font-semibold">
-          Entities referenced by this trace
-        </h3>
-        {entities.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No linked entities.</p>
+    <div className="max-w-[920px] space-y-8">
+      <section>
+        <div className="mb-2 text-[11.5px] font-bold uppercase tracking-[0.04em] text-muted-foreground">
+          LINKED ENTITIES
+        </div>
+        <p className="mb-4 text-[13px] text-muted-foreground">
+          Entities referenced by spans in this trace.
+        </p>
+        {entityRefs.length === 0 ? (
+          <div
+            data-testid="entities-empty"
+            className="rounded-[10px] border border-dashed border-[color:var(--border-strong)] px-4 py-3.5 text-[13px] text-muted-foreground"
+          >
+            No referenced entities found across spans.
+          </div>
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2">
-            {entities.map((entity, idx) => (
-              <LinkedEntityCard key={`${entity.kind}-${entity.primaryId ?? idx}`} entity={entity} />
-            ))}
+          <div
+            data-testid="entity-cards"
+            className="grid gap-4"
+            style={{ gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))" }}
+          >
+            {entityRefs.map((ref) => {
+              const cfg = KIND_CONFIG[ref.kind] ?? FALLBACK_CFG;
+              const href = cfg.routeFor ? cfg.routeFor(ref.primaryId) : null;
+              const { Icon } = cfg;
+              return (
+                <div
+                  key={`${ref.kind}::${ref.primaryId}`}
+                  data-testid={`entity-card-${ref.kind.toLowerCase().replace(/\s+/g, "-")}`}
+                  className="rounded-xl border border-[color:var(--border)] bg-[color:var(--card)] p-4 shadow-sm"
+                >
+                  <div className="mb-2.5 flex items-center gap-2.5">
+                    <span
+                      aria-hidden="true"
+                      className="inline-flex h-[30px] w-[30px] items-center justify-center rounded-md"
+                      style={{ background: cfg.bg, color: cfg.fg }}
+                    >
+                      <Icon className="h-4 w-4" />
+                    </span>
+                    <span className="text-[11.5px] font-bold uppercase tracking-[0.03em] text-muted-foreground">
+                      {ref.kind}
+                    </span>
+                  </div>
+                  <div className="mb-2.5">
+                    <CopyValue value={ref.primaryId} label={ref.kind} explicit />
+                  </div>
+                  {href ? (
+                    <a
+                      href={href}
+                      className="inline-flex items-center gap-1 text-[12.5px] font-semibold text-[color:var(--brand)] hover:underline"
+                    >
+                      View {ref.kind.toLowerCase()}{" "}
+                      <ExternalLink className="h-3 w-3" aria-hidden="true" />
+                    </a>
+                  ) : (
+                    <span
+                      className="text-[12.5px] text-muted-foreground"
+                      title={`No portal route registered for ${ref.kind}`}
+                    >
+                      Route not yet available
+                    </span>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </section>
 
-      <section aria-labelledby="trace-audit-events" className="space-y-3">
-        <h3 id="trace-audit-events" className="text-sm font-semibold">
-          Audit events written under this trace
-        </h3>
-        <AuditEventsBlock
+      <section>
+        <div className="mb-2 text-[11.5px] font-bold uppercase tracking-[0.04em] text-muted-foreground">
+          AUDIT EVENTS
+        </div>
+        <AuditEventsTable
           loading={auditQuery.isLoading}
-          error={auditQuery.error}
+          error={auditQuery.error as Error | null}
           data={auditQuery.data}
-          onRetry={() => void auditQuery.refetch()}
+          onRetry={() => auditQuery.refetch()}
         />
       </section>
     </div>
   );
 }
 
-function LinkedEntityCard({ entity }: { entity: LinkedEntity }) {
-  const piiFields = entity.fields.filter((f) => f.pii);
-  const visibleFields = entity.fields.filter((f) => !f.pii);
-  return (
-    <Card size="sm" data-testid={`linked-entity-${entity.kind}`}>
-      <CardHeader>
-        <CardTitle>{entity.title}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        <dl className="grid grid-cols-[max-content_1fr] gap-x-3 gap-y-1 text-xs">
-          {visibleFields.map((f) => (
-            <FieldRow key={f.key} field={f} />
-          ))}
-        </dl>
-        {piiFields.length > 0 ? (
-          <details className="text-xs">
-            <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
-              Show contact info
-            </summary>
-            <dl className="mt-2 grid grid-cols-[max-content_1fr] gap-x-3 gap-y-1">
-              {piiFields.map((f) => (
-                <FieldRow key={f.key} field={f} />
-              ))}
-            </dl>
-          </details>
-        ) : null}
-        <CardCta entity={entity} />
-      </CardContent>
-    </Card>
-  );
-}
-
-function FieldRow({ field }: { field: LinkedEntityField }) {
-  return (
-    <>
-      <dt className="text-muted-foreground">{field.key}</dt>
-      <dd className="font-mono break-all">{field.value}</dd>
-    </>
-  );
-}
-
-function CardCta({ entity }: { entity: LinkedEntity }) {
-  if (entity.href && entity.ctaLabel) {
-    return (
-      <Link href={entity.href} className={buttonVariants({ variant: "outline", size: "xs" })}>
-        {entity.ctaLabel}
-      </Link>
-    );
-  }
-  // No portal route yet — surface a muted hint so admins know the data is
-  // captured but not deep-linkable from this build.
-  if (entity.kind === "httpRequest") return null;
-  return (
-    <Tooltip>
-      <TooltipTrigger
-        render={
-          <span className="cursor-help text-xs text-muted-foreground">Route not yet available</span>
-        }
-      />
-      <TooltipContent>No portal page wired for this entity type yet.</TooltipContent>
-    </Tooltip>
-  );
-}
-
-type AuditEventsBlockProps = {
-  loading: boolean;
-  error: unknown;
-  data: AuditEventsResponse | undefined;
-  onRetry: () => void;
+type AuditRow = {
+  key: string;
+  createdAt: string;
+  source: "core" | "amie";
+  eventType: string;
+  entityId: string;
+  summary: string;
 };
 
-function AuditEventsBlock({ loading, error, data, onRetry }: AuditEventsBlockProps) {
+function mergeAuditRows(data: AuditEventsResponse | undefined): AuditRow[] {
+  if (!data) return [];
+  const core: AuditRow[] = data.audit_events.map((e) => ({
+    key: `core::${e.id}`,
+    createdAt: e.event_time,
+    source: "core",
+    eventType: e.event_type,
+    entityId: e.entity_id,
+    summary: e.details,
+  }));
+  const amie: AuditRow[] = data.amie_audit_log.map((e) => ({
+    key: `amie::${e.id}`,
+    createdAt: e.created_at,
+    source: "amie",
+    eventType: e.action,
+    entityId: e.entity_id ?? "",
+    summary: e.summary ?? "",
+  }));
+  return [...core, ...amie].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+function AuditEventsTable({
+  loading,
+  error,
+  data,
+  onRetry,
+}: {
+  loading: boolean;
+  error: Error | null;
+  data: AuditEventsResponse | undefined;
+  onRetry: () => void;
+}) {
+  const rows = React.useMemo(() => mergeAuditRows(data), [data]);
+
   if (loading) {
     return (
-      <div className="space-y-2" data-testid="audit-events-skeleton">
-        <Skeleton className="h-6 w-full" />
-        <Skeleton className="h-6 w-full" />
-        <Skeleton className="h-6 w-3/4" />
+      <div data-testid="audit-events-loading" className="space-y-2">
+        <Skeleton className="h-8 w-full" />
+        <Skeleton className="h-8 w-full" />
+        <Skeleton className="h-8 w-full" />
       </div>
     );
   }
-  if (error instanceof Error) {
-    return <ErrorState message={error.message} onRetry={onRetry} />;
+  if (error) {
+    return (
+      <ErrorState
+        message={error.message ?? "Could not load audit events."}
+        onRetry={onRetry}
+        retryLabel="Retry"
+      />
+    );
   }
-  const rows = mergeAuditRows(data);
   if (rows.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground">No audit events written under this trace.</p>
+      <div
+        data-testid="audit-events-empty"
+        className="rounded-[10px] border border-dashed border-[color:var(--border-strong)] px-4 py-3.5 text-[13px] text-muted-foreground"
+      >
+        No audit events written under this trace.
+      </div>
     );
   }
   return (
-    <div className="overflow-x-auto rounded-md border">
-      <table className="w-full text-xs">
+    <div className="overflow-hidden rounded-[10px] border border-[color:var(--border)]">
+      <table className="w-full text-[13px]">
         <caption className="sr-only">Audit events under this trace</caption>
-        <thead className="bg-muted/30 text-muted-foreground">
+        <thead className="bg-[color:var(--muted-2)]">
           <tr>
-            <th className="px-3 py-2 text-left font-medium">Created</th>
-            <th className="px-3 py-2 text-left font-medium">Source</th>
-            <th className="px-3 py-2 text-left font-medium">Event</th>
-            <th className="px-3 py-2 text-left font-medium">Entity ID</th>
-            <th className="px-3 py-2 text-left font-medium">Summary</th>
-            <th className="px-3 py-2 text-left font-medium">Span</th>
+            {["Created", "Source", "Event type", "Entity ID", "Summary"].map((h) => (
+              <th
+                key={h}
+                className="px-3 py-2 text-left text-[11.5px] font-semibold uppercase tracking-[0.04em] text-muted-foreground"
+              >
+                {h}
+              </th>
+            ))}
           </tr>
         </thead>
         <tbody>
-          {rows.map((r) => (
-            <tr key={`${r.source}-${r.id}`} className="border-t border-border/60">
-              <td className="px-3 py-2">
-                <Tooltip>
-                  <TooltipTrigger
-                    render={
-                      <span className="cursor-help tabular-nums">
-                        {formatRelative(r.createdAt)}
-                      </span>
-                    }
-                  />
-                  <TooltipContent>{formatAbsoluteUtc(r.createdAt)}</TooltipContent>
-                </Tooltip>
+          {rows.map((r, i) => (
+            <tr
+              key={r.key}
+              className={cn(
+                "border-t border-[color:var(--border)]",
+                i % 2 === 1 ? "bg-[color:var(--muted-2)]" : "bg-[color:var(--card)]",
+              )}
+            >
+              <td
+                className="px-3 py-2 tabular-nums text-muted-foreground"
+                title={formatAbsoluteUtc(r.createdAt)}
+              >
+                {formatRelative(r.createdAt)}
               </td>
-              <td className="px-3 py-2 text-muted-foreground">{r.source}</td>
-              <td className="px-3 py-2 font-medium">{r.event}</td>
-              <td className="px-3 py-2 font-mono break-all">{r.entityId ?? "—"}</td>
-              <td className="px-3 py-2 text-muted-foreground">{r.summary ?? "—"}</td>
-              <td className="px-3 py-2 font-mono text-muted-foreground">{shortHex(r.spanId, 8)}</td>
+              <td className="px-3 py-2">
+                <SourcePill source={r.source} size="sm" />
+              </td>
+              <td className="px-3 py-2 font-mono text-[12.5px]">{r.eventType}</td>
+              <td className="px-3 py-2 font-mono text-[12.5px]">{r.entityId}</td>
+              <td className="px-3 py-2 text-muted-foreground">{r.summary}</td>
             </tr>
           ))}
         </tbody>
       </table>
     </div>
   );
-}
-
-type AuditRow = {
-  id: string;
-  source: "core" | "amie";
-  createdAt: string;
-  event: string;
-  entityId: string | null;
-  summary: string | null;
-  spanId: string;
-};
-
-// Merge both audit streams into one list ordered by created-at desc so the
-// most recent rows show up first. `source` column distinguishes the origin.
-function mergeAuditRows(data: AuditEventsResponse | undefined): AuditRow[] {
-  if (!data) return [];
-  const rows: AuditRow[] = [];
-  for (const e of data.audit_events) {
-    rows.push({
-      id: e.id,
-      source: "core",
-      createdAt: e.event_time,
-      event: e.event_type,
-      entityId: e.entity_id || null,
-      summary: e.details || null,
-      spanId: e.span_id,
-    });
-  }
-  for (const e of data.amie_audit_log) {
-    rows.push({
-      id: String(e.id),
-      source: "amie",
-      createdAt: e.created_at,
-      event: e.action,
-      entityId: e.entity_id ?? null,
-      summary: e.summary ?? null,
-      spanId: e.span_id,
-    });
-  }
-  return rows.sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
 }

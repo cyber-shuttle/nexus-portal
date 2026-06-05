@@ -1,7 +1,6 @@
-import type { LinkedEntity, LinkedEntityField, Span, WaterfallNode } from "./types";
+import type { EntityRef, RowTone, Span, Trace, UISpan } from "./types";
 
-// Truncate a hex id (trace_id 32 chars, span_id 16 chars) to a leading prefix
-// for compact display in tables/badges. Default prefix length is 8.
+// Truncate a hex id to a leading prefix for compact display in tables/badges.
 export function shortHex(value: string | undefined | null, length = 8): string {
   if (!value) return "";
   return value.length > length ? value.slice(0, length) : value;
@@ -46,9 +45,7 @@ export function formatRelative(iso: string, now: number = Date.now()): string {
   return `${Math.floor(ageMs / DAY_MS)}d ago`;
 }
 
-// Hoisted from the table / overview tab — clipboard write + sonner toast
-// is the same shape in both call sites. Lazily import sonner so test setups
-// don't have to mock it just to load utils.ts.
+// Sonner is imported lazily so tests don't have to stub it when loading utils.
 export async function copyTraceId(traceId: string): Promise<void> {
   const { toast } = await import("sonner");
   try {
@@ -59,130 +56,176 @@ export async function copyTraceId(traceId: string): Promise<void> {
   }
 }
 
-// Spec §11.2: a span is a retry root when its name starts with `retry:` or it
-// carries a `retry.attempt` attribute. Retry roots render as sibling subtrees
-// of the original root, not children of their wire-level parent_span_id.
-export function isRetryRoot(span: Span): boolean {
-  if (span.name.startsWith("retry:")) return true;
-  const attrs = span.attributes;
-  if (attrs && typeof attrs === "object") {
-    const raw = (attrs as Record<string, unknown>)["retry.attempt"];
-    if (raw != null) return true;
-  }
-  return false;
+// Mirror of the spec's rowTone precedence (design_handoff_trace_view/ui.jsx).
+// Order matters: run-state flags win over wire status which wins over name
+// heuristics. Wire schema uses `name`; the spec calls it `action`.
+export function rowTone(row: UISpan): RowTone {
+  if (row.running) return "in-progress";
+  if (row.orphan && row.status == null) return "orphaned";
+  if (row.notRun) return "no-status";
+  if (row.status === 1) return "error";
+  if (row.status === 0) return "ok";
+  const a = row.name || "";
+  if (/Failed$/.test(a) || /Error/.test(a) || row.status_message) return "error";
+  if (row.status == null) return "no-status";
+  return "ok";
 }
 
-// Build a forest of WaterfallNodes. Retry roots become top-level siblings of
-// the original root. Spans whose parent_span_id points outside the input set
-// are also treated as top-level (orphans). Sibling order = start_time asc.
-export function buildSpanTree(spans: Span[], maxDepth = 50): WaterfallNode[] {
-  const byId = new Map<string, Span>();
+// Trace-level tone: 0→ok, 1→error, 2→no-status (cancelled rendered muted),
+// 3→orphaned. `ended_at == null` always overrides to in-progress so a live
+// trace shows the amber pulse even before its terminal status is recorded.
+export function traceTone(trace: Trace): RowTone {
+  if (trace.ended_at == null) return "in-progress";
+  switch (trace.status) {
+    case 0:
+      return "ok";
+    case 1:
+      return "error";
+    case 2:
+      return "no-status";
+    case 3:
+      return "orphaned";
+    default:
+      return "no-status";
+  }
+}
+
+// Augment a wire span with the run-state flags rowTone needs. `notRun` is
+// "skipped because parent failed": child sat null with no end_time under an
+// errored ancestor — the heuristic the prototype encodes inline.
+export function enrichSpan(span: Span, byId: Map<string, Span>, parentIsError: boolean): UISpan {
+  const running = span.end_time == null && !parentIsError;
+  const orphan = span.parent_span_id != null && !byId.has(span.parent_span_id);
+  const notRun = parentIsError && span.status == null && span.end_time == null;
+  return { ...span, running, orphan, notRun };
+}
+
+// A code-shaped action has no whitespace and at least one `.` or `:` separator
+// (so `comanage.create_person` is mono; `http.POST /users` falls back to sans).
+export function isCodeShaped(action: string): boolean {
+  if (/\s/.test(action)) return false;
+  return /[.:]/.test(action);
+}
+
+// Walk every error span up to the root, collecting the path. An "error leaf"
+// is an error span with no error descendant — the precise failing row.
+export function detectErrorPath(spans: UISpan[]): {
+  pathSet: Set<string>;
+  errorLeafIds: string[];
+} {
+  const byId = new Map<string, UISpan>();
   for (const s of spans) byId.set(s.span_id, s);
 
-  const childrenOf = new Map<string, Span[]>();
-  const roots: Span[] = [];
+  const childrenOf = new Map<string, UISpan[]>();
   for (const s of spans) {
-    if (isRetryRoot(s) || !s.parent_span_id || !byId.has(s.parent_span_id)) {
-      roots.push(s);
-      continue;
-    }
+    if (!s.parent_span_id) continue;
     const list = childrenOf.get(s.parent_span_id) ?? [];
     list.push(s);
     childrenOf.set(s.parent_span_id, list);
   }
 
-  const sortByStart = (a: Span, b: Span) => Date.parse(a.start_time) - Date.parse(b.start_time);
-
-  function build(span: Span, depth: number): WaterfallNode {
-    // Defensive: retry roots are already lifted to roots[] above, so they
-    // can't appear here; keep the filter for the symmetry of the invariant.
-    const rawKids = (childrenOf.get(span.span_id) ?? [])
-      .filter((c) => !isRetryRoot(c))
-      .sort(sortByStart);
-    if (depth >= maxDepth) {
-      // Past the depth cap, summarize the subtree count so the UI can render
-      // a "+N collapsed" pill instead of more rows.
-      const collapsed = countSubtree(rawKids, childrenOf);
-      return { span, depth, children: [], collapsedCount: collapsed };
+  const errors = spans.filter((s) => rowTone(s) === "error");
+  const pathSet = new Set<string>();
+  for (const e of errors) {
+    let cursor: UISpan | undefined = e;
+    while (cursor && !pathSet.has(cursor.span_id)) {
+      pathSet.add(cursor.span_id);
+      cursor = cursor.parent_span_id ? byId.get(cursor.parent_span_id) : undefined;
     }
-    const children = rawKids.map((c) => build(c, depth + 1));
-    return { span, depth, children, collapsedCount: 0 };
   }
 
-  return roots.sort(sortByStart).map((r) => build(r, 0));
-}
-
-function countSubtree(spans: Span[], childrenOf: Map<string, Span[]>): number {
-  let n = 0;
-  for (const s of spans) {
-    n += 1;
-    const kids = childrenOf.get(s.span_id);
-    if (kids && kids.length > 0) n += countSubtree(kids, childrenOf);
+  const errorLeafIds: string[] = [];
+  for (const e of errors) {
+    const kids = childrenOf.get(e.span_id) ?? [];
+    const hasErrorDescendant = kids.some((k) => rowTone(k) === "error");
+    if (!hasErrorDescendant) errorLeafIds.push(e.span_id);
   }
-  return n;
+
+  return { pathSet, errorLeafIds };
 }
 
-// Depth-first flatten preserving the visual tree order; consumers slice for
-// windowing past 200 rows (spec §10 risk #2).
-export function flattenTree(nodes: WaterfallNode[]): WaterfallNode[] {
-  const out: WaterfallNode[] = [];
-  const walk = (n: WaterfallNode) => {
-    out.push(n);
-    for (const c of n.children) walk(c);
+export type TreeNode = {
+  span: UISpan;
+  depth: number;
+  children: TreeNode[];
+  parent: TreeNode | null;
+};
+
+// Join spans into a tree by parent_span_id. Orphans (parent set but
+// unresolved) and true roots both surface as roots — matches the prototype
+// in design_handoff_trace_view/tree.jsx so retry siblings keep their place.
+export function buildTree(spans: UISpan[]): {
+  roots: TreeNode[];
+  byId: Map<string, TreeNode>;
+} {
+  const byId = new Map<string, TreeNode>();
+  for (const span of spans) {
+    byId.set(span.span_id, { span, depth: 0, children: [], parent: null });
+  }
+  const roots: TreeNode[] = [];
+  for (const span of spans) {
+    const node = byId.get(span.span_id);
+    if (!node) continue;
+    const parentId = span.parent_span_id;
+    const parent = parentId ? byId.get(parentId) : undefined;
+    if (parent) {
+      node.parent = parent;
+      node.depth = parent.depth + 1;
+      parent.children.push(node);
+    } else {
+      roots.push(node);
+    }
+  }
+  // Second pass: walk roots to settle depths for cases where a child was
+  // visited before its parent in the input order.
+  const walk = (n: TreeNode, depth: number) => {
+    n.depth = depth;
+    for (const c of n.children) walk(c, depth + 1);
   };
-  for (const n of nodes) walk(n);
+  for (const r of roots) walk(r, 0);
+  return { roots, byId };
+}
+
+export function subtreeHasError(node: TreeNode): boolean {
+  if (rowTone(node.span) === "error") return true;
+  for (const c of node.children) if (subtreeHasError(c)) return true;
+  return false;
+}
+
+export type VisibleRow = { node: TreeNode; depth: number; hasChildren: boolean };
+
+// Flatten honoring `expanded`. In errorsOnly mode, only rows whose span is on
+// the error path are emitted — collapsed subtrees still elide their children.
+export function flattenTree(
+  roots: TreeNode[],
+  expanded: Set<string>,
+  errorsOnly: boolean,
+  errorPathSet: Set<string>,
+): VisibleRow[] {
+  const out: VisibleRow[] = [];
+  const walk = (node: TreeNode, depth: number) => {
+    const hasChildren = node.children.length > 0;
+    const onPath = errorPathSet.has(node.span.span_id);
+    if (!errorsOnly || onPath) {
+      out.push({ node, depth, hasChildren });
+    }
+    if (hasChildren && expanded.has(node.span.span_id)) {
+      for (const c of node.children) walk(c, depth + 1);
+    }
+  };
+  for (const r of roots) walk(r, 0);
   return out;
 }
 
-export function spanDurationMs(span: Span): number {
-  return durationBetween(span.start_time, span.end_time ?? null) ?? 0;
-}
-
-// P95 across sibling durations, ignoring zero-duration spans so "slow"
-// detection isn't dominated by no-op bus spans. Linear-interpolated.
-export function percentile(values: number[], p: number): number {
-  const filtered = values.filter((v) => v > 0).sort((a, b) => a - b);
-  if (filtered.length === 0) return 0;
-  if (filtered.length === 1) return filtered[0] ?? 0;
-  const rank = (p / 100) * (filtered.length - 1);
-  const lo = Math.floor(rank);
-  const hi = Math.ceil(rank);
-  if (lo === hi) return filtered[lo] ?? 0;
-  const fraction = rank - lo;
-  const low = filtered[lo] ?? 0;
-  const high = filtered[hi] ?? 0;
-  return low + (high - low) * fraction;
-}
-
-// Per-parent-id sibling P95 lookup. Top-level roots share a synthetic bucket
-// keyed by empty string so retry roots compete with the original root.
-export function computeSiblingP95(nodes: WaterfallNode[]): Map<string, number> {
-  const groups = new Map<string, number[]>();
-  const walk = (node: WaterfallNode, parentKey: string) => {
-    const arr = groups.get(parentKey) ?? [];
-    arr.push(spanDurationMs(node.span));
-    groups.set(parentKey, arr);
-    for (const c of node.children) walk(c, node.span.span_id);
-  };
-  for (const n of nodes) walk(n, "");
-  const out = new Map<string, number>();
-  for (const [k, v] of groups) out.set(k, percentile(v, 95));
-  return out;
-}
-
-// Map child span_id → parent key used by computeSiblingP95 so a row can look
-// up its sibling-group P95 without re-walking the tree.
-export function buildParentKeyMap(nodes: WaterfallNode[]): Map<string, string> {
-  const out = new Map<string, string>();
-  const walk = (node: WaterfallNode, parentKey: string) => {
-    out.set(node.span.span_id, parentKey);
-    for (const c of node.children) walk(c, node.span.span_id);
-  };
-  for (const n of nodes) walk(n, "");
-  return out;
-}
-
-// --- Linked entities (Phase 4B) ---
+const ENTITY_ATTR_MAP: ReadonlyArray<{ attr: string; kind: string }> = [
+  { attr: "amie.packet_id", kind: "AMIE packet" },
+  { attr: "entity.user_id", kind: "User" },
+  { attr: "entity.project_id", kind: "Project" },
+  { attr: "project.id", kind: "Project" },
+  { attr: "comanage.co_person_id", kind: "CO person" },
+  { attr: "allocation.id", kind: "Allocation" },
+  { attr: "slurm.account", kind: "Cluster account" },
+];
 
 function readAttr(span: Span, key: string): string | undefined {
   const attrs = span.attributes;
@@ -194,124 +237,21 @@ function readAttr(span: Span, key: string): string | undefined {
   return undefined;
 }
 
-// Aggregate span attributes into entity cards per spec §11.8. Walks every span
-// (not just the root) and dedupes by primary id so the same packet_id surfacing
-// in root + child shows up once.
-export function extractLinkedEntities(spans: Span[]): LinkedEntity[] {
-  const out: LinkedEntity[] = [];
+// Scan span attributes for the six known entity keys and dedupe by
+// `${kind}::${primaryId}` so the same packet/user surfacing across spans
+// collapses to one card. Order follows ENTITY_ATTR_MAP for stable output.
+export function getEntityRefs(spans: Span[]): EntityRef[] {
+  const out: EntityRef[] = [];
   const seen = new Set<string>();
-
-  const push = (entity: LinkedEntity) => {
-    const dedupeKey = `${entity.kind}::${entity.primaryId ?? JSON.stringify(entity.fields)}`;
-    if (seen.has(dedupeKey)) return;
-    seen.add(dedupeKey);
-    out.push(entity);
-  };
-
   for (const span of spans) {
-    const packetId = readAttr(span, "amie.packet_id");
-    const eventId = readAttr(span, "amie.event_id");
-    const eventType = readAttr(span, "amie.event_type");
-    if (packetId || eventId) {
-      const fields: LinkedEntityField[] = [];
-      if (packetId) fields.push({ key: "Packet ID", value: packetId });
-      if (eventId) fields.push({ key: "Event ID", value: eventId });
-      if (eventType) fields.push({ key: "Event type", value: eventType });
-      push({
-        kind: "amiePacket",
-        title: "AMIE Packet",
-        primaryId: packetId ?? eventId,
-        fields,
-        href: packetId ? `/admin/amie/packets/${encodeURIComponent(packetId)}` : undefined,
-        ctaLabel: packetId ? "Open packet →" : undefined,
-      });
-    }
-
-    const coId = readAttr(span, "comanage.co_id");
-    const email = readAttr(span, "comanage.email");
-    const clusterUserId = readAttr(span, "comanage.cluster_user_id");
-    if (coId || email || clusterUserId) {
-      const fields: LinkedEntityField[] = [];
-      if (coId) fields.push({ key: "CO ID", value: coId });
-      if (clusterUserId) fields.push({ key: "Cluster user ID", value: clusterUserId });
-      // §11.8: comanage.email is PII; tuck behind a Show contact info toggle.
-      if (email) fields.push({ key: "Email", value: email, pii: true });
-      push({
-        kind: "comanagePerson",
-        title: "COmanage Person",
-        primaryId: coId ?? clusterUserId ?? email,
-        fields,
-      });
-    }
-
-    const allocationId = readAttr(span, "slurm.allocation_id");
-    if (allocationId) {
-      push({
-        kind: "allocation",
-        title: "Allocation",
-        primaryId: allocationId,
-        fields: [{ key: "Allocation ID", value: allocationId }],
-        href: `/allocations/${encodeURIComponent(allocationId)}`,
-        ctaLabel: "Open allocation →",
-      });
-    }
-
-    const clusterId = readAttr(span, "slurm.cluster_id");
-    if (clusterId) {
-      push({
-        kind: "cluster",
-        title: "Cluster",
-        primaryId: clusterId,
-        fields: [{ key: "Cluster ID", value: clusterId }],
-      });
-    }
-
-    const slurmUserId = readAttr(span, "slurm.user_id");
-    if (slurmUserId) {
-      push({
-        kind: "user",
-        title: "User",
-        primaryId: slurmUserId,
-        fields: [{ key: "User ID", value: slurmUserId }],
-      });
-    }
-
-    const membershipId = readAttr(span, "slurm.membership_id");
-    if (membershipId) {
-      push({
-        kind: "membership",
-        title: "Membership",
-        primaryId: membershipId,
-        fields: [{ key: "Membership ID", value: membershipId }],
-      });
-    }
-
-    const overrideId = readAttr(span, "slurm.override_id");
-    if (overrideId) {
-      push({
-        kind: "override",
-        title: "Override",
-        primaryId: overrideId,
-        fields: [{ key: "Override ID", value: overrideId }],
-      });
-    }
-
-    const method = readAttr(span, "http.method");
-    const route = readAttr(span, "http.route");
-    const statusCode = readAttr(span, "http.status_code");
-    if (method || route || statusCode) {
-      const fields: LinkedEntityField[] = [];
-      if (method) fields.push({ key: "Method", value: method });
-      if (route) fields.push({ key: "Route", value: route });
-      if (statusCode) fields.push({ key: "Status", value: statusCode });
-      push({
-        kind: "httpRequest",
-        title: "HTTP request",
-        primaryId: `${method ?? ""} ${route ?? ""}`.trim() || statusCode,
-        fields,
-      });
+    for (const { attr, kind } of ENTITY_ATTR_MAP) {
+      const value = readAttr(span, attr);
+      if (!value) continue;
+      const key = `${kind}::${value}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({ kind, primaryId: value, attrs: { [attr]: value } });
     }
   }
-
   return out;
 }

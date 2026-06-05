@@ -147,3 +147,15 @@
   --brand-foreground: #ffffff;
   --brand-tint: rgba(35, 97, 184, 0.15);
 }
+
+/* Trace view rebuild (Phase A) — purple ramp + neutral aliases the spec uses
+   for source pills, drawer shadows, and code-block backgrounds. */
+:root {
+  --nexus-purple-50: #f5f3ff;
+  --nexus-purple-500: #8b5cf6;
+  --nexus-purple-700: #6d28d9;
+
+  --muted-2: #f8fafc;
+  --border-strong: #d6dce4;
+  --shadow-drawer: -12px 0 40px rgba(15, 23, 42, 0.14), -2px 0 8px rgba(15, 23, 42, 0.06);
+}

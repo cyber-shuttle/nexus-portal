@@ -1,76 +1,73 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+import { TraceFilterStrip } from "@features/tracing/components/TraceFilterStrip";
 import {
   DEFAULT_FILTERS,
   type ListFilters,
-  TraceFilterStrip,
-} from "../components/TraceFilterStrip";
+} from "@features/tracing/components/traceListUrlState";
 
-afterEach(() => {
-  vi.useRealTimers();
-});
+function renderStrip(initial: ListFilters = DEFAULT_FILTERS) {
+  const onChange = vi.fn<(next: ListFilters) => void>();
+  let value: ListFilters = initial;
+  const Wrap = () => (
+    <TraceFilterStrip
+      value={value}
+      onChange={(next) => {
+        value = next;
+        onChange(next);
+      }}
+    />
+  );
+  const utils = render(<Wrap />);
+  return { ...utils, onChange, getValue: () => value };
+}
 
 describe("TraceFilterStrip", () => {
-  it("renders status, source, and window controls with defaults", () => {
-    render(<TraceFilterStrip value={DEFAULT_FILTERS} onChange={() => {}} />);
-    expect(screen.getByText(/^status$/i)).toBeInTheDocument();
-    expect(screen.getByText(/^source$/i)).toBeInTheDocument();
-    expect(screen.getByText(/^window$/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /^ok$/i })).toHaveAttribute("aria-pressed", "false");
-    expect(screen.getByRole("button", { name: /^30d$/i })).toHaveAttribute("aria-pressed", "true");
+  it("renders the default state with error pre-pressed", () => {
+    renderStrip();
+    const errorPill = screen.getByRole("button", { name: /error/i, pressed: true });
+    expect(errorPill).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^ok$/i, pressed: false })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "30d", pressed: true })).toBeInTheDocument();
   });
 
-  it("toggles a status chip and emits the updated filter", () => {
-    const onChange = vi.fn();
-    render(<TraceFilterStrip value={DEFAULT_FILTERS} onChange={onChange} />);
-    fireEvent.click(screen.getByRole("button", { name: /^error$/i }));
-    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ status: [1], offset: 0 }));
+  it("toggles a status pill and resets to page 1", () => {
+    const { onChange } = renderStrip({ ...DEFAULT_FILTERS, page: 3 });
+    fireEvent.click(screen.getByRole("button", { name: /^ok$/i }));
+    expect(onChange).toHaveBeenCalled();
+    const last = onChange.mock.calls.at(-1)?.[0];
+    expect(last?.status).toContain("ok");
+    expect(last?.status).toContain("error");
+    expect(last?.page).toBe(1);
   });
 
-  it("toggles a source chip and emits the updated filter", () => {
-    const onChange = vi.fn();
-    render(<TraceFilterStrip value={DEFAULT_FILTERS} onChange={onChange} />);
-    fireEvent.click(screen.getByRole("button", { name: /^amie$/i }));
-    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ source: ["amie"], offset: 0 }));
+  it("clicking a window pill replaces selection (radio behavior)", () => {
+    const { onChange } = renderStrip();
+    fireEvent.click(screen.getByRole("button", { name: "24h" }));
+    const last = onChange.mock.calls.at(-1)?.[0];
+    expect(last?.window).toBe("24h");
   });
 
-  it("switches preset on click", () => {
-    const onChange = vi.fn();
-    render(<TraceFilterStrip value={DEFAULT_FILTERS} onChange={onChange} />);
-    fireEvent.click(screen.getByRole("button", { name: /^7d$/i }));
-    expect(onChange).toHaveBeenCalledWith(
-      expect.objectContaining({ preset: "7d", from: undefined, to: undefined }),
+  it("debounces the search input and emits page=1", async () => {
+    const { onChange } = renderStrip();
+    const input = screen.getByRole("searchbox", { name: /search traces/i });
+    fireEvent.change(input, { target: { value: "alice" } });
+    // Initial render fires once for debounce sync; wait for the debounced emit.
+    await waitFor(
+      () => {
+        const call = onChange.mock.calls.find((c) => c[0].q === "alice");
+        expect(call).toBeTruthy();
+      },
+      { timeout: 1000 },
     );
+    const last = onChange.mock.calls.find((c) => c[0].q === "alice")?.[0];
+    expect(last?.page).toBe(1);
   });
 
-  it("shows date inputs when preset is custom", () => {
-    const value: ListFilters = { ...DEFAULT_FILTERS, preset: "custom" };
-    render(<TraceFilterStrip value={value} onChange={() => {}} />);
-    expect(screen.getByLabelText(/^from$/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/^to$/i)).toBeInTheDocument();
-  });
-
-  it("warns when custom range exceeds 365 days", () => {
-    const value: ListFilters = {
-      ...DEFAULT_FILTERS,
-      preset: "custom",
-      from: "2024-01-01T00:00:00.000Z",
-      to: "2026-01-01T00:00:00.000Z",
-    };
-    render(<TraceFilterStrip value={value} onChange={() => {}} />);
-    expect(screen.getByRole("alert")).toHaveTextContent(/cannot exceed 365 days/i);
-  });
-
-  it("debounces free-text input before emitting", async () => {
-    vi.useFakeTimers();
-    const onChange = vi.fn();
-    render(<TraceFilterStrip value={DEFAULT_FILTERS} onChange={onChange} />);
-    const search = screen.getByPlaceholderText(/trace_id, span_id, or operation/i);
-    fireEvent.change(search, { target: { value: "alice" } });
-    expect(onChange).not.toHaveBeenCalled();
-    await act(async () => {
-      vi.advanceTimersByTime(350);
-    });
-    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ q: "alice", offset: 0 }));
+  it("toggles source pills", () => {
+    const { onChange } = renderStrip();
+    fireEvent.click(screen.getByRole("button", { name: "amie" }));
+    const last = onChange.mock.calls.at(-1)?.[0];
+    expect(last?.source).toEqual(["amie"]);
   });
 });

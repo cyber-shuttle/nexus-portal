@@ -1,270 +1,207 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
 import { useDebounce } from "@shared/hooks/useDebounce";
+import { Card } from "@shared/ui/card";
+import { Search } from "lucide-react";
 import * as React from "react";
-import { TRACE_SOURCES, getTraceStatusInfo } from "../types";
-
-export type WindowPreset = "24h" | "7d" | "30d" | "custom";
-
-export type ListFilters = {
-  status: number[];
-  source: string[];
-  preset: WindowPreset;
-  from?: string;
-  to?: string;
-  q: string;
-  limit: number;
-  offset: number;
-};
-
-export const DEFAULT_FILTERS: ListFilters = {
-  status: [],
-  source: [],
-  preset: "30d",
-  q: "",
-  limit: 50,
-  offset: 0,
-};
-
-const STATUS_VALUES: number[] = [0, 1, 2, 3];
-const WINDOW_PRESETS: WindowPreset[] = ["24h", "7d", "30d", "custom"];
-const DAY_MS = 24 * 60 * 60 * 1000;
-const MAX_RANGE_DAYS = 365;
-
-// Chip variant per status — mirrors StatusBadge tokens (token-only, never
-// raw bg-nexus-*-NNN) and the styling-alignment status color map. Cancelled
-// rides foreground tint so the active state stays distinct from the inactive
-// chip background on dark mode (plain `bg-muted` was indistinguishable).
-const STATUS_CHIP_STYLES: Record<number, string> = {
-  0: "bg-[color:var(--nexus-green-50)] text-[color:var(--nexus-green-700)]",
-  1: "bg-[color:var(--nexus-red-50)] text-[color:var(--nexus-red-700)]",
-  2: "bg-foreground/15 text-foreground",
-  3: "bg-[color:var(--nexus-amber-50)] text-[color:var(--nexus-amber-700)]",
-};
+import type { RowTone } from "../types";
+import type { ListFilters, StatusFilter, WindowPreset } from "./traceListUrlState";
 
 export type TraceFilterStripProps = {
   value: ListFilters;
-  onChange: (next: ListFilters) => void;
+  onChange(next: ListFilters): void;
 };
 
-export function TraceFilterStrip({ value, onChange }: TraceFilterStripProps) {
-  const [searchDraft, setSearchDraft] = React.useState(value.q);
-  const debouncedSearch = useDebounce(searchDraft, 300);
-  const latestRef = React.useRef({ value, onChange });
-  latestRef.current = { value, onChange };
+const STATUS_OPTIONS: { id: StatusFilter; tone: RowTone; label: string }[] = [
+  { id: "error", tone: "error", label: "error" },
+  { id: "ok", tone: "ok", label: "ok" },
+  { id: "in-progress", tone: "in-progress", label: "in-progress" },
+  { id: "orphaned", tone: "orphaned", label: "orphaned" },
+];
 
-  // Only push debounced text through when it differs from the URL — avoids a
-  // redundant render loop on parent-driven `value.q` changes.
-  React.useEffect(() => {
-    const { value: latest, onChange: latestOnChange } = latestRef.current;
-    if (debouncedSearch !== latest.q) {
-      latestOnChange({ ...latest, q: debouncedSearch, offset: 0 });
-    }
-  }, [debouncedSearch]);
+const SOURCE_OPTIONS = ["amie", "comanage", "slurm", "http", "core"] as const;
+const WINDOW_OPTIONS: WindowPreset[] = ["24h", "7d", "30d"];
 
-  React.useEffect(() => {
-    setSearchDraft(value.q);
-  }, [value.q]);
+// Inline-style tone dot to avoid leaking tone CSS outside of StatusPill.
+// (StatusPill exposes dotOnly but the filter pill needs a 7px dot, not 8px.)
+const TONE_DOT: Record<StatusFilter, { color: string; hollow: boolean }> = {
+  error: { color: "var(--nexus-red-500)", hollow: false },
+  ok: { color: "var(--nexus-green-500)", hollow: false },
+  "in-progress": { color: "var(--nexus-amber-500)", hollow: false },
+  orphaned: { color: "var(--muted-foreground)", hollow: true },
+};
 
-  function toggleStatus(s: number) {
-    const next = value.status.includes(s)
-      ? value.status.filter((x) => x !== s)
-      : [...value.status, s];
-    onChange({ ...value, status: next, offset: 0 });
-  }
-
-  function toggleSource(src: string) {
-    const next = value.source.includes(src)
-      ? value.source.filter((x) => x !== src)
-      : [...value.source, src];
-    onChange({ ...value, source: next, offset: 0 });
-  }
-
-  function pickPreset(preset: WindowPreset) {
-    if (preset === "custom") {
-      onChange({ ...value, preset: "custom", offset: 0 });
-      return;
-    }
-    onChange({ ...value, preset, from: undefined, to: undefined, offset: 0 });
-  }
-
-  const isCustom = value.preset === "custom";
-  const rangeDays = React.useMemo(() => {
-    if (!isCustom || !value.from || !value.to) return 0;
-    const f = Date.parse(value.from);
-    const t = Date.parse(value.to);
-    if (Number.isNaN(f) || Number.isNaN(t)) return 0;
-    return Math.max(0, Math.round((t - f) / DAY_MS));
-  }, [isCustom, value.from, value.to]);
-  const rangeTooLong = isCustom && rangeDays > MAX_RANGE_DAYS;
-
-  function setCustomFrom(iso: string) {
-    if (!iso) {
-      onChange({ ...value, from: undefined, offset: 0 });
-      return;
-    }
-    onChange({ ...value, preset: "custom", from: toUtcIso(iso), offset: 0 });
-  }
-
-  function setCustomTo(iso: string) {
-    if (!iso) {
-      onChange({ ...value, to: undefined, offset: 0 });
-      return;
-    }
-    // Anchor the `to` bound to end-of-day so the same calendar day is included.
-    onChange({ ...value, preset: "custom", to: toUtcIso(iso, true), offset: 0 });
-  }
-
+function FilterPill({
+  active,
+  onClick,
+  children,
+  radio,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+  radio?: boolean;
+}) {
   return (
-    <div className="rounded-lg border border-border bg-card p-4">
-      <div className="flex flex-wrap items-end gap-x-6 gap-y-4">
-        <fieldset className="flex flex-col gap-1.5">
-          <legend className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Status
-          </legend>
-          <div className="flex flex-wrap gap-1.5">
-            {STATUS_VALUES.map((s) => {
-              const info = getTraceStatusInfo(s);
-              const active = value.status.includes(s);
-              return (
-                <button
-                  key={s}
-                  type="button"
-                  aria-pressed={active}
-                  onClick={() => toggleStatus(s)}
-                  className={cn(
-                    "inline-flex items-center rounded-full px-3 py-1 text-xs font-medium transition-colors",
-                    active
-                      ? STATUS_CHIP_STYLES[s]
-                      : "bg-muted/40 text-muted-foreground hover:bg-muted",
-                  )}
-                >
-                  {info.label.toLowerCase()}
-                </button>
-              );
-            })}
-          </div>
-        </fieldset>
-
-        <fieldset className="flex flex-col gap-1.5">
-          <legend className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Source
-          </legend>
-          <div className="flex flex-wrap gap-1.5">
-            {TRACE_SOURCES.map((src) => {
-              const active = value.source.includes(src);
-              return (
-                <button
-                  key={src}
-                  type="button"
-                  aria-pressed={active}
-                  onClick={() => toggleSource(src)}
-                  className={cn(
-                    "inline-flex items-center rounded-full px-3 py-1 text-xs font-medium transition-colors",
-                    active
-                      ? "bg-[color:var(--nexus-blue-50)] text-[color:var(--nexus-blue-700)]"
-                      : "bg-muted/40 text-muted-foreground hover:bg-muted",
-                  )}
-                >
-                  {src}
-                </button>
-              );
-            })}
-          </div>
-        </fieldset>
-
-        <fieldset className="flex flex-col gap-1.5">
-          <legend className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Window
-          </legend>
-          <div className="flex flex-wrap gap-1.5">
-            {WINDOW_PRESETS.map((preset) => {
-              const active = value.preset === preset;
-              return (
-                <button
-                  key={preset}
-                  type="button"
-                  aria-pressed={active}
-                  onClick={() => pickPreset(preset)}
-                  className={cn(
-                    "inline-flex items-center rounded-full px-3 py-1 text-xs font-medium transition-colors",
-                    active
-                      ? "bg-foreground text-background"
-                      : "bg-muted/40 text-muted-foreground hover:bg-muted",
-                  )}
-                >
-                  {preset}
-                </button>
-              );
-            })}
-          </div>
-        </fieldset>
-
-        {isCustom ? (
-          <div className="flex items-end gap-3">
-            <div className="flex flex-col gap-1">
-              <Label htmlFor="trace-from" className="text-xs">
-                From
-              </Label>
-              <input
-                id="trace-from"
-                type="date"
-                value={isoToDateInput(value.from)}
-                onChange={(e) => setCustomFrom(e.currentTarget.value)}
-                className="h-8 rounded-md border border-input bg-background px-2 text-sm"
-              />
-            </div>
-            <div className="flex flex-col gap-1">
-              <Label htmlFor="trace-to" className="text-xs">
-                To
-              </Label>
-              <input
-                id="trace-to"
-                type="date"
-                value={isoToDateInput(value.to)}
-                onChange={(e) => setCustomTo(e.currentTarget.value)}
-                className="h-8 rounded-md border border-input bg-background px-2 text-sm"
-              />
-            </div>
-          </div>
-        ) : null}
-
-        <div className="flex flex-1 flex-col gap-1 min-w-[200px]">
-          <Label htmlFor="trace-search" className="text-xs">
-            Search
-          </Label>
-          <Input
-            id="trace-search"
-            type="search"
-            placeholder="trace_id, span_id, or operation"
-            value={searchDraft}
-            onChange={(e) => setSearchDraft(e.currentTarget.value)}
-          />
-        </div>
-      </div>
-
-      {rangeTooLong ? (
-        <p role="alert" className="mt-3 text-xs text-[color:var(--nexus-red-700)]">
-          Date range cannot exceed 365 days.
-        </p>
-      ) : null}
-    </div>
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={cn(
+        "inline-flex h-7 items-center gap-1.5 px-2.5 text-[12.5px] font-semibold transition-colors",
+        "border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        radio ? "rounded-[14px]" : "rounded-md",
+        active
+          ? "border-[color:var(--brand)] bg-[color:var(--brand-tint)] text-[color:var(--brand)]"
+          : "border-[color:var(--border-strong)] bg-card text-foreground hover:bg-muted",
+      )}
+    >
+      {children}
+    </button>
   );
 }
 
-// `<input type="date">` writes `YYYY-MM-DD`; serialize at UTC midnight (or
-// end-of-day for the upper bound) so the wire format matches §3.3 ISO usage.
-function toUtcIso(date: string, endOfDay = false): string {
-  const suffix = endOfDay ? "T23:59:59.999Z" : "T00:00:00.000Z";
-  return `${date}${suffix}`;
+function StatusDot({ status }: { status: StatusFilter }) {
+  const { color, hollow } = TONE_DOT[status];
+  return (
+    <span
+      aria-hidden="true"
+      style={{
+        width: 7,
+        height: 7,
+        borderRadius: "50%",
+        background: hollow ? "transparent" : color,
+        boxShadow: hollow ? `inset 0 0 0 1.4px ${color}` : "none",
+      }}
+    />
+  );
 }
 
-function isoToDateInput(iso: string | undefined): string {
-  if (!iso) return "";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
-  return d.toISOString().slice(0, 10);
+function GroupLegend({ children }: { children: React.ReactNode }) {
+  return (
+    <legend className="text-[11.5px] font-semibold uppercase tracking-[0.04em] text-muted-foreground">
+      {children}
+    </legend>
+  );
+}
+
+function Divider() {
+  return (
+    <div
+      aria-hidden="true"
+      className="mx-1 hidden h-7 w-px self-center bg-[color:var(--border)] md:block"
+    />
+  );
+}
+
+export function TraceFilterStrip({ value, onChange }: TraceFilterStripProps) {
+  // Local search state debounced before pushing to the URL — avoids navigating
+  // on every keystroke and resets to page 1 once the user pauses.
+  const [search, setSearch] = React.useState(value.q);
+  const lastRemote = React.useRef(value.q);
+  const valueRef = React.useRef(value);
+  const onChangeRef = React.useRef(onChange);
+  valueRef.current = value;
+  onChangeRef.current = onChange;
+  React.useEffect(() => {
+    // Sync inbound URL changes (back/forward, banner reset) into the input.
+    if (value.q !== lastRemote.current) {
+      lastRemote.current = value.q;
+      setSearch(value.q);
+    }
+  }, [value.q]);
+  const debounced = useDebounce(search, 300);
+  React.useEffect(() => {
+    if (debounced === valueRef.current.q) return;
+    lastRemote.current = debounced;
+    onChangeRef.current({ ...valueRef.current, q: debounced, page: 1 });
+  }, [debounced]);
+
+  const toggleStatus = (id: StatusFilter) => {
+    const has = value.status.includes(id);
+    const next = has ? value.status.filter((s) => s !== id) : [...value.status, id];
+    onChange({ ...value, status: next, page: 1 });
+  };
+
+  const toggleSource = (id: string) => {
+    const has = value.source.includes(id);
+    const next = has ? value.source.filter((s) => s !== id) : [...value.source, id];
+    onChange({ ...value, source: next, page: 1 });
+  };
+
+  const pickWindow = (w: WindowPreset) => {
+    if (w === value.window) return;
+    onChange({ ...value, window: w, page: 1 });
+  };
+
+  return (
+    <Card className="rounded-xl px-4 py-3 shadow-sm" data-testid="trace-filter-strip">
+      <div className="flex flex-wrap items-start gap-4">
+        <fieldset className="flex items-center gap-2">
+          <GroupLegend>STATUS</GroupLegend>
+          <div className="flex flex-wrap gap-1.5">
+            {STATUS_OPTIONS.map((opt) => (
+              <FilterPill
+                key={opt.id}
+                active={value.status.includes(opt.id)}
+                onClick={() => toggleStatus(opt.id)}
+              >
+                <StatusDot status={opt.id} />
+                {opt.label}
+              </FilterPill>
+            ))}
+          </div>
+        </fieldset>
+
+        <Divider />
+
+        <fieldset className="flex items-center gap-2">
+          <GroupLegend>SOURCE</GroupLegend>
+          <div className="flex flex-wrap gap-1.5">
+            {SOURCE_OPTIONS.map((s) => (
+              <FilterPill
+                key={s}
+                active={value.source.includes(s)}
+                onClick={() => toggleSource(s)}
+              >
+                {s}
+              </FilterPill>
+            ))}
+          </div>
+        </fieldset>
+
+        <Divider />
+
+        <fieldset className="flex items-center gap-2">
+          <GroupLegend>WINDOW</GroupLegend>
+          <div className="flex flex-wrap gap-1.5">
+            {WINDOW_OPTIONS.map((w) => (
+              <FilterPill key={w} active={value.window === w} onClick={() => pickWindow(w)} radio>
+                {w}
+              </FilterPill>
+            ))}
+          </div>
+        </fieldset>
+      </div>
+
+      <div className="relative mt-3">
+        <Search
+          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+          aria-hidden="true"
+        />
+        <input
+          type="search"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search trace_id / span_id / entity / action…"
+          aria-label="Search traces"
+          className={cn(
+            "h-[38px] w-full rounded-md border bg-card pl-9 pr-3 text-[13.5px] text-foreground outline-none",
+            "border-[color:var(--border-strong)] focus-visible:ring-2 focus-visible:ring-ring",
+          )}
+        />
+      </div>
+    </Card>
+  );
 }

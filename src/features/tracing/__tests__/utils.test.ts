@@ -1,276 +1,328 @@
-import type { Span } from "@features/tracing/types";
+import type { Span, Trace, UISpan } from "@features/tracing/types";
 import {
-  buildParentKeyMap,
-  buildSpanTree,
-  computeSiblingP95,
-  extractLinkedEntities,
+  buildTree,
+  detectErrorPath,
+  enrichSpan,
   flattenTree,
-  isRetryRoot,
-  percentile,
+  getEntityRefs,
+  isCodeShaped,
+  rowTone,
+  subtreeHasError,
+  traceTone,
 } from "@features/tracing/utils";
 import { describe, expect, it } from "vitest";
 
-// Minimal Span factory — schema requires hex IDs and ISO timestamps, but the
-// pure utils only read the fields named here. Cast as Span to satisfy types.
-function span(partial: Partial<Span> & { span_id: string }): Span {
-  return {
+// Minimal builders — the schema demands hex ids in production, but the pure
+// utils only read the fields named below. `in` checks preserve explicit nulls
+// the spec relies on (status: null, end_time: null) rather than collapsing
+// them to defaults via `??`.
+function span(partial: Partial<UISpan> & { span_id: string }): UISpan {
+  const out: Record<string, unknown> = {
     span_id: partial.span_id,
     parent_span_id: partial.parent_span_id,
-    name: partial.name ?? "op",
-    kind: partial.kind ?? 0,
-    status: partial.status ?? 0,
-    status_message: partial.status_message ?? null,
-    start_time: partial.start_time ?? "2025-01-01T00:00:00.000Z",
-    end_time: partial.end_time ?? "2025-01-01T00:00:00.010Z",
-    attributes: partial.attributes ?? null,
-  } as Span;
+    name: "name" in partial ? partial.name : "op",
+    kind: "kind" in partial ? partial.kind : 0,
+    status: "status" in partial ? partial.status : 0,
+    status_message: "status_message" in partial ? partial.status_message : null,
+    start_time: "start_time" in partial ? partial.start_time : "2026-06-04T00:00:00.000Z",
+    end_time: "end_time" in partial ? partial.end_time : "2026-06-04T00:00:00.010Z",
+    attributes: "attributes" in partial ? partial.attributes : null,
+    running: partial.running,
+    notRun: partial.notRun,
+    orphan: partial.orphan,
+  };
+  return out as UISpan;
 }
 
-describe("isRetryRoot", () => {
-  it("matches name starting with retry:", () => {
-    expect(isRetryRoot(span({ span_id: "a", name: "retry:foo" }))).toBe(true);
+function trace(partial: Partial<Trace> & { trace_id: string }): Trace {
+  const out: Record<string, unknown> = {
+    trace_id: partial.trace_id,
+    root_name: "root_name" in partial ? partial.root_name : "op",
+    source: "source" in partial ? partial.source : "amie",
+    status: "status" in partial ? partial.status : 0,
+    started_at: "started_at" in partial ? partial.started_at : "2026-06-04T00:00:00.000Z",
+    ended_at: "ended_at" in partial ? partial.ended_at : "2026-06-04T00:00:00.500Z",
+    span_count: "span_count" in partial ? partial.span_count : 1,
+    root_event: "root_event" in partial ? partial.root_event : null,
+  };
+  return out as Trace;
+}
+
+describe("rowTone", () => {
+  it("returns in-progress when running flag is set", () => {
+    expect(rowTone(span({ span_id: "a", running: true, status: 0 }))).toBe("in-progress");
   });
-  it("matches retry.attempt attribute even without name prefix", () => {
+  it("returns orphaned when orphan flag is set and status is null", () => {
     expect(
-      isRetryRoot(span({ span_id: "a", name: "foo", attributes: { "retry.attempt": 1 } })),
-    ).toBe(true);
+      rowTone(span({ span_id: "a", orphan: true, status: null as unknown as number })),
+    ).toBe("orphaned");
   });
-  it("returns false for plain spans", () => {
-    expect(isRetryRoot(span({ span_id: "a", name: "foo" }))).toBe(false);
+  it("returns no-status when notRun flag is set", () => {
+    expect(rowTone(span({ span_id: "a", notRun: true, status: null as unknown as number }))).toBe(
+      "no-status",
+    );
   });
-  it("tolerates null / non-object attributes", () => {
-    expect(isRetryRoot(span({ span_id: "a", name: "foo", attributes: null }))).toBe(false);
+  it("returns error when status code is 1", () => {
+    expect(rowTone(span({ span_id: "a", status: 1 }))).toBe("error");
+  });
+  it("returns ok when status code is 0", () => {
+    expect(rowTone(span({ span_id: "a", status: 0 }))).toBe("ok");
+  });
+  it("name ending with Failed yields error when status is null", () => {
     expect(
-      isRetryRoot(span({ span_id: "a", name: "foo", attributes: "nope" as unknown as never })),
-    ).toBe(false);
+      rowTone(
+        span({ span_id: "a", name: "ComanageProvisioningFailed", status: null as unknown as number }),
+      ),
+    ).toBe("error");
+  });
+  it("name containing Error yields error when status is null", () => {
+    expect(
+      rowTone(span({ span_id: "a", name: "SlurmCommandError", status: null as unknown as number })),
+    ).toBe("error");
+  });
+  it("status_message presence yields error when status is null", () => {
+    expect(
+      rowTone(
+        span({
+          span_id: "a",
+          name: "calm.name",
+          status: null as unknown as number,
+          status_message: "boom",
+        }),
+      ),
+    ).toBe("error");
+  });
+  it("returns no-status when status is null and no heuristic matches", () => {
+    expect(
+      rowTone(span({ span_id: "a", name: "calm.name", status: null as unknown as number })),
+    ).toBe("no-status");
+  });
+  it("default branch returns ok when status is undefined and falls through to ok", () => {
+    // Belt-and-braces: a span with explicit status 0 still tones ok even when
+    // a heuristic-eligible name is present, since the int wins over the name.
+    expect(rowTone(span({ span_id: "a", name: "noisyError", status: 0 }))).toBe("ok");
   });
 });
 
-describe("buildSpanTree", () => {
-  it("produces correct depth for a root with two children and a grandchild", () => {
-    const spans = [
-      span({ span_id: "r", parent_span_id: undefined, start_time: "2025-01-01T00:00:00.000Z" }),
-      span({ span_id: "c1", parent_span_id: "r", start_time: "2025-01-01T00:00:00.001Z" }),
-      span({ span_id: "c2", parent_span_id: "r", start_time: "2025-01-01T00:00:00.002Z" }),
-      span({ span_id: "g", parent_span_id: "c1", start_time: "2025-01-01T00:00:00.003Z" }),
-    ];
-    const tree = buildSpanTree(spans);
-    expect(tree).toHaveLength(1);
-    const root = tree[0];
-    expect(root?.depth).toBe(0);
-    expect(root?.children.map((c) => c.span.span_id)).toEqual(["c1", "c2"]);
-    expect(root?.children[0]?.depth).toBe(1);
-    expect(root?.children[0]?.children[0]?.depth).toBe(2);
+describe("traceTone", () => {
+  it("maps status 0 to ok", () => {
+    expect(traceTone(trace({ trace_id: "t1", status: 0 }))).toBe("ok");
   });
-  it("treats an orphan (parent outside input) as a root", () => {
-    const spans = [
-      span({ span_id: "a", parent_span_id: undefined }),
-      span({ span_id: "b", parent_span_id: "missing" }),
-    ];
-    const tree = buildSpanTree(spans);
-    expect(tree.map((n) => n.span.span_id).sort()).toEqual(["a", "b"]);
+  it("maps status 1 to error", () => {
+    expect(traceTone(trace({ trace_id: "t1", status: 1 }))).toBe("error");
   });
-  it("does not infinite-loop on a 2-cycle (defense-in-depth)", () => {
-    const spans = [
-      span({ span_id: "a", parent_span_id: "b" }),
-      span({ span_id: "b", parent_span_id: "a" }),
-    ];
-    // Both spans have an in-set parent so neither is a root by the current
-    // rules — the function must still return a bounded result, not loop.
-    const tree = buildSpanTree(spans);
-    expect(Array.isArray(tree)).toBe(true);
+  it("maps status 2 to no-status (cancelled gets muted treatment)", () => {
+    expect(traceTone(trace({ trace_id: "t1", status: 2 }))).toBe("no-status");
   });
-  it("lifts a retry span with non-null parent to a top-level sibling", () => {
-    const spans = [
-      span({ span_id: "r", parent_span_id: undefined, start_time: "2025-01-01T00:00:00.000Z" }),
-      span({
-        span_id: "y",
-        parent_span_id: "r",
-        name: "retry:foo",
-        start_time: "2025-01-01T00:00:00.005Z",
-      }),
-    ];
-    const tree = buildSpanTree(spans);
-    expect(tree.map((n) => n.span.span_id)).toEqual(["r", "y"]);
-    expect(tree[0]?.children).toHaveLength(0);
+  it("maps status 3 to orphaned", () => {
+    expect(traceTone(trace({ trace_id: "t1", status: 3 }))).toBe("orphaned");
   });
-  it("sorts siblings by start_time ascending", () => {
-    const spans = [
-      span({ span_id: "r", parent_span_id: undefined }),
-      span({ span_id: "late", parent_span_id: "r", start_time: "2025-01-01T00:00:00.010Z" }),
-      span({ span_id: "early", parent_span_id: "r", start_time: "2025-01-01T00:00:00.001Z" }),
-    ];
-    const tree = buildSpanTree(spans);
-    expect(tree[0]?.children.map((c) => c.span.span_id)).toEqual(["early", "late"]);
+  it("overrides to in-progress when ended_at is null regardless of status", () => {
+    expect(traceTone(trace({ trace_id: "t1", status: 0, ended_at: null }))).toBe("in-progress");
+    expect(traceTone(trace({ trace_id: "t1", status: 1, ended_at: null }))).toBe("in-progress");
+  });
+});
+
+describe("enrichSpan", () => {
+  it("marks orphan when parent_span_id is set but unresolved", () => {
+    const child = span({ span_id: "c", parent_span_id: "missing" }) as Span;
+    const byId = new Map<string, Span>([[child.span_id, child]]);
+    const enriched = enrichSpan(child, byId, false);
+    expect(enriched.orphan).toBe(true);
+  });
+  it("does not mark orphan when parent resolves", () => {
+    const parent = span({ span_id: "p" }) as Span;
+    const child = span({ span_id: "c", parent_span_id: "p" }) as Span;
+    const byId = new Map<string, Span>([
+      [parent.span_id, parent],
+      [child.span_id, child],
+    ]);
+    expect(enrichSpan(child, byId, false).orphan).toBe(false);
+  });
+  it("marks running when end_time is null and parent isn't errored", () => {
+    const s = span({ span_id: "a", end_time: null }) as Span;
+    const byId = new Map<string, Span>([[s.span_id, s]]);
+    expect(enrichSpan(s, byId, false).running).toBe(true);
+  });
+  it("marks notRun when parent errored and the span has no status or end_time", () => {
+    const s = span({
+      span_id: "a",
+      end_time: null,
+      status: null as unknown as number,
+    }) as Span;
+    const byId = new Map<string, Span>([[s.span_id, s]]);
+    const enriched = enrichSpan(s, byId, true);
+    expect(enriched.notRun).toBe(true);
+    expect(enriched.running).toBe(false);
+  });
+});
+
+describe("isCodeShaped", () => {
+  it("returns true for dotted identifiers", () => {
+    expect(isCodeShaped("comanage.create_person")).toBe(true);
+  });
+  it("returns true for colon-separated identifiers", () => {
+    expect(isCodeShaped("amie.process:request_account_create")).toBe(true);
+  });
+  it("returns false for phrases that contain whitespace", () => {
+    expect(isCodeShaped("http.POST /users")).toBe(false);
+    expect(isCodeShaped("phrase with spaces")).toBe(false);
+  });
+  it("returns false for plain bareword identifiers without . or :", () => {
+    expect(isCodeShaped("create")).toBe(false);
+  });
+});
+
+describe("detectErrorPath", () => {
+  it("walks an error leaf up to the root, collecting every ancestor", () => {
+    const root = span({ span_id: "r", parent_span_id: undefined, status: 1 });
+    const mid = span({ span_id: "m", parent_span_id: "r", status: 1 });
+    const leaf = span({ span_id: "l", parent_span_id: "m", status: 1 });
+    const { pathSet, errorLeafIds } = detectErrorPath([root, mid, leaf]);
+    expect(pathSet.has("r")).toBe(true);
+    expect(pathSet.has("m")).toBe(true);
+    expect(pathSet.has("l")).toBe(true);
+    expect(errorLeafIds).toEqual(["l"]);
+  });
+  it("returns empty results when no errors are present", () => {
+    const { pathSet, errorLeafIds } = detectErrorPath([
+      span({ span_id: "r", status: 0 }),
+      span({ span_id: "c", parent_span_id: "r", status: 0 }),
+    ]);
+    expect(pathSet.size).toBe(0);
+    expect(errorLeafIds).toEqual([]);
+  });
+});
+
+describe("buildTree", () => {
+  it("joins children to parents via parent_span_id and computes depths", () => {
+    const root = span({ span_id: "r" });
+    const mid = span({ span_id: "m", parent_span_id: "r" });
+    const leaf = span({ span_id: "l", parent_span_id: "m" });
+    const { roots, byId } = buildTree([root, mid, leaf]);
+    expect(roots).toHaveLength(1);
+    const r0 = roots[0];
+    if (!r0) throw new Error("expected a root");
+    expect(r0.span.span_id).toBe("r");
+    expect(r0.depth).toBe(0);
+    expect(r0.children).toHaveLength(1);
+    const midNode = byId.get("m");
+    expect(midNode?.depth).toBe(1);
+    expect(midNode?.parent?.span.span_id).toBe("r");
+    expect(byId.get("l")?.depth).toBe(2);
+  });
+
+  it("keeps retry siblings as separate root-level children — does not re-parent", () => {
+    const root = span({ span_id: "r" });
+    const a = span({ span_id: "a", parent_span_id: "r" });
+    const retry = span({ span_id: "rt", parent_span_id: "r", name: "retry:something" });
+    const { roots } = buildTree([root, a, retry]);
+    expect(roots).toHaveLength(1);
+    const r0 = roots[0];
+    if (!r0) throw new Error("expected a root");
+    expect(r0.children.map((c) => c.span.span_id).sort()).toEqual(["a", "rt"]);
+  });
+
+  it("treats spans with unresolved parent_span_id as roots (orphan-style)", () => {
+    const orphan = span({ span_id: "o", parent_span_id: "missing" });
+    const real = span({ span_id: "r" });
+    const { roots } = buildTree([orphan, real]);
+    expect(roots).toHaveLength(2);
+    expect(roots.map((n) => n.span.span_id).sort()).toEqual(["o", "r"]);
+  });
+});
+
+describe("subtreeHasError", () => {
+  it("returns true when a descendant is errored", () => {
+    const root = span({ span_id: "r", status: 0 });
+    const errChild = span({ span_id: "c", parent_span_id: "r", status: 1 });
+    const { byId } = buildTree([root, errChild]);
+    const node = byId.get("r");
+    if (!node) throw new Error("missing");
+    expect(subtreeHasError(node)).toBe(true);
+  });
+  it("returns false for an all-ok subtree", () => {
+    const root = span({ span_id: "r", status: 0 });
+    const child = span({ span_id: "c", parent_span_id: "r", status: 0 });
+    const { byId } = buildTree([root, child]);
+    const rNode = byId.get("r");
+    if (!rNode) throw new Error("missing");
+    expect(subtreeHasError(rNode)).toBe(false);
   });
 });
 
 describe("flattenTree", () => {
-  it("renders depth=0 for roots and depth=1 for direct children", () => {
-    const spans = [
-      span({ span_id: "r", parent_span_id: undefined }),
-      span({ span_id: "c", parent_span_id: "r" }),
-    ];
-    const flat = flattenTree(buildSpanTree(spans));
-    expect(flat.map((n) => n.depth)).toEqual([0, 1]);
+  it("emits only roots when nothing is expanded", () => {
+    const r = span({ span_id: "r" });
+    const c = span({ span_id: "c", parent_span_id: "r" });
+    const { roots } = buildTree([r, c]);
+    const rows = flattenTree(roots, new Set(), false, new Set());
+    expect(rows.map((v) => v.node.span.span_id)).toEqual(["r"]);
+    const r0 = rows[0];
+    if (!r0) throw new Error("expected a row");
+    expect(r0.hasChildren).toBe(true);
+    expect(r0.depth).toBe(0);
   });
-  it("collapses spans past MAX_DEPTH (50) into a collapsedCount marker", () => {
-    const spans: Span[] = [];
-    for (let i = 0; i < 60; i++) {
-      spans.push(
-        span({
-          span_id: `s${i}`,
-          parent_span_id: i === 0 ? undefined : `s${i - 1}`,
-        }),
-      );
-    }
-    const flat = flattenTree(buildSpanTree(spans));
-    // Beyond the depth cap the function emits a node with collapsedCount > 0
-    // instead of continuing to recurse, so the flat list never reaches 60.
-    expect(flat.length).toBeLessThan(60);
-    expect(flat.some((n) => n.collapsedCount > 0)).toBe(true);
+
+  it("walks into expanded subtrees with depth incremented", () => {
+    const r = span({ span_id: "r" });
+    const c = span({ span_id: "c", parent_span_id: "r" });
+    const { roots } = buildTree([r, c]);
+    const rows = flattenTree(roots, new Set(["r"]), false, new Set());
+    expect(rows.map((v) => `${v.node.span.span_id}@${v.depth}`)).toEqual(["r@0", "c@1"]);
+  });
+
+  it("errorsOnly filters out rows not on the error path", () => {
+    const r = span({ span_id: "r", status: 1 });
+    const ok = span({ span_id: "ok", parent_span_id: "r", status: 0 });
+    const err = span({ span_id: "err", parent_span_id: "r", status: 1 });
+    const { roots } = buildTree([r, ok, err]);
+    const { pathSet } = detectErrorPath([r, ok, err] as UISpan[]);
+    const rows = flattenTree(roots, new Set(["r"]), true, pathSet);
+    expect(rows.map((v) => v.node.span.span_id).sort()).toEqual(["err", "r"]);
+  });
+
+  it("errorsOnly still respects collapsed subtrees", () => {
+    const r = span({ span_id: "r", status: 1 });
+    const err = span({ span_id: "err", parent_span_id: "r", status: 1 });
+    const { roots } = buildTree([r, err]);
+    const { pathSet } = detectErrorPath([r, err] as UISpan[]);
+    const rows = flattenTree(roots, new Set(), true, pathSet);
+    expect(rows.map((v) => v.node.span.span_id)).toEqual(["r"]);
   });
 });
 
-describe("percentile", () => {
-  it("returns 0 for an empty input", () => {
-    const v = percentile([], 95);
-    expect(Number.isFinite(v)).toBe(true);
-    expect(v).toBe(0);
+describe("getEntityRefs", () => {
+  it("dedupes the same entity surfacing on multiple spans", () => {
+    const a = span({ span_id: "a", attributes: { "amie.packet_id": "pkt_1" } });
+    const b = span({ span_id: "b", attributes: { "amie.packet_id": "pkt_1" } });
+    const refs = getEntityRefs([a, b]);
+    expect(refs).toHaveLength(1);
+    expect(refs[0]).toMatchObject({ kind: "AMIE packet", primaryId: "pkt_1" });
   });
-  it("returns the value when n=1", () => {
-    expect(percentile([42], 95)).toBe(42);
+  it("handles spans with null attributes without crashing", () => {
+    const a = span({ span_id: "a", attributes: null });
+    expect(getEntityRefs([a])).toEqual([]);
   });
-  it("returns that value when all inputs are identical", () => {
-    expect(percentile([7, 7, 7, 7], 95)).toBe(7);
-  });
-  it("returns a finite number for small-n input", () => {
-    const v = percentile([1, 2, 3], 95);
-    expect(Number.isFinite(v)).toBe(true);
-    expect(Number.isNaN(v)).toBe(false);
-  });
-});
-
-describe("computeSiblingP95", () => {
-  it("groups durations by parent, keyed by parent span_id", () => {
+  it("extracts each known entity key", () => {
     const spans = [
-      span({
-        span_id: "r",
-        parent_span_id: undefined,
-        start_time: "2025-01-01T00:00:00.000Z",
-        end_time: "2025-01-01T00:00:00.100Z",
-      }),
-      span({
-        span_id: "c1",
-        parent_span_id: "r",
-        start_time: "2025-01-01T00:00:00.000Z",
-        end_time: "2025-01-01T00:00:00.010Z",
-      }),
-      span({
-        span_id: "c2",
-        parent_span_id: "r",
-        start_time: "2025-01-01T00:00:00.001Z",
-        end_time: "2025-01-01T00:00:00.020Z",
-      }),
+      span({ span_id: "1", attributes: { "amie.packet_id": "pkt" } }),
+      span({ span_id: "2", attributes: { "entity.user_id": "usr" } }),
+      span({ span_id: "3", attributes: { "entity.project_id": "prj" } }),
+      span({ span_id: "4", attributes: { "project.id": "prj2" } }),
+      span({ span_id: "5", attributes: { "comanage.co_person_id": "co" } }),
+      span({ span_id: "6", attributes: { "allocation.id": "alloc" } }),
+      span({ span_id: "7", attributes: { "slurm.account": "TG-CCR" } }),
     ];
-    const tree = buildSpanTree(spans);
-    const p95 = computeSiblingP95(tree);
-    expect(p95.has("")).toBe(true); // root bucket
-    expect(p95.has("r")).toBe(true); // r's children bucket
-    expect((p95.get("r") ?? 0) > 0).toBe(true);
-  });
-  it("excludes zero-duration spans from the percentile", () => {
-    const spans = [
-      span({
-        span_id: "r",
-        parent_span_id: undefined,
-        start_time: "2025-01-01T00:00:00.000Z",
-        end_time: "2025-01-01T00:00:00.000Z",
-      }),
-    ];
-    const p95 = computeSiblingP95(buildSpanTree(spans));
-    // Only span has 0 duration, so the root bucket reduces to empty → 0.
-    expect(p95.get("")).toBe(0);
-  });
-  it("places retry roots in the empty-string root bucket alongside the original root", () => {
-    const spans = [
-      span({
-        span_id: "r",
-        parent_span_id: undefined,
-        start_time: "2025-01-01T00:00:00.000Z",
-        end_time: "2025-01-01T00:00:00.010Z",
-      }),
-      span({
-        span_id: "y",
-        parent_span_id: "r",
-        name: "retry:foo",
-        start_time: "2025-01-01T00:00:00.020Z",
-        end_time: "2025-01-01T00:00:00.030Z",
-      }),
-    ];
-    const p95 = computeSiblingP95(buildSpanTree(spans));
-    expect(p95.has("")).toBe(true);
-    expect((p95.get("") ?? 0) > 0).toBe(true);
-  });
-});
-
-describe("buildParentKeyMap", () => {
-  it("maps children to their parent span_id", () => {
-    const spans = [
-      span({ span_id: "r", parent_span_id: undefined }),
-      span({ span_id: "c", parent_span_id: "r" }),
-    ];
-    const map = buildParentKeyMap(buildSpanTree(spans));
-    expect(map.get("c")).toBe("r");
-  });
-  it("maps roots (incl. orphans) to the empty-string root key", () => {
-    const spans = [
-      span({ span_id: "r", parent_span_id: undefined }),
-      span({ span_id: "o", parent_span_id: "missing" }),
-    ];
-    const map = buildParentKeyMap(buildSpanTree(spans));
-    expect(map.get("r")).toBe("");
-    expect(map.get("o")).toBe("");
-  });
-});
-
-describe("extractLinkedEntities", () => {
-  it("walks all spans and dedupes the same packet across child + root", () => {
-    const spans = [
-      span({
-        span_id: "r",
-        parent_span_id: undefined,
-        attributes: { "amie.packet_id": "PKT-1", "amie.event_type": "request_account_create" },
-      }),
-      span({
-        span_id: "c",
-        parent_span_id: "r",
-        attributes: { "amie.packet_id": "PKT-1" },
-      }),
-    ];
-    const entities = extractLinkedEntities(spans);
-    const packets = entities.filter((e) => e.kind === "amiePacket");
-    expect(packets).toHaveLength(1);
-    expect(packets[0]?.primaryId).toBe("PKT-1");
-  });
-  it("does not throw when attributes is a string, array, or number", () => {
-    const spans = [
-      span({ span_id: "a", attributes: "not-an-object" as unknown as never }),
-      span({ span_id: "b", attributes: [1, 2, 3] as unknown as never }),
-      span({ span_id: "c", attributes: 42 as unknown as never }),
-    ];
-    expect(() => extractLinkedEntities(spans)).not.toThrow();
-    expect(extractLinkedEntities(spans)).toEqual([]);
-  });
-  it("produces an equivalent set when input order is reversed", () => {
-    const spans = [
-      span({ span_id: "a", attributes: { "amie.packet_id": "PKT-1" } }),
-      span({ span_id: "b", attributes: { "slurm.allocation_id": "ALLOC-9" } }),
-      span({ span_id: "c", attributes: { "slurm.cluster_id": "CLU-2" } }),
-    ];
-    const forward = extractLinkedEntities(spans);
-    const reversed = extractLinkedEntities([...spans].reverse());
-    const key = (e: { kind: string; primaryId?: string }) => `${e.kind}::${e.primaryId}`;
-    expect(new Set(forward.map(key))).toEqual(new Set(reversed.map(key)));
+    const kinds = getEntityRefs(spans).map((r) => r.kind);
+    expect(kinds).toEqual([
+      "AMIE packet",
+      "User",
+      "Project",
+      "Project",
+      "CO person",
+      "Allocation",
+      "Cluster account",
+    ]);
   });
 });

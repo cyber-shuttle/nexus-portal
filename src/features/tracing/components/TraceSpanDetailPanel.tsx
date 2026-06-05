@@ -1,153 +1,172 @@
 "use client";
 
-import { DrillStack } from "@/shared/ui/DrillStack";
-import { MetaItem, MetaRow } from "@/shared/ui/MetaRow";
-import { StatusBadge } from "@/shared/ui/StatusBadge";
-import { Button } from "@/shared/ui/button";
-import { CopyIcon } from "lucide-react";
-import dynamic from "next/dynamic";
-import * as React from "react";
-import type { Span } from "../types";
-import { STATUS_TO_BADGE, getSpanKindLabel, getTraceStatusInfo } from "../types";
+import { cn } from "@/lib/utils";
+import { ArrowRight } from "lucide-react";
+import type * as React from "react";
+import type { Trace, UISpan } from "../types";
 import {
-  copyTraceId,
   durationBetween,
   formatAbsoluteUtc,
   formatDurationMs,
   formatRelative,
+  isCodeShaped,
+  rowTone,
 } from "../utils";
-
-const PayloadJsonView = dynamic(() => import("./PayloadJsonView"), {
-  ssr: false,
-  loading: () => <div className="h-24 rounded-md border bg-muted/20" />,
-});
+import { CopyValue } from "./primitives/CopyValue";
+import { SourcePill } from "./primitives/SourcePill";
+import { StatusPill } from "./primitives/StatusPill";
 
 export type TraceSpanDetailPanelProps = {
-  span: Span | null;
-  rootStart: string;
-  open: boolean;
-  onClose: () => void;
+  span: UISpan | null;
+  trace: Trace;
+  source: string;
+  onOpenInRaw: () => void;
 };
 
-export function TraceSpanDetailPanel({ span, open, onClose }: TraceSpanDetailPanelProps) {
+const SECTION_LABEL_CLASS =
+  "mb-1.5 text-[11px] font-bold uppercase tracking-[0.05em] text-muted-foreground";
+
+function FactRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <DrillStack
-      open={open}
-      onClose={onClose}
-      title={span ? span.name : "Span"}
-      crumbs={[{ label: "Trace", onPop: onClose }]}
-      width="lg"
-    >
-      {span ? <SpanDetailBody span={span} /> : null}
-    </DrillStack>
+    <div className="flex items-baseline gap-3 py-1.5">
+      <span className="w-[120px] shrink-0 text-[12px] font-medium text-muted-foreground">
+        {label}
+      </span>
+      <span className="min-w-0 flex-1 text-[13px] text-foreground break-words">{children}</span>
+    </div>
   );
 }
 
-function SpanDetailBody({ span }: { span: Span }) {
-  const statusInfo = getTraceStatusInfo(span.status);
-  const durationMs = durationBetween(span.start_time, span.end_time ?? null);
-  const attrs = span.attributes;
-  const attrsIsObject = attrs != null && typeof attrs === "object";
+export function TraceSpanDetailPanel({ span, trace, source, onOpenInRaw }: TraceSpanDetailPanelProps) {
+  if (!span) {
+    return (
+      <div
+        data-testid="trace-span-detail-empty"
+        className="flex h-full shrink-0 items-center justify-center rounded-[10px] border border-[color:var(--border)] bg-[color:var(--card)] p-6 text-center text-sm text-muted-foreground"
+        style={{ width: 360 }}
+      >
+        Select a row to see span details.
+      </div>
+    );
+  }
+
+  const tone = rowTone(span);
+  const code = isCodeShaped(span.name);
+  const dur = durationBetween(span.start_time, span.end_time ?? null);
+  const attrs =
+    span.attributes && typeof span.attributes === "object" && !Array.isArray(span.attributes)
+      ? (span.attributes as Record<string, unknown>)
+      : null;
+  const attrKeys = attrs ? Object.keys(attrs).sort() : [];
 
   return (
-    <div className="space-y-5">
-      <MetaRow>
-        <MetaItem
-          label="Span ID"
-          value={
-            <span className="inline-flex items-center gap-1.5">
-              <span className="font-mono text-sm">{span.span_id}</span>
-              <button
-                type="button"
-                aria-label={`Copy span ID ${span.span_id}`}
-                onClick={() => void copyTraceId(span.span_id)}
-                className="inline-flex size-6 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <CopyIcon className="size-3.5" aria-hidden="true" />
-              </button>
-            </span>
-          }
-        />
-        <MetaItem
-          label="Parent span"
-          value={
-            span.parent_span_id ? (
-              <span className="font-mono text-sm">{span.parent_span_id}</span>
-            ) : (
-              <span className="text-muted-foreground">—</span>
-            )
-          }
-        />
-        <MetaItem label="Name" value={<span className="break-all">{span.name}</span>} />
-        <MetaItem label="Kind" value={getSpanKindLabel(span.kind)} />
-        <MetaItem
-          label="Status"
-          value={
-            <StatusBadge
-              variant={STATUS_TO_BADGE[span.status] ?? "inactive"}
-              label={statusInfo.label}
-            />
-          }
-        />
-        <MetaItem
-          label="Started"
-          value={
-            <span className="tabular-nums">
-              {formatRelative(span.start_time)}{" "}
-              <span className="text-muted-foreground">({formatAbsoluteUtc(span.start_time)})</span>
-            </span>
-          }
-        />
-        <MetaItem
-          label="Ended"
-          value={
-            span.end_time ? (
-              <span className="tabular-nums">
-                {formatRelative(span.end_time)}{" "}
-                <span className="text-muted-foreground">({formatAbsoluteUtc(span.end_time)})</span>
-              </span>
-            ) : (
-              <span className="text-muted-foreground">In progress</span>
-            )
-          }
-        />
-        <MetaItem
-          label="Duration"
-          value={
-            <span className="tabular-nums">
-              {durationMs == null ? "—" : formatDurationMs(durationMs)}
-            </span>
-          }
-        />
-      </MetaRow>
+    <div
+      data-testid="trace-span-detail"
+      className="flex shrink-0 flex-col overflow-auto rounded-[10px] border border-[color:var(--border)] bg-[color:var(--card)] p-4"
+      style={{ width: 360 }}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div
+          className={cn(
+            "min-w-0 break-words font-bold text-foreground leading-snug",
+            code ? "font-mono text-sm" : "text-[15.5px]",
+          )}
+        >
+          {span.name}
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={onOpenInRaw}
+        data-testid="trace-span-open-raw"
+        className="inline-flex items-center gap-1 self-start border-none bg-transparent py-1 text-[12px] font-semibold text-brand hover:underline"
+      >
+        Open in Raw tab <ArrowRight className="h-3 w-3" aria-hidden="true" />
+      </button>
 
-      {span.status_message ? (
-        <section aria-labelledby="span-status-message" className="space-y-2">
-          <h3 id="span-status-message" className="text-sm font-semibold">
-            Status message
-          </h3>
-          <p className="rounded-md border border-[color:var(--nexus-red-200)] bg-[color:var(--nexus-red-50)] px-3 py-2 text-xs text-[color:var(--nexus-red-700)]">
-            {span.status_message}
-          </p>
-        </section>
+      <div className="mt-2 mb-3 flex items-center gap-2">
+        <StatusPill tone={tone} />
+        <SourcePill source={source} />
+        <span className="font-mono text-[11.5px] text-muted-foreground">kind={span.kind}</span>
+      </div>
+
+      <div className="border-t border-[color:var(--border)] pt-1.5">
+        <FactRow label="Time">
+          {formatAbsoluteUtc(span.start_time)}
+          <span className="ml-1.5 text-muted-foreground">· {formatRelative(span.start_time)}</span>
+        </FactRow>
+        <FactRow label="Duration">
+          {dur == null ? "—" : formatDurationMs(dur)}
+        </FactRow>
+        {span.status_message ? (
+          <FactRow label="Status message">
+            <span className="font-mono text-[12px] font-semibold text-[color:var(--nexus-red-700)]">
+              {span.status_message}
+            </span>
+          </FactRow>
+        ) : null}
+      </div>
+
+      {attrs && typeof attrs.summary === "string" && attrs.summary ? (
+        <div className="mt-3">
+          <div className={SECTION_LABEL_CLASS}>Summary</div>
+          <div className="text-[13px] leading-relaxed text-foreground">{attrs.summary}</div>
+        </div>
       ) : null}
 
-      <section aria-labelledby="span-attributes" className="space-y-2">
-        <h3 id="span-attributes" className="text-sm font-semibold">
-          Attributes
-        </h3>
-        {attrsIsObject ? (
-          <PayloadJsonView data={attrs as object} />
-        ) : (
-          <p className="text-sm text-muted-foreground">(no attributes)</p>
-        )}
-      </section>
+      {attrKeys.length > 0 ? (
+        <div className="mt-3.5">
+          <div className={SECTION_LABEL_CLASS}>Attributes</div>
+          <div className="overflow-hidden rounded-md border border-[color:var(--border)]">
+            {attrKeys.map((k, i) => {
+              const raw = attrs?.[k];
+              const value =
+                raw == null
+                  ? ""
+                  : typeof raw === "string"
+                    ? raw
+                    : typeof raw === "number" || typeof raw === "boolean"
+                      ? String(raw)
+                      : JSON.stringify(raw);
+              return (
+                <div
+                  key={k}
+                  className={cn(
+                    "flex items-baseline gap-2.5 px-2.5 py-1.5",
+                    i % 2 === 1 ? "bg-[color:var(--muted-2)]" : "bg-[color:var(--card)]",
+                  )}
+                >
+                  <span className="w-[46%] shrink-0 break-all font-mono text-[11.5px] text-muted-foreground">
+                    {k}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <CopyValue value={value} label={k} explicit />
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
 
-      <div className="flex flex-wrap gap-2 border-t border-border/60 pt-4">
-        <Button variant="outline" size="sm" onClick={() => void copyTraceId(span.span_id)}>
-          Copy span ID
-        </Button>
+      <div className="mt-3.5 flex flex-col gap-2 border-t border-[color:var(--border)] pt-2.5">
+        <IdRow label="Trace ID" value={trace.trace_id} />
+        <IdRow label="Span ID" value={span.span_id} />
+        {span.parent_span_id ? <IdRow label="Parent" value={span.parent_span_id} /> : null}
       </div>
+    </div>
+  );
+}
+
+function IdRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center gap-3">
+      <span className="w-[64px] shrink-0 text-[12px] font-medium text-muted-foreground">
+        {label}
+      </span>
+      <span className="min-w-0 flex-1 truncate font-mono text-xs">
+        <CopyValue value={value} label={label} explicit />
+      </span>
     </div>
   );
 }

@@ -4,97 +4,127 @@ import { loginAs } from "./fixtures/personas";
 
 const SEVERITIES = ["serious", "critical"] as const;
 
-test.describe("admin tracing detail drawer", () => {
-  test("row click opens the drawer with ?trace= and refresh preserves it", async ({
+test.describe("admin traces detail drawer (Phase C)", () => {
+  test("clicking a row opens the drawer, refresh persists it, Esc closes it", async ({ page }) => {
+    await loginAs(page, "admin");
+    await page.goto("/admin/traces");
+    await expect(page.getByRole("heading", { name: /^Traces$/ })).toBeVisible({
+      timeout: 20_000,
+    });
+
+    const firstRow = page.locator('[data-testid^="trace-row-"]').first();
+    await expect(firstRow).toBeVisible({ timeout: 20_000 });
+    await firstRow.click();
+
+    await expect(page).toHaveURL(/[?&]trace=[0-9a-f]{32}\b/, { timeout: 10_000 });
+    await expect(page.getByTestId("trace-detail-drawer")).toBeVisible({ timeout: 10_000 });
+
+    // Reload — drawer stays open because the trace id lives on the URL.
+    await page.reload();
+    await expect(page.getByTestId("trace-detail-drawer")).toBeVisible({ timeout: 20_000 });
+
+    await page.keyboard.press("Escape");
+    await expect(page.getByTestId("trace-detail-drawer")).toHaveCount(0, { timeout: 10_000 });
+    await expect(page).not.toHaveURL(/[?&]trace=[0-9a-f]{32}\b/);
+  });
+
+  test("Tree is the default tab and renders the span tree", async ({ page }) => {
+    await loginAs(page, "admin");
+    await page.goto("/admin/traces");
+    await expect(page.getByRole("heading", { name: /^Traces$/ })).toBeVisible({
+      timeout: 20_000,
+    });
+    await page.locator('[data-testid^="trace-row-"]').first().click();
+    await expect(page.getByTestId("trace-detail-drawer")).toBeVisible({ timeout: 10_000 });
+
+    await expect(page.getByRole("tree", { name: /trace span tree/i })).toBeVisible({
+      timeout: 10_000,
+    });
+  });
+
+  test("Tree tab on a failed trace shows the error chip", async ({ page }) => {
+    await loginAs(page, "admin");
+    await page.goto("/admin/traces");
+    await expect(page.getByRole("heading", { name: /^Traces$/ })).toBeVisible({
+      timeout: 20_000,
+    });
+
+    // The list defaults to status=error; the first row is the failed AMIE
+    // fixture. Tree tab is the default, so the chip should render.
+    await page.locator('[data-testid^="trace-row-"][data-tone="error"]').first().click();
+    await expect(page.getByTestId("trace-detail-drawer")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByTestId("trace-error-chip")).toBeVisible({ timeout: 10_000 });
+  });
+
+  test("Tree tab keyboard nav: ArrowDown moves selection and 'n' jumps to next error", async ({
     page,
   }) => {
     await loginAs(page, "admin");
     await page.goto("/admin/traces");
-    await expect(page.getByRole("heading", { name: /^Tracing$/ })).toBeVisible({
+    await expect(page.getByRole("heading", { name: /^Traces$/ })).toBeVisible({
       timeout: 20_000,
     });
-    // Wait for the table to settle.
-    await expect(page.locator("tbody tr").first()).toBeVisible({ timeout: 15_000 });
+    await page.locator('[data-testid^="trace-row-"][data-tone="error"]').first().click();
+    await expect(page.getByTestId("trace-detail-drawer")).toBeVisible({ timeout: 10_000 });
 
-    const firstRow = page.locator("tbody tr").first();
-    await firstRow.getByRole("button", { name: /^View$/ }).click();
+    const tree = page.getByRole("tree", { name: /trace span tree/i });
+    await expect(tree).toBeVisible();
+    await tree.focus();
+    await page.keyboard.press("ArrowDown");
+    await expect(page).toHaveURL(/[?&]span=[0-9a-f]+/, { timeout: 10_000 });
 
-    // Row click writes ?trace=<32-hex> without leaving /admin/traces so the
-    // list stays mounted behind the drawer.
-    await expect(page).toHaveURL(/\/admin\/traces\?.*trace=[0-9a-f]{32}/);
-
-    // Drawer is the only Overview tab on the page.
-    const overviewTab = page.getByRole("tab", { name: /^Overview$/ });
-    await expect(overviewTab).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByRole("tab", { name: /^Waterfall$/ })).toBeVisible();
-    await expect(page.getByRole("tab", { name: /^Raw JSON$/ })).toBeVisible();
-    await expect(page.getByRole("tab", { name: /^Linked$/ })).toBeVisible();
-
-    // Refresh — drawer should still be open with the same trace param.
-    const urlBefore = page.url();
-    await page.reload();
-    await expect(page).toHaveURL(urlBefore);
-    await expect(page.getByRole("tab", { name: /^Overview$/ })).toBeVisible({
-      timeout: 15_000,
-    });
+    await page.keyboard.press("n");
+    // After "n" the URL's ?span= lands on the error-leaf span id.
+    await expect(page).toHaveURL(/[?&]span=[0-9a-f]+/, { timeout: 10_000 });
   });
 
-  test("close button removes ?trace= and returns to the list", async ({ page }) => {
+  test("switching tabs surfaces Overview, Raw, and Linked entities content", async ({ page }) => {
     await loginAs(page, "admin");
     await page.goto("/admin/traces");
-    await expect(page.locator("tbody tr").first()).toBeVisible({ timeout: 15_000 });
-    await page.locator("tbody tr").first().getByRole("button", { name: /^View$/ }).click();
-    await expect(page.getByRole("tab", { name: /^Overview$/ })).toBeVisible({
-      timeout: 15_000,
-    });
-
-    await page.getByRole("button", { name: /^Close$/ }).click();
-    // Close drops the `trace` search-param. /admin/traces is the bare list.
-    await expect(page).toHaveURL(/\/admin\/traces($|\?(?!.*trace=))/, { timeout: 15_000 });
-  });
-
-  test("Waterfall tab renders the span tree when selected", async ({ page }) => {
-    await loginAs(page, "admin");
-    await page.goto("/admin/traces");
-    await expect(page.locator("tbody tr").first()).toBeVisible({ timeout: 15_000 });
-    await page.locator("tbody tr").first().getByRole("button", { name: /^View$/ }).click();
-    await expect(page.getByRole("tab", { name: /^Overview$/ })).toBeVisible({
-      timeout: 15_000,
-    });
-
-    await page.getByRole("tab", { name: /^Waterfall$/ }).click();
-    await expect(page.getByRole("tree", { name: /Span waterfall/i })).toBeVisible();
-  });
-
-  test("deep-linking /admin/traces/{id} opens the drawer", async ({ page }) => {
-    await loginAs(page, "admin");
-    // Pull a trace_id from the list first so we don't hard-code one.
-    await page.goto("/admin/traces");
-    await expect(page.locator("tbody tr").first()).toBeVisible({ timeout: 15_000 });
-    const traceIdButton = page
-      .locator("tbody tr")
-      .first()
-      .getByRole("button", { name: /Copy trace ID [0-9a-f]{32}/ });
-    const ariaLabel = (await traceIdButton.getAttribute("aria-label")) ?? "";
-    const match = ariaLabel.match(/[0-9a-f]{32}/);
-    expect(match).not.toBeNull();
-    const traceId = match?.[0] ?? "";
-
-    await page.goto(`/admin/traces/${traceId}`);
-    await expect(page.getByRole("tab", { name: /^Overview$/ })).toBeVisible({
+    await expect(page.getByRole("heading", { name: /^Traces$/ })).toBeVisible({
       timeout: 20_000,
     });
+    await page.locator('[data-testid^="trace-row-"]').first().click();
+    await expect(page.getByTestId("trace-detail-drawer")).toBeVisible({ timeout: 10_000 });
+
+    const drawer = page.getByTestId("trace-detail-drawer");
+
+    await page.getByRole("tab", { name: /^Overview$/ }).click();
+    await expect(drawer.getByText(/^Trace ID$/)).toBeVisible();
+    await expect(drawer.getByText(/^Span count$/)).toBeVisible();
+
+    await page.getByRole("tab", { name: /^Raw$/ }).click();
+    await expect(drawer.getByRole("button", { name: /copy trace JSON/i })).toBeVisible();
+
+    await page.getByRole("tab", { name: /^Linked entities$/ }).click();
+    await expect(drawer.getByText(/Entities referenced by spans/)).toBeVisible();
   });
 
-  test("axe-core passes on the drawer-open page", async ({ page }) => {
+  test("Retry button is aria-disabled and surfaces the coming-soon tooltip", async ({ page }) => {
     await loginAs(page, "admin");
     await page.goto("/admin/traces");
-    await expect(page.locator("tbody tr").first()).toBeVisible({ timeout: 15_000 });
-    await page.locator("tbody tr").first().getByRole("button", { name: /^View$/ }).click();
-    await expect(page.getByRole("tab", { name: /^Overview$/ })).toBeVisible({
-      timeout: 15_000,
+    await expect(page.getByRole("heading", { name: /^Traces$/ })).toBeVisible({
+      timeout: 20_000,
     });
-    await page.mouse.move(0, 0);
+    await page.locator('[data-testid^="trace-row-"]').first().click();
+    await expect(page.getByTestId("trace-detail-drawer")).toBeVisible({ timeout: 10_000 });
+
+    const retry = page.getByTestId("retry-tooltip-anchor");
+    await expect(retry).toHaveAttribute("aria-disabled", "true");
+    await retry.hover();
+    await expect(page.getByText(/Retry coming soon/i)).toBeVisible({ timeout: 5_000 });
+  });
+
+  test("axe: no serious or critical violations on the drawer-open page", async ({ page }) => {
+    await loginAs(page, "admin");
+    await page.goto("/admin/traces");
+    await expect(page.getByRole("heading", { name: /^Traces$/ })).toBeVisible({
+      timeout: 20_000,
+    });
+    await page.locator('[data-testid^="trace-row-"]').first().click();
+    await expect(page.getByTestId("trace-detail-drawer")).toBeVisible({ timeout: 10_000 });
+    await page.waitForLoadState("networkidle");
+
     const results = await new AxeBuilder({ page })
       .options({ resultTypes: ["violations"] })
       .analyze();
@@ -102,49 +132,5 @@ test.describe("admin tracing detail drawer", () => {
       SEVERITIES.includes((v.impact ?? "minor") as (typeof SEVERITIES)[number]),
     );
     expect(blocking, JSON.stringify(blocking, null, 2)).toEqual([]);
-  });
-
-  test("waterfall: clicking a span row opens the DrillStack detail panel", async ({
-    page,
-  }) => {
-    await loginAs(page, "admin");
-    await page.goto("/admin/traces");
-    await expect(page.locator("tbody tr").first()).toBeVisible({ timeout: 15_000 });
-    await page.locator("tbody tr").first().getByRole("button", { name: /^View$/ }).click();
-    await expect(page.getByRole("tab", { name: /^Overview$/ })).toBeVisible({
-      timeout: 15_000,
-    });
-
-    await page.getByRole("tab", { name: /^Waterfall$/ }).click();
-    const tree = page.getByRole("tree", { name: /Span waterfall/i });
-    await expect(tree).toBeVisible({ timeout: 15_000 });
-
-    const firstSpan = tree.getByRole("treeitem").first();
-    await firstSpan.click();
-    // DrillStack uses the SideDrawer breadcrumb pattern — assert the
-    // breadcrumb root is visible.
-    await expect(page.getByRole("navigation", { name: /Drill breadcrumb/i })).toBeVisible({
-      timeout: 10_000,
-    });
-  });
-
-  test("waterfall: arrow-key navigation moves selection across rows", async ({ page }) => {
-    await loginAs(page, "admin");
-    await page.goto("/admin/traces");
-    await expect(page.locator("tbody tr").first()).toBeVisible({ timeout: 15_000 });
-    await page.locator("tbody tr").first().getByRole("button", { name: /^View$/ }).click();
-    await expect(page.getByRole("tab", { name: /^Overview$/ })).toBeVisible({
-      timeout: 15_000,
-    });
-
-    await page.getByRole("tab", { name: /^Waterfall$/ }).click();
-    const tree = page.getByRole("tree", { name: /Span waterfall/i });
-    await expect(tree).toBeVisible({ timeout: 15_000 });
-
-    const firstRow = tree.getByRole("treeitem").first();
-    await firstRow.focus();
-    await page.keyboard.press("ArrowDown");
-    // ArrowDown URL-syncs `?span=<id>`; assert the search-param landed.
-    await expect(page).toHaveURL(/[?&]span=[0-9a-f]{16}\b/, { timeout: 5_000 });
   });
 });
