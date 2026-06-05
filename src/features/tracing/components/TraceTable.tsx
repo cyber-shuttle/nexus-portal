@@ -116,12 +116,12 @@ function TraceRow({ trace, onView }: { trace: Trace; onView(id: string): void })
           </span>
         </div>
         {isErr && errorSummary && (
-          <div className="ml-4 mt-0.5 truncate text-[12.5px] font-medium text-[color:var(--nexus-red-700)]">
+          <div className="ml-4 mt-0.5 truncate text-[12.5px] font-medium text-[color:var(--banner-error-fg)]">
             {errorSummary}
           </div>
         )}
         {isRunning && (
-          <div className="ml-4 mt-0.5 truncate text-[12.5px] italic text-[color:var(--nexus-amber-700)]">
+          <div className="ml-4 mt-0.5 truncate text-[12.5px] italic text-[color:var(--tone-warn-fg)]">
             …still running
           </div>
         )}

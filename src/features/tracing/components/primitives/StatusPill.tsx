@@ -25,19 +25,19 @@ const TONE_STYLES: Record<
 > = {
   ok: {
     dot: "bg-[color:var(--nexus-green-500)]",
-    pill: "bg-[color:var(--nexus-green-50)] text-[color:var(--nexus-green-700)]",
+    pill: "bg-[color:var(--tone-ok-bg)] text-[color:var(--tone-ok-fg)]",
     hollow: false,
     pulse: false,
   },
   error: {
     dot: "bg-[color:var(--nexus-red-500)]",
-    pill: "bg-[color:var(--nexus-red-50)] text-[color:var(--nexus-red-700)]",
+    pill: "bg-[color:var(--tone-error-bg)] text-[color:var(--tone-error-fg)]",
     hollow: false,
     pulse: false,
   },
   "in-progress": {
     dot: "bg-[color:var(--nexus-amber-500)]",
-    pill: "bg-[color:var(--nexus-amber-50)] text-[color:var(--nexus-amber-700)]",
+    pill: "bg-[color:var(--tone-warn-bg)] text-[color:var(--tone-warn-fg)]",
     hollow: false,
     pulse: true,
   },

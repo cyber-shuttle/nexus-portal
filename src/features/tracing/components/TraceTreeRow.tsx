@@ -91,7 +91,7 @@ export function TraceTreeRow({
   const rowBg = isSelected
     ? "var(--brand-tint)"
     : isPreciseFailure
-      ? "color-mix(in oklab, var(--nexus-red-50) 60%, transparent)"
+      ? "var(--tone-error-bg)"
       : undefined;
 
   return (
@@ -184,7 +184,7 @@ export function TraceTreeRow({
       {hasHiddenError && (
         <span
           title="Contains a failed span"
-          className="inline-flex shrink-0 items-center text-[color:var(--nexus-red-600)]"
+          className="inline-flex shrink-0 items-center text-[color:var(--banner-error-icon)]"
         >
           <AlertTriangle className="h-3 w-3" aria-hidden="true" />
         </span>
@@ -202,7 +202,7 @@ export function TraceTreeRow({
         style={{ maxWidth: "46%" }}
       >
         {errStatus != null && (
-          <span className="overflow-hidden font-mono text-ellipsis text-[color:var(--nexus-red-700)]">
+          <span className="overflow-hidden font-mono text-ellipsis text-[color:var(--banner-error-fg)]">
             status={String(errStatus)}
           </span>
         )}
@@ -215,7 +215,7 @@ export function TraceTreeRow({
         ) : null}
         {isPreciseFailure && (
           <AlertTriangle
-            className="h-3 w-3 shrink-0 text-[color:var(--nexus-red-600)]"
+            className="h-3 w-3 shrink-0 text-[color:var(--banner-error-icon)]"
             aria-hidden="true"
           />
         )}

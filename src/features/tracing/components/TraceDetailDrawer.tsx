@@ -130,7 +130,7 @@ export function TraceDetailDrawer({
               : "data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
           )}
           style={{
-            background: "rgba(15,23,42,0.32)",
+            background: "var(--drawer-scrim)",
             transitionDuration: reducedMotion ? "0ms" : "180ms",
           }}
         />
@@ -143,7 +143,7 @@ export function TraceDetailDrawer({
               : "data-open:animate-in data-open:slide-in-from-right-12 data-closed:animate-out data-closed:slide-out-to-right-12",
           )}
           style={{
-            width: "min(1080px, 94vw)",
+            width: "min(1080px, calc(100vw - 96px))",
             boxShadow: "var(--shadow-drawer)",
             transitionDuration: reducedMotion ? "0ms" : "220ms",
           }}
@@ -292,9 +292,9 @@ function DrawerContent({
                 {trace.root_name}
               </div>
               {showErrorLine && (
-                <div className="mt-1.5 flex items-center gap-1.5 text-[13.5px] font-semibold text-[color:var(--nexus-red-700)]">
+                <div className="mt-1.5 flex items-center gap-1.5 text-[13.5px] font-semibold text-[color:var(--banner-error-fg)]">
                   <AlertTriangle
-                    className="h-3.5 w-3.5 shrink-0 text-[color:var(--nexus-red-600)]"
+                    className="h-3.5 w-3.5 shrink-0 text-[color:var(--banner-error-icon)]"
                     aria-hidden="true"
                   />
                   <span>

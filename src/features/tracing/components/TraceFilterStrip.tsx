@@ -185,22 +185,40 @@ export function TraceFilterStrip({ value, onChange }: TraceFilterStripProps) {
         </fieldset>
       </div>
 
-      <div className="relative mt-3">
-        <Search
-          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-          aria-hidden="true"
-        />
-        <input
-          type="search"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search trace_id / span_id / entity / action…"
-          aria-label="Search traces"
-          className={cn(
-            "h-[38px] w-full rounded-md border bg-card pl-9 pr-3 text-[13.5px] text-foreground outline-none",
-            "border-[color:var(--border-strong)] focus-visible:ring-2 focus-visible:ring-ring",
-          )}
-        />
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <div className="relative min-w-[260px] flex-1">
+          <Search
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+            aria-hidden="true"
+          />
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search trace_id / span_id / entity / action…"
+            aria-label="Search traces"
+            className={cn(
+              "h-[38px] w-full rounded-md border bg-card pl-9 pr-3 text-[13.5px] text-foreground outline-none",
+              "border-[color:var(--border-strong)] focus-visible:ring-2 focus-visible:ring-ring",
+            )}
+          />
+        </div>
+        {value.failingOver24h && (
+          <button
+            type="button"
+            data-testid="failing-over-24h-chip"
+            aria-label="Clear Failing >24h filter"
+            onClick={() => onChange({ ...value, failingOver24h: false, page: 1 })}
+            className={cn(
+              "inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-[12.5px] font-semibold transition-colors",
+              "border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              "border-[color:var(--brand)] bg-[color:var(--brand-tint)] text-[color:var(--brand)]",
+            )}
+          >
+            <span>Failing &gt;24h</span>
+            <span aria-hidden="true">×</span>
+          </button>
+        )}
       </div>
     </Card>
   );

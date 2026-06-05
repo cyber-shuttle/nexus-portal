@@ -100,7 +100,7 @@ export function TraceSpanDetailPanel({ span, trace, source, onOpenInRaw }: Trace
         </FactRow>
         {span.status_message ? (
           <FactRow label="Status message">
-            <span className="font-mono text-[12px] font-semibold text-[color:var(--nexus-red-700)]">
+            <span className="font-mono text-[12px] font-semibold text-[color:var(--banner-error-fg)]">
               {span.status_message}
             </span>
           </FactRow>

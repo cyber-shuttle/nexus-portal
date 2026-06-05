@@ -25,16 +25,16 @@ describe("TraceRawTab", () => {
     expect(screen.getByText(/10 spans/)).toBeInTheDocument();
   });
 
-  it("emits highlighted tokens for keys (purple) and strings (green)", () => {
+  it("emits highlighted tokens for keys (syntax-key) and strings (syntax-str)", () => {
     const { container } = render(<TraceRawTab trace={trace} spans={spans} />);
     const pre = container.querySelector('[data-testid="trace-raw-json"]');
     expect(pre).not.toBeNull();
     const keys = pre?.querySelectorAll('[data-token="key"]');
     expect((keys?.length ?? 0)).toBeGreaterThan(0);
-    const purple = Array.from(keys ?? []).find((el) =>
-      (el.getAttribute("style") ?? "").includes("--nexus-purple-700"),
+    const keyToken = Array.from(keys ?? []).find((el) =>
+      (el.getAttribute("style") ?? "").includes("--syntax-key"),
     );
-    expect(purple).toBeTruthy();
+    expect(keyToken).toBeTruthy();
     const strings = pre?.querySelectorAll('[data-token="str"]');
     expect((strings?.length ?? 0)).toBeGreaterThan(0);
   });

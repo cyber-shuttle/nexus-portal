@@ -18,6 +18,7 @@ import { TraceTable } from "./TraceTable";
 import {
   DEFAULT_FILTERS,
   type ListFilters,
+  bannerBounds,
   hasActiveFilters,
   parseFilters,
   serializeFilters,
@@ -29,7 +30,6 @@ export type TraceListPageProps = {
   initialTraceId?: string;
 };
 
-const BANNER_LOOKBACK_DAYS = 1;
 const TRACE_PARAM = "trace";
 
 // Forward the trace param when reassigning URL state — keeps drawer deeplinks
@@ -56,6 +56,7 @@ export function TraceListPage({ initialTraceId }: TraceListPageProps = {}) {
   // Stable `now` per-mount keeps the from/to window from drifting between
   // re-renders (and changing the TanStack cache key).
   const nowRef = React.useRef<number>(Date.now());
+  const failing24h = React.useMemo(() => bannerBounds(nowRef.current), []);
   const { from, to } = React.useMemo(
     () => windowToFromTo(filters.window, nowRef.current),
     [filters.window],
@@ -66,19 +67,41 @@ export function TraceListPage({ initialTraceId }: TraceListPageProps = {}) {
     [filters.status],
   );
 
-  // When in-progress is the sole filter we drop status from the wire and
-  // filter the response client-side. Mixed selections leave it to the API.
+  // failingOver24h overrides status/window and pins the 30d→24h window so the
+  // banner click lands on exactly the rows the count came from. Source/search
+  // stay live on top.
   const apiFilters = React.useMemo(
-    () => ({
-      status: apiStatus.length ? apiStatus : undefined,
-      source: filters.source.length ? filters.source : undefined,
+    () =>
+      filters.failingOver24h
+        ? {
+            status: [1] as number[],
+            source: filters.source.length ? filters.source : undefined,
+            from: failing24h.from,
+            to: failing24h.to,
+            q: filters.q || undefined,
+            limit: filters.pageSize,
+            offset: (filters.page - 1) * filters.pageSize,
+          }
+        : {
+            status: apiStatus.length ? apiStatus : undefined,
+            source: filters.source.length ? filters.source : undefined,
+            from,
+            to,
+            q: filters.q || undefined,
+            limit: filters.pageSize,
+            offset: (filters.page - 1) * filters.pageSize,
+          },
+    [
+      filters.failingOver24h,
+      apiStatus,
+      filters.source,
+      filters.q,
+      filters.page,
+      filters.pageSize,
       from,
       to,
-      q: filters.q || undefined,
-      limit: filters.pageSize,
-      offset: (filters.page - 1) * filters.pageSize,
-    }),
-    [apiStatus, filters.source, filters.q, filters.page, filters.pageSize, from, to],
+      failing24h,
+    ],
   );
 
   const tracesQuery = useTraces(apiFilters);
@@ -100,22 +123,16 @@ export function TraceListPage({ initialTraceId }: TraceListPageProps = {}) {
     : (tracesQuery.data?.total ?? 0);
 
   // 24h-failing banner — separate query so it survives any active filter.
-  const bannerFrom = React.useMemo(
-    () => new Date(nowRef.current - 30 * 24 * 60 * 60 * 1000).toISOString(),
-    [],
-  );
-  const bannerTo = React.useMemo(
-    () => new Date(nowRef.current - BANNER_LOOKBACK_DAYS * 24 * 60 * 60 * 1000).toISOString(),
-    [],
-  );
   const failingQuery = useTraces({
     status: [1],
-    from: bannerFrom,
-    to: bannerTo,
+    from: failing24h.from,
+    to: failing24h.to,
     limit: 1,
   });
   const failingCount = failingQuery.data?.total ?? 0;
-  const showBanner = !failingQuery.isLoading && failingCount > 0;
+  // Hide once the user is already looking at those rows (filter is on).
+  const showBanner =
+    !failingQuery.isLoading && failingCount > 0 && !filters.failingOver24h;
 
   const onView = React.useCallback(
     (traceId: string) => {
@@ -154,8 +171,7 @@ export function TraceListPage({ initialTraceId }: TraceListPageProps = {}) {
   const applyFailingPreset = React.useCallback(() => {
     updateFilters({
       ...DEFAULT_FILTERS,
-      status: ["error"],
-      window: "30d",
+      failingOver24h: true,
       pageSize: filters.pageSize,
     });
   }, [filters.pageSize, updateFilters]);
@@ -168,7 +184,7 @@ export function TraceListPage({ initialTraceId }: TraceListPageProps = {}) {
   void traceTone;
 
   return (
-    <div className="mx-auto w-full max-w-[1280px] px-6 pb-12 pt-6 md:px-8">
+    <div className="w-full pb-12 pt-2">
       <header className="mb-2 flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="font-display text-[28px] font-bold leading-tight tracking-[-0.01em] text-foreground">
@@ -182,16 +198,18 @@ export function TraceListPage({ initialTraceId }: TraceListPageProps = {}) {
       </header>
 
       {showBanner && (
+        // biome-ignore lint/a11y/useSemanticElements: role="status" promotes the banner to a polite live region; <section> is the correct landmark and the role is additive for AT.
         <section
+          role="status"
           aria-label="Failing traces alert"
           data-testid="failing-banner"
           className={cn(
             "mt-4 flex items-center gap-3 rounded-[10px] border px-4 py-3",
-            "border-[color:var(--nexus-red-100)] bg-[color:var(--nexus-red-50)] text-[color:var(--nexus-red-700)]",
+            "border-[color:var(--banner-error-border)] bg-[color:var(--banner-error-bg)] text-[color:var(--banner-error-fg)]",
           )}
         >
           <AlertTriangle
-            className="h-4 w-4 shrink-0 text-[color:var(--nexus-red-600)]"
+            className="h-4 w-4 shrink-0 text-[color:var(--banner-error-icon)]"
             aria-hidden="true"
           />
           <span className="text-[13.5px]">
@@ -201,7 +219,7 @@ export function TraceListPage({ initialTraceId }: TraceListPageProps = {}) {
           <button
             type="button"
             onClick={applyFailingPreset}
-            className="ml-auto inline-flex items-center gap-1 text-[13px] font-semibold text-[color:var(--nexus-red-700)] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="ml-auto inline-flex items-center gap-1 text-[13px] font-semibold text-[color:var(--banner-error-fg)] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             Investigate <ArrowRight className="h-3.5 w-3.5" />
           </button>

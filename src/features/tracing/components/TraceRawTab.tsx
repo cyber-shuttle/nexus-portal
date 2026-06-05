@@ -31,12 +31,12 @@ function highlightJson(obj: unknown): { text: string; nodes: Highlighted } {
     const isStr = tok.startsWith('"') && !isKey;
     const isBool = /^(true|false|null)$/.test(tok);
     const color = isKey
-      ? "var(--nexus-purple-700)"
+      ? "var(--syntax-key)"
       : isStr
-        ? "var(--nexus-green-700)"
+        ? "var(--syntax-str)"
         : isBool
-          ? "var(--nexus-amber-700)"
-          : "var(--nexus-blue-700)";
+          ? "var(--syntax-bool)"
+          : "var(--syntax-num)";
     const tokenType = isKey ? "key" : isStr ? "str" : isBool ? "bool" : "num";
     parts.push(
       <span key={`tk-${key++}`} data-token={tokenType} style={{ color }}>
@@ -113,7 +113,7 @@ export function TraceRawTab({ trace, spans }: TraceRawTabProps) {
           aria-label={copied ? "Copied JSON" : "Copy trace JSON"}
         >
           {copied ? (
-            <Check className="h-3.5 w-3.5 text-[color:var(--nexus-green-700)]" />
+            <Check className="h-3.5 w-3.5 text-[color:var(--tone-ok-fg)]" />
           ) : (
             <Copy className="h-3.5 w-3.5" />
           )}

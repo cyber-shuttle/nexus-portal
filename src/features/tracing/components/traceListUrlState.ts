@@ -12,6 +12,7 @@ export type ListFilters = {
   q: string;
   page: number;
   pageSize: number;
+  failingOver24h: boolean;
 };
 
 export const DEFAULT_FILTERS: ListFilters = {
@@ -21,6 +22,7 @@ export const DEFAULT_FILTERS: ListFilters = {
   q: "",
   page: 1,
   pageSize: 50,
+  failingOver24h: false,
 };
 
 const VALID_STATUS: ReadonlyArray<StatusFilter> = ["error", "ok", "in-progress", "orphaned"];
@@ -63,7 +65,8 @@ export function parseFilters(params: SearchParamsLike): ListFilters {
   const pageSize = VALID_PAGE_SIZES.includes(pageSizeRaw)
     ? pageSizeRaw
     : DEFAULT_FILTERS.pageSize;
-  return { status, source, window, q, page, pageSize };
+  const failingOver24h = params.get("failingOver24h") === "1";
+  return { status, source, window, q, page, pageSize, failingOver24h };
 }
 
 function arraysEqual<T>(a: ReadonlyArray<T>, b: ReadonlyArray<T>): boolean {
@@ -85,6 +88,7 @@ export function serializeFilters(filters: ListFilters): URLSearchParams {
   if (filters.pageSize !== DEFAULT_FILTERS.pageSize) {
     params.set("pageSize", String(filters.pageSize));
   }
+  if (filters.failingOver24h) params.set("failingOver24h", "1");
   return params;
 }
 
@@ -97,7 +101,8 @@ export function hasActiveFilters(filters: ListFilters): boolean {
     statusChanged ||
     filters.source.length > 0 ||
     filters.window !== DEFAULT_FILTERS.window ||
-    filters.q.length > 0
+    filters.q.length > 0 ||
+    filters.failingOver24h
   );
 }
 
@@ -128,4 +133,15 @@ export function statusFiltersToApi(status: StatusFilter[]): {
   // backend doesn't return everything) and rely on the client filter.
   const inProgressOnly = hasInProgress && apiStatus.length === 0;
   return { apiStatus, inProgressOnly };
+}
+
+/**
+ * Bounds used by both the 24h failure banner and the "Failing >24h" filter:
+ * traces that started between 30 days ago and 24 hours ago.
+ */
+export function bannerBounds(now: number): { from: string; to: string } {
+  return {
+    from: new Date(now - 30 * 24 * 60 * 60 * 1000).toISOString(),
+    to: new Date(now - 24 * 60 * 60 * 1000).toISOString(),
+  };
 }

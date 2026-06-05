@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   DEFAULT_FILTERS,
   type ListFilters,
+  bannerBounds,
   hasActiveFilters,
   parseFilters,
   serializeFilters,
@@ -49,6 +50,12 @@ describe("traceListUrlState — parseFilters", () => {
   it("trims the q query", () => {
     expect(parseFilters(p("q=%20alice%20")).q).toBe("alice");
   });
+
+  it("defaults failingOver24h to false; accepts =1", () => {
+    expect(parseFilters(p("")).failingOver24h).toBe(false);
+    expect(parseFilters(p("failingOver24h=1")).failingOver24h).toBe(true);
+    expect(parseFilters(p("failingOver24h=0")).failingOver24h).toBe(false);
+  });
 });
 
 describe("traceListUrlState — serializeFilters", () => {
@@ -80,6 +87,17 @@ describe("traceListUrlState — serializeFilters", () => {
     expect(qs.get("page")).toBe("3");
     expect(qs.get("pageSize")).toBe("100");
   });
+
+  it("round-trips failingOver24h=1", () => {
+    const filters: ListFilters = { ...DEFAULT_FILTERS, failingOver24h: true };
+    const qs = serializeFilters(filters);
+    expect(qs.get("failingOver24h")).toBe("1");
+    expect(parseFilters(qs).failingOver24h).toBe(true);
+  });
+
+  it("omits failingOver24h when false", () => {
+    expect(serializeFilters(DEFAULT_FILTERS).has("failingOver24h")).toBe(false);
+  });
 });
 
 describe("traceListUrlState — round-trip", () => {
@@ -91,6 +109,7 @@ describe("traceListUrlState — round-trip", () => {
       q: "alice",
       page: 2,
       pageSize: 25,
+      failingOver24h: false,
     };
     const out = parseFilters(serializeFilters(f));
     expect(new Set(out.status)).toEqual(new Set(f.status));
@@ -113,6 +132,10 @@ describe("traceListUrlState — hasActiveFilters", () => {
     expect(hasActiveFilters({ ...DEFAULT_FILTERS, window: "24h" })).toBe(true);
     expect(hasActiveFilters({ ...DEFAULT_FILTERS, q: "x" })).toBe(true);
   });
+
+  it("is true when failingOver24h is on", () => {
+    expect(hasActiveFilters({ ...DEFAULT_FILTERS, failingOver24h: true })).toBe(true);
+  });
 });
 
 describe("traceListUrlState — windowToFromTo", () => {
@@ -125,6 +148,15 @@ describe("traceListUrlState — windowToFromTo", () => {
     expect(r7.from).toBe("2026-05-29T12:00:00.000Z");
     const r30 = windowToFromTo("30d", now);
     expect(r30.from).toBe("2026-05-06T12:00:00.000Z");
+  });
+});
+
+describe("traceListUrlState — bannerBounds", () => {
+  it("anchors from at 30d ago and to at 24h ago", () => {
+    const now = Date.parse("2026-06-05T12:00:00.000Z");
+    const { from, to } = bannerBounds(now);
+    expect(to).toBe("2026-06-04T12:00:00.000Z");
+    expect(from).toBe("2026-05-06T12:00:00.000Z");
   });
 });
 

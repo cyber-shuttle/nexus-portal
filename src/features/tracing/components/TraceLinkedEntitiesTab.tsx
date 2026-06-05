@@ -27,8 +27,8 @@ type EntityKindCfg = {
 const KIND_CONFIG: Record<string, EntityKindCfg> = {
   "AMIE packet": {
     Icon: Package,
-    bg: "var(--nexus-blue-50)",
-    fg: "var(--nexus-blue-700)",
+    bg: "var(--tone-info-bg)",
+    fg: "var(--tone-info-fg)",
     routeFor: (id) => `/admin/amie/packets/${encodeURIComponent(id)}`,
   },
   User: {
@@ -45,8 +45,8 @@ const KIND_CONFIG: Record<string, EntityKindCfg> = {
   },
   "CO person": {
     Icon: Users,
-    bg: "var(--nexus-purple-50)",
-    fg: "var(--nexus-purple-700)",
+    bg: "var(--tone-accent-bg)",
+    fg: "var(--tone-accent-fg)",
     routeFor: null,
   },
   Allocation: {
@@ -57,8 +57,8 @@ const KIND_CONFIG: Record<string, EntityKindCfg> = {
   },
   "Cluster account": {
     Icon: Server,
-    bg: "var(--nexus-amber-50)",
-    fg: "var(--nexus-amber-700)",
+    bg: "var(--tone-warn-bg)",
+    fg: "var(--tone-warn-fg)",
     routeFor: null,
   },
 };

@@ -311,7 +311,7 @@ export function TraceTreeTab({ trace, spans, onSwitchToTab }: TraceTreeTabProps)
     if (hasRunning) {
       return (
         <span className="tabular-nums text-muted-foreground">
-          {n} spans · <span className="text-[color:var(--nexus-amber-700)]">running</span>
+          {n} spans · <span className="text-[color:var(--tone-warn-fg)]">running</span>
         </span>
       );
     }
@@ -320,7 +320,7 @@ export function TraceTreeTab({ trace, spans, onSwitchToTab }: TraceTreeTabProps)
     }
     return (
       <span className="tabular-nums text-muted-foreground">
-        {n} spans · <span className="text-[color:var(--nexus-green-700)]">all ok</span>
+        {n} spans · <span className="text-[color:var(--tone-ok-fg)]">all ok</span>
       </span>
     );
   })();
@@ -446,9 +446,9 @@ function TraceErrorChip({ count, cursor, onPrev, onNext, onJump }: TraceErrorChi
       data-testid="trace-error-chip"
       className="mb-3 flex items-center gap-2.5 rounded-[10px] border px-3 py-2.5 text-[13px] font-semibold"
       style={{
-        background: "var(--nexus-red-50)",
-        borderColor: "var(--nexus-red-100)",
-        color: "var(--nexus-red-700)",
+        background: "var(--banner-error-bg)",
+        borderColor: "var(--banner-error-border)",
+        color: "var(--banner-error-fg)",
       }}
     >
       <AlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
@@ -465,8 +465,8 @@ function TraceErrorChip({ count, cursor, onPrev, onNext, onJump }: TraceErrorChi
               onClick={onPrev}
               aria-label="Previous error"
               data-testid="trace-error-chip-prev"
-              className="inline-flex h-[22px] w-[22px] items-center justify-center rounded-md border bg-[color:var(--card)] text-[color:var(--nexus-red-700)]"
-              style={{ borderColor: "var(--nexus-red-100)" }}
+              className="inline-flex h-[22px] w-[22px] items-center justify-center rounded-md border bg-[color:var(--card)] text-[color:var(--banner-error-fg)]"
+              style={{ borderColor: "var(--banner-error-border)" }}
             >
               <ArrowUp className="h-3 w-3" aria-hidden="true" />
             </button>
@@ -475,8 +475,8 @@ function TraceErrorChip({ count, cursor, onPrev, onNext, onJump }: TraceErrorChi
               onClick={onNext}
               aria-label="Next error"
               data-testid="trace-error-chip-next"
-              className="inline-flex h-[22px] w-[22px] items-center justify-center rounded-md border bg-[color:var(--card)] text-[color:var(--nexus-red-700)]"
-              style={{ borderColor: "var(--nexus-red-100)" }}
+              className="inline-flex h-[22px] w-[22px] items-center justify-center rounded-md border bg-[color:var(--card)] text-[color:var(--banner-error-fg)]"
+              style={{ borderColor: "var(--banner-error-border)" }}
             >
               <ArrowDown className="h-3 w-3" aria-hidden="true" />
             </button>
@@ -487,7 +487,7 @@ function TraceErrorChip({ count, cursor, onPrev, onNext, onJump }: TraceErrorChi
         type="button"
         onClick={onJump}
         data-testid="trace-error-chip-jump"
-        className="ml-auto inline-flex items-center gap-1 border-none bg-transparent text-[12.5px] font-semibold text-[color:var(--nexus-red-700)] hover:underline"
+        className="ml-auto inline-flex items-center gap-1 border-none bg-transparent text-[12.5px] font-semibold text-[color:var(--banner-error-fg)] hover:underline"
       >
         jump to row <ArrowRight className="h-3 w-3" aria-hidden="true" />
       </button>

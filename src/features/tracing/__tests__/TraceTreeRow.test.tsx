@@ -82,7 +82,7 @@ describe("TraceTreeRow", () => {
     const bar = node?.querySelector('span[aria-hidden="true"]');
     expect(bar).toBeTruthy();
     const style = (node as HTMLElement)?.getAttribute("style") ?? "";
-    expect(style).toMatch(/color-mix|var\(--nexus-red-50\)/);
+    expect(style).toMatch(/var\(--tone-error-bg\)/);
   });
 
   it("ancestor error row keeps calm — no precise treatment", () => {
@@ -104,7 +104,7 @@ describe("TraceTreeRow", () => {
     expect(node).not.toBeNull();
     expect(node?.getAttribute("data-precise")).toBeNull();
     const style = (node as HTMLElement)?.getAttribute("style") ?? "";
-    expect(style).not.toMatch(/nexus-red-50/);
+    expect(style).not.toMatch(/tone-error-bg/);
   });
 
   it("shows the (orphan) tag when span.orphan is true", () => {

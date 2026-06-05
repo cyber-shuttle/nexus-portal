@@ -70,4 +70,19 @@ describe("TraceFilterStrip", () => {
     const last = onChange.mock.calls.at(-1)?.[0];
     expect(last?.source).toEqual(["amie"]);
   });
+
+  it("renders the Failing >24h chip when filter is on, and clears it on click", () => {
+    const { onChange } = renderStrip({ ...DEFAULT_FILTERS, failingOver24h: true, page: 4 });
+    const chip = screen.getByTestId("failing-over-24h-chip");
+    expect(chip).toBeInTheDocument();
+    fireEvent.click(chip);
+    const last = onChange.mock.calls.at(-1)?.[0];
+    expect(last?.failingOver24h).toBe(false);
+    expect(last?.page).toBe(1);
+  });
+
+  it("does not render the Failing >24h chip when filter is off", () => {
+    renderStrip();
+    expect(screen.queryByTestId("failing-over-24h-chip")).toBeNull();
+  });
 });

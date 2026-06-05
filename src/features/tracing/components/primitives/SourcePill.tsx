@@ -7,9 +7,9 @@ export type SourcePillProps = {
 };
 
 const SOURCE_STYLES: Record<string, string> = {
-  amie: "bg-[color:var(--nexus-blue-50)] text-[color:var(--nexus-blue-700)]",
-  comanage: "bg-[color:var(--nexus-purple-50)] text-[color:var(--nexus-purple-700)]",
-  slurm: "bg-[color:var(--nexus-amber-50)] text-[color:var(--nexus-amber-700)]",
+  amie: "bg-[color:var(--tone-info-bg)] text-[color:var(--tone-info-fg)]",
+  comanage: "bg-[color:var(--tone-accent-bg)] text-[color:var(--tone-accent-fg)]",
+  slurm: "bg-[color:var(--tone-warn-bg)] text-[color:var(--tone-warn-fg)]",
   http: "bg-muted text-muted-foreground",
   core: "bg-muted text-muted-foreground",
 };
