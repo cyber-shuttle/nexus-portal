@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/shared/ui/button";
+import { ChevronDown } from "lucide-react";
 import * as React from "react";
 
 export type DataTableColumn<T> = {
@@ -21,6 +22,8 @@ export type DataTablePagination = {
   pageSize: number;
   total: number;
   onPageChange: (page: number) => void;
+  onPageSizeChange?: (size: number) => void;
+  pageSizeOptions?: number[];
 };
 
 export type DataTableProps<T> = {
@@ -45,7 +48,12 @@ export function DataTable<T>({
   className,
 }: DataTableProps<T>) {
   return (
-    <div className={cn("overflow-hidden rounded-lg border border-border bg-card", className)}>
+    <div
+      className={cn(
+        "overflow-hidden rounded-lg border border-border bg-card",
+        className,
+      )}
+    >
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
           {caption ? <caption className="sr-only">{caption}</caption> : null}
@@ -71,7 +79,11 @@ export function DataTable<T>({
             {rows.length === 0 ? (
               <tr>
                 <td colSpan={columns.length} className="px-4 py-12 text-center">
-                  {empty ?? <span className="text-sm text-muted-foreground">No data.</span>}
+                  {empty ?? (
+                    <span className="text-sm text-muted-foreground">
+                      No data.
+                    </span>
+                  )}
                 </td>
               </tr>
             ) : (
@@ -90,7 +102,12 @@ export function DataTable<T>({
                           // Ignore clicks on interactive children (buttons,
                           // checkboxes, links) — they have their own handlers.
                           const target = e.target as HTMLElement;
-                          if (target.closest("button, a, input, select, textarea, label")) return;
+                          if (
+                            target.closest(
+                              "button, a, input, select, textarea, label",
+                            )
+                          )
+                            return;
                           onRowClick(row);
                         }
                       : undefined
@@ -98,7 +115,10 @@ export function DataTable<T>({
                   onKeyDown={
                     onRowClick
                       ? (e) => {
-                          if (e.key === "Enter" && e.target === e.currentTarget) {
+                          if (
+                            e.key === "Enter" &&
+                            e.target === e.currentTarget
+                          ) {
                             onRowClick(row);
                           }
                         }
@@ -155,7 +175,14 @@ export function DataTable<T>({
 }
 
 function DataTablePager({ pagination }: { pagination: DataTablePagination }) {
-  const { page, pageSize, total, onPageChange } = pagination;
+  const {
+    page,
+    pageSize,
+    total,
+    onPageChange,
+    onPageSizeChange,
+    pageSizeOptions = [10, 20, 50, 100],
+  } = pagination;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const start = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const end = Math.min(total, page * pageSize);
@@ -164,32 +191,57 @@ function DataTablePager({ pagination }: { pagination: DataTablePagination }) {
       <span>
         Showing {start}–{end} of {total}
       </span>
-      <div className="flex items-center gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onPageChange(Math.max(1, page - 1))}
-          disabled={page <= 1}
-        >
-          Previous
-        </Button>
-        {/* Active page renders as solid primary (near-black) to match the
-            collaborator's tables; sibling prev/next are outlined. */}
-        <span
-          aria-current="page"
-          className="inline-flex h-8 min-w-8 items-center justify-center rounded-md bg-primary px-3 text-[0.8rem] font-semibold text-primary-foreground"
-        >
-          {page}
-        </span>
-        <span className="text-muted-foreground">of {totalPages}</span>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onPageChange(Math.min(totalPages, page + 1))}
-          disabled={page >= totalPages}
-        >
-          Next
-        </Button>
+      <div className="flex items-center gap-4">
+        {onPageSizeChange && (
+          <div className="flex items-center gap-2">
+            <span>Rows per page</span>
+            <div className="relative">
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  onPageSizeChange(Number(e.target.value));
+                  onPageChange(1);
+                }}
+                aria-label="Rows per page"
+                className="h-8 appearance-none rounded-md border border-border bg-background pl-2 pr-8 text-xs"
+              >
+                {pageSizeOptions.map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3 w-3 -translate-y-1/2 text-muted-foreground" />
+            </div>
+          </div>
+        )}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(Math.max(1, page - 1))}
+            disabled={page <= 1}
+          >
+            Previous
+          </Button>
+          {/* Active page renders as solid primary (near-black) to match the
+              collaborator's tables; sibling prev/next are outlined. */}
+          <span
+            aria-current="page"
+            className="inline-flex h-8 min-w-8 items-center justify-center rounded-md bg-primary px-3 text-[0.8rem] font-semibold text-primary-foreground"
+          >
+            {page}
+          </span>
+          <span className="text-muted-foreground">of {totalPages}</span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(Math.min(totalPages, page + 1))}
+            disabled={page >= totalPages}
+          >
+            Next
+          </Button>
+        </div>
       </div>
     </div>
   );

@@ -1,13 +1,33 @@
 "use client";
 
+import { useFeedback } from "@/features/feedback/FeedbackProvider";
 import { cn } from "@/lib/utils";
 import { Button } from "@/shared/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/shared/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/ui/tooltip";
-import { Bell, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Bell,
+  ChevronLeft,
+  ChevronRight,
+  CircleHelp,
+  Headset,
+  MessageSquarePlus,
+  Settings,
+} from "lucide-react";
+import { useSession } from "next-auth/react";
+
 import { useRouter } from "next/navigation";
 import { Breadcrumbs } from "./Breadcrumbs";
 import { UserPill } from "./UserPill";
 import { useNavHistory } from "./useNavHistory";
+
+const SUPPORT_MAILTO =
+  "mailto:support@nexus.local?subject=Nexus%20Portal%20Help";
 
 function NavArrows() {
   const router = useRouter();
@@ -41,6 +61,73 @@ function NavArrows() {
   );
 }
 
+function HelpMenu() {
+  const { status } = useSession();
+  const { openMode, isCapturing } = useFeedback();
+  const signedIn = status === "authenticated";
+  const suggestionDisabled = !signedIn || isCapturing;
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Help"
+            title="Help"
+            className="h-8 w-8 rounded-full text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+          >
+            <CircleHelp className="h-4 w-4" />
+          </Button>
+        }
+      />
+      <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuItem
+          onClick={() => {
+            window.location.href = SUPPORT_MAILTO;
+          }}
+        >
+          <Headset className="mr-2 h-4 w-4" />
+          Get support
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          disabled={suggestionDisabled}
+          onClick={() => {
+            if (!suggestionDisabled) void openMode();
+          }}
+          data-feedback-ignore
+        >
+          <MessageSquarePlus className="mr-2 h-4 w-4" />
+          Suggestion mode
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+function SettingsButton() {
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={(props) => (
+          <Button
+            {...props}
+            variant="ghost"
+            size="icon"
+            aria-label="Settings"
+            className="h-8 w-8 rounded-full text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+            onClick={() => { window.location.href = "/settings"; }}
+          >
+            <Settings className="h-4 w-4" />
+          </Button>
+        )}
+      />
+      <TooltipContent>Settings</TooltipContent>
+    </Tooltip>
+  );
+}
+
 function NotificationBell() {
   return (
     <Tooltip>
@@ -71,7 +158,11 @@ export function Topbar() {
       </div>
 
       <div className="flex items-center gap-4">
-        <NotificationBell />
+        <div className="flex items-center gap-1">
+          <HelpMenu />
+          <NotificationBell />
+          <SettingsButton />
+        </div>
         <UserPill />
       </div>
     </header>

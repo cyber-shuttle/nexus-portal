@@ -4,7 +4,6 @@ import { cn } from "@/lib/utils";
 import { useAbility } from "@/shared/casl/AbilityProvider";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { NeedHelpCard } from "./NeedHelpCard";
 import { NAV_GROUP_LABELS, type NavGroup, type NavItem, portalNav } from "./navConfig";
 
 const GROUP_ORDER: NavGroup[] = ["allocations", "admin"];
@@ -47,9 +46,7 @@ export function Sidebar() {
         ))}
       </nav>
 
-      <div className="mt-auto">
-        <NeedHelpCard />
-      </div>
+
     </aside>
   );
 }
@@ -67,8 +64,8 @@ function SidebarLink({ item, active }: { item: NavItem; active: boolean }) {
       className={cn(
         "relative flex h-11 items-center gap-3 px-6 text-sm font-medium transition",
         active
-          ? "bg-brand-tint font-semibold text-brand"
-          : "text-muted-foreground hover:bg-muted/40 hover:text-foreground",
+          ? "bg-[var(--sidebar-active)] font-semibold text-brand"
+          : "text-muted-foreground hover:bg-[var(--sidebar-hover)] hover:text-foreground",
       )}
     >
       <Icon className="h-5 w-5 stroke-[1.75]" />

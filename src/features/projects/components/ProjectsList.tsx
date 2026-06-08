@@ -125,7 +125,7 @@ export function ProjectsList({
   }, [rows, search, statusFilter, piFilter, orgFilter]);
 
   const [page, setPage] = React.useState(1);
-  const pageSize = 20;
+  const [pageSize, setPageSize] = React.useState(20);
   const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
 
   // Reset paging when filters narrow the result set.
@@ -290,6 +290,8 @@ export function ProjectsList({
             pageSize,
             total: filtered.length,
             onPageChange: setPage,
+            onPageSizeChange: setPageSize,
+            pageSizeOptions: [10, 20, 50, 100],
           }}
         />
       )}
