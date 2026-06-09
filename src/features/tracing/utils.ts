@@ -56,7 +56,7 @@ export async function copyTraceId(traceId: string): Promise<void> {
   }
 }
 
-// Mirror of the spec's rowTone precedence (design_handoff_trace_view/ui.jsx).
+// Mirror of the spec's rowTone precedence (docs/design/tracing/ui.jsx).
 // Order matters: run-state flags win over wire status which wins over name
 // heuristics. Wire schema uses `name`; the spec calls it `action`.
 export function rowTone(row: UISpan): RowTone {
@@ -153,7 +153,7 @@ export type TreeNode = {
 
 // Join spans into a tree by parent_span_id. Orphans (parent set but
 // unresolved) and true roots both surface as roots — matches the prototype
-// in design_handoff_trace_view/tree.jsx so retry siblings keep their place.
+// in docs/design/tracing/tree.jsx so retry siblings keep their place.
 export function buildTree(spans: UISpan[]): {
   roots: TreeNode[];
   byId: Map<string, TreeNode>;
