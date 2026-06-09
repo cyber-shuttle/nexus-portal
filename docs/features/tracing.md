@@ -5,11 +5,9 @@ filterable list with a 30-day trend, opens a side drawer with overview, span
 waterfall, raw JSON, and linked audit-event tabs, and exposes a one-click
 retry for failed flows.
 
-> **Design reference:** the original design handoff with full pixel-level
-> tokens, screen specs, and a runnable browser prototype lives at
-> [`../design/tracing/`](../design/tracing/). Read its `README.md` for the
-> source-of-truth design intent; open `Custos Admin Trace View.html` in a
-> browser for the interactive reference.
+> **Design reference:** the source-of-truth design spec — full pixel-level
+> tokens, screen specs, status semantics, and the suggested build order —
+> lives at [`../design/tracing/README.md`](../design/tracing/README.md).
 
 ## Routes
 

@@ -1,6 +1,8 @@
-# Handoff: Custos Admin — Trace View
+# Design Handoff: Custos Admin — Trace View
 
-> **For Claude Code / a developer:** read this README top-to-bottom before writing any code. It is self-sufficient — you should be able to implement the feature from this document alone, using the bundled HTML files as a visual reference.
+> Source-of-truth design spec for `/admin/traces`. Read top-to-bottom before changing the trace view UI — this captures the design intent at a pixel-level detail the operational spec at [`../../features/tracing.md`](../../features/tracing.md) does not.
+>
+> The original handoff also shipped with a runnable HTML/React-via-Babel prototype that mounted the design in a browser. The prototype is no longer in the repo (git history preserves it); the prose below is self-sufficient.
 
 ---
 
@@ -14,18 +16,11 @@ It has two primary surfaces:
 
 ---
 
-## About the Design Files
+## How to use this document
 
-The files in this bundle are **design references created in HTML/React-via-Babel** — runnable prototypes that show the intended look, layout, and behavior. **They are not production code to copy verbatim.**
+Implement the design using the codebase's existing patterns — TypeScript, Tailwind + shadcn/ui, TanStack Query, the design tokens already defined in `design-tokens/`. The tokens listed below are the *intent* of each color/type role; if a matching token already exists in `design-tokens/colors.css`, use the real one and treat the value here as a fallback specification.
 
-Your task is to **recreate these designs in the target codebase's existing environment**, using its established patterns, component library, router, data layer, and design tokens. The prototype uses inline-style React components and hardcoded sample data purely to be self-contained in a single openable file — do **not** carry those choices into production:
-
-- Replace inline `style={{…}}` objects with the codebase's styling system (CSS Modules / Tailwind / styled-components / shadcn — whatever is already in use).
-- Replace the hardcoded `TRACES` array (`data.jsx`) with real data from the tracing API.
-- Map the prototype's ad-hoc primitives (`Button`, `StatusPill`, `Tooltip`, etc.) onto existing components in the design system where equivalents exist; only build new ones where there's a genuine gap (the span tree, the error rail, the error chip).
-- If **no** frontend environment exists yet, choose an appropriate stack (React + TypeScript + a headless component lib like Radix/shadcn is a safe default) and implement there.
-
-The companion design-system tokens referenced below (nexus color ramp, Manrope/Inter type) were **reconstructed** for the prototype. If the real nexus-portal design system defines these tokens, **use the real ones** — treat the values here as a fallback / intent specification.
+The status-derivation logic and the tree-building rules in `src/features/tracing/utils.ts` are direct mirrors of the design intent captured in this document (`rowTone`, `buildTree`). Keep them aligned.
 
 ---
 
@@ -37,7 +32,7 @@ The companion design-system tokens referenced below (nexus color ramp, Manrope/I
 
 ## Design Tokens
 
-> These map to CSS custom properties in the prototype (see `Custos Admin Trace View.html` `<style>` block). Prefer the real nexus-portal tokens if they exist.
+> These map to CSS custom properties. Prefer the real nexus-portal tokens in `design-tokens/colors.css` if a matching role already exists.
 
 ### Color — neutral (cool slate)
 | Token | Hex | Use |
@@ -237,29 +232,28 @@ Prototype keeps everything in local React state; in production, lift data fetchi
 
 ## Assets
 
-- **Icons**: all inline SVG (stroke-based, 24-viewBox), defined in `ui.jsx` (`Ic` object) — chevron, copy, check, external, refresh, search, x, alert, arrows, expand/collapse, and nav glyphs (pulse, grid, users, box, server, cog, link). Replace with the codebase's icon set (Lucide/Heroicons map 1:1 to most of these).
-- **Fonts**: Manrope + Inter (Google Fonts in prototype). Use the portal's bundled fonts if available.
+- **Icons**: stroke-based SVGs (24-viewBox) — chevron, copy, check, external, refresh, search, x, alert, arrows, expand/collapse, and nav glyphs (pulse, grid, users, box, server, cog, link). The portal uses Lucide, which maps 1:1 to most of these.
+- **Fonts**: Manrope + Inter. Loaded via `next/font/google` from the portal's `app/layout.tsx`.
 - **No raster assets / logos** beyond the inline shield glyph — swap for the real Custos mark.
 
 ---
 
-## Files (in this bundle)
+## Where the implementation lives
 
-| File | What it contains |
+| Concern | File |
 |---|---|
-| `Custos Admin Trace View.html` | Entry point — design tokens (`:root` CSS vars), font links, React/Babel mounts. Open this in a browser to interact with the full prototype. |
-| `app.jsx` | App shell (sidebar, topbar), routing state, Tweaks wiring, mount. |
-| `list.jsx` | Trace list page — filter strip, sticky banner, table, pagination, "last synced" badge. |
-| `drawer.jsx` | Detail drawer — header, tabs, Overview / Raw / Linked-entities tab bodies. |
-| `tree.jsx` | **The centerpiece** — tree building, error-path + error-leaf computation, the red rail (DOM-measured), rows, error chip, keyboard nav, span detail panel. |
-| `ui.jsx` | Primitives — icons, `StatusPill`, `SourcePill`, `Button`, `Tooltip`, click-to-copy, time/duration helpers, **status-derivation logic** (`rowTone`). |
-| `data.jsx` | Sample traces (hero COmanage-404, healthy, in-progress, multi-error+orphan, list filler). **Delete in production — replace with API data.** |
-
-> The `*.jsx` files load via in-browser Babel for zero-build portability. Treat them as **reference**, not a starting codebase: the inline styling and global-`window` exports are prototype conveniences, not production patterns.
+| App shell (sidebar, topbar) | `src/shared/layout/PortalLayout.tsx`, `Sidebar.tsx`, `Topbar.tsx` |
+| List page (filters, banner, table, pagination) | `src/features/tracing/components/TraceListContainer.tsx`, `TraceFilterStrip.tsx`, `TraceTable.tsx`, `TraceTrendChart.tsx` |
+| Detail drawer + tabs | `src/features/tracing/components/TraceDetailDrawer.tsx` + `TraceOverviewTab.tsx`, `TraceTreeTab.tsx`, `TraceRawTab.tsx`, `TraceLinkedEntitiesTab.tsx` |
+| Span tree + error rail + keyboard nav | `src/features/tracing/components/TraceTreeTab.tsx`, `TraceWaterfallRow.tsx`, `TraceSpanDetailPanel.tsx` |
+| Status-derivation logic (`rowTone`) | `src/features/tracing/utils.ts` |
+| Primitives (`StatusPill`, `SourcePill`, copyable value) | `src/features/tracing/components/primitives/` |
 
 ---
 
 ## Suggested build order
+
+If you're rebuilding this surface from scratch:
 
 1. Port **design tokens** into the codebase's token system (or confirm they already exist in nexus-portal).
 2. Build **primitives** (StatusPill, SourcePill, copyable value, status-derivation util) — or map to existing ones.

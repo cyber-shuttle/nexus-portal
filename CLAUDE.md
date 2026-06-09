@@ -150,5 +150,4 @@ These are the patterns LLMs and humans both default to that get rejected in revi
 - [docs/adr/](./docs/adr/) — architecture decisions and their *why*
 - [docs/features/](./docs/features/) — per-feature specs (e.g. [tracing.md](./docs/features/tracing.md))
 - [docs/backend-contracts/](./docs/backend-contracts/) — API contracts with the backend
-- [docs/design/](./docs/design/) — design references and runnable prototypes
-- [docs/archive/](./docs/archive/) — historical phase-gate reports; not authoritative
+- [docs/design/](./docs/design/) — design handoff references (prose specs)
