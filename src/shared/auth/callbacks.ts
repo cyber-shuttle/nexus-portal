@@ -22,26 +22,6 @@ type CallbackOptions = {
   fetchSystemRoleImpl?: (userId: string, baseUrl: string) => Promise<SystemRoleResponse>;
 };
 
-type GitHubEmailEntry = { email?: string; verified?: boolean };
-
-async function fetchGithubVerifiedEmails(accessToken: string): Promise<string[]> {
-  const res = await fetch("https://api.github.com/user/emails", {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      Accept: "application/vnd.github+json",
-      "X-GitHub-Api-Version": "2022-11-28",
-    },
-  });
-  if (!res.ok) {
-    throw new Error(`github /user/emails returned ${res.status}`);
-  }
-  const body = (await res.json()) as GitHubEmailEntry[];
-  if (!Array.isArray(body)) return [];
-  return body
-    .filter((entry) => entry?.verified && typeof entry.email === "string")
-    .map((entry) => (entry.email as string).toLowerCase());
-}
-
 export function buildAuthCallbacks(options: CallbackOptions): NextAuthConfig["callbacks"] {
   const { allowedEmails, oidcEnabled, coreApiBaseUrl } = options;
   const fetchSystemRoleFn = options.fetchSystemRoleImpl ?? fetchSystemRole;
@@ -56,24 +36,8 @@ export function buildAuthCallbacks(options: CallbackOptions): NextAuthConfig["ca
         }
         return true;
       }
-      if (account?.provider === "github") {
-        const primary = user.email ?? "";
-        const accessToken = account.access_token;
-        if (typeof accessToken !== "string" || accessToken.length === 0) {
-          // Without the token we cannot reach /user/emails — fail closed.
-          return `/sign-in?error=not_allowed&email=${encodeURIComponent(primary)}`;
-        }
-        try {
-          const verified = await fetchGithubVerifiedEmails(accessToken);
-          const candidates = primary ? [primary.toLowerCase(), ...verified] : verified;
-          const admitted = candidates.some((addr) => isEmailAllowed(addr, allowedEmails));
-          if (admitted) return true;
-          return `/sign-in?error=not_allowed&email=${encodeURIComponent(primary)}`;
-        } catch (err) {
-          console.error("github sign-in /user/emails failure", err);
-          return `/sign-in?error=not_allowed&email=${encodeURIComponent(primary)}`;
-        }
-      }
+      // GitHub sign-in is unrestricted: the OAuth app itself is the gate
+      // (org-owned), and issues file under the user's own identity.
       return true;
     },
     async jwt({ token, user, account }) {

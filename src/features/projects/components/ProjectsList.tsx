@@ -139,6 +139,8 @@ export function ProjectsList({
     {
       key: "project",
       header: "Project",
+      sortable: true,
+      sortValue: (row) => row.project.title,
       cell: (row) => (
         <div className="flex flex-col gap-0.5">
           <Link
@@ -166,6 +168,8 @@ export function ProjectsList({
     {
       key: "pi",
       header: "PI",
+      sortable: true,
+      sortValue: (row) => row.piLabel ?? row.project.project_pi_id ?? "",
       cell: (row) => (
         <span className="text-sm text-muted-foreground">
           {row.piLabel ?? row.project.project_pi_id}
@@ -176,17 +180,23 @@ export function ProjectsList({
       key: "allocations",
       header: "# Allocations",
       align: "right",
+      sortable: true,
+      sortValue: (row) => row.allocationsCount,
       cell: (row) => <span className="tabular-nums">{row.allocationsCount}</span>,
     },
     {
       key: "total",
       header: "Total SUs",
       align: "right",
+      sortable: true,
+      sortValue: (row) => row.totalSu,
       cell: (row) => <span className="tabular-nums">{formatSU(row.totalSu)}</span>,
     },
     {
       key: "used",
       header: "Used %",
+      sortable: true,
+      sortValue: (row) => row.usedPct,
       cell: (row) => (
         <div className="flex w-40 flex-col gap-1">
           <span className="text-xs text-muted-foreground tabular-nums">
@@ -204,6 +214,8 @@ export function ProjectsList({
     {
       key: "status",
       header: "Status",
+      sortable: true,
+      sortValue: (row) => row.project.status,
       cell: (row) => (
         <StatusBadge
           variant={statusBadgeVariantFromAllocationStatus(row.project.status)}

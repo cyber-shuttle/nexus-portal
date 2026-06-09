@@ -63,21 +63,26 @@ export async function POST(req: NextRequest) {
     }
     const payload = parsed.data;
 
-    // Prefer the user's GitHub access token so the issue is attributed to them;
-    // fall back to the bot PAT only when no session token is available.
+    // Two distinct concerns:
+    //  - Issue creation: prefer the user's token so the issue is attributed
+    //    to them. Falls back to the bot PAT only when no session token.
+    //  - Image commit (PUT /contents): always uses the bot PAT — writing to
+    //    a service-owned images branch is housekeeping, and non-collaborator
+    //    user tokens can't write to /contents even on public repos.
     const sessionToken =
       session.provider === "github" && typeof session.accessToken === "string"
         ? session.accessToken
         : undefined;
-    const token = sessionToken ?? serverEnv.FEEDBACK_GITHUB_TOKEN;
+    const issueToken = sessionToken ?? serverEnv.FEEDBACK_GITHUB_TOKEN;
+    const imageToken = serverEnv.FEEDBACK_GITHUB_TOKEN ?? sessionToken;
 
-    if (!token) {
+    if (!issueToken) {
       if (process.env.NODE_ENV === "production") {
-        // PAT-free mode is the default in production — this branch only fires
-        // when the UI POSTed without a github session (it should have triggered
-        // the lazy OAuth redirect first).
+        // No usable credential for the issue. Should never fire in normal
+        // use — either the UI bypassed the lazy OAuth redirect or the bot
+        // PAT is missing in env.
         console.error(
-          "no GitHub credential available — session.provider=%s, FEEDBACK_GITHUB_TOKEN set=%s",
+          "no GitHub credential for issue creation — session.provider=%s, FEEDBACK_GITHUB_TOKEN set=%s",
           session.provider,
           Boolean(serverEnv.FEEDBACK_GITHUB_TOKEN),
         );
@@ -95,13 +100,13 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const cfg = { token, repo: serverEnv.FEEDBACK_GITHUB_REPO };
+    const repo = serverEnv.FEEDBACK_GITHUB_REPO;
 
     let rawUrl: string | undefined;
-    if (payload.imagePngBase64) {
+    if (payload.imagePngBase64 && imageToken) {
       try {
         const result = await commitImageToRepo(
-          cfg,
+          { token: imageToken, repo },
           payload.imagePngBase64,
           `${randomUUID()}.png`,
           `feedback: image for issue from ${payload.context.reporterEmail}`,
@@ -109,24 +114,30 @@ export async function POST(req: NextRequest) {
         );
         rawUrl = result.rawUrl;
       } catch (err) {
-        return translateGithubError(err, "image commit failed");
+        // Don't fail the whole submission if just the image upload failed —
+        // the comment + annotations + context are still valuable. Log and
+        // continue.
+        console.warn("image commit failed; filing issue without screenshot:", err);
       }
     }
 
     const githubLogin = sessionToken ? (await getAuthedUserLogin(sessionToken)) ?? undefined : undefined;
 
     try {
-      const result = await createIssue(cfg, {
-        title: issueTitle(payload.comment),
-        body: issueBody({
-          comment: payload.comment,
-          imageRawUrl: rawUrl,
-          annotations: payload.annotations,
-          context: payload.context,
-          githubLogin,
-        }),
-        labels: [serverEnv.FEEDBACK_LABEL],
-      });
+      const result = await createIssue(
+        { token: issueToken, repo },
+        {
+          title: issueTitle(payload.comment),
+          body: issueBody({
+            comment: payload.comment,
+            imageRawUrl: rawUrl,
+            annotations: payload.annotations,
+            context: payload.context,
+            githubLogin,
+          }),
+          labels: [serverEnv.FEEDBACK_LABEL],
+        },
+      );
       return NextResponse.json({
         ok: true,
         issueUrl: result.issueUrl,

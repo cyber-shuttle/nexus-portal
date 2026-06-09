@@ -129,3 +129,25 @@
     font-family: var(--nexus-font-display);
   }
 }
+
+/* Trace view rebuild — pulsing dot for in-progress spans. The animation is
+   suppressed under prefers-reduced-motion via the media query below. */
+@keyframes nexus-pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.nexus-pulse-dot {
+  animation: nexus-pulse-dot 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nexus-pulse-dot {
+    animation: none !important;
+  }
+}

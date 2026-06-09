@@ -1,0 +1,39 @@
+{
+  "audit_events": [
+    {
+      "id": "ae-1",
+      "event_type": "ComanageProvisioningFailed",
+      "event_time": "2026-06-03T14:21:33.000Z",
+      "entity_id": "usr-alice",
+      "details": "comanage.create_person returned 404",
+      "trace_id": "a3b1c92d3f4e5a6b7c8d9e0f12345678",
+      "span_id": "1000000000000008"
+    }
+  ],
+  "amie_audit_log": [
+    {
+      "id": 101,
+      "packet_id": "pkt-2",
+      "event_id": "evt-2",
+      "action": "CREATE_PERSON",
+      "entity_type": "user",
+      "entity_id": "usr-alice",
+      "summary": "Failed during ensure_posix",
+      "created_at": "2026-06-03T14:21:33.000Z",
+      "trace_id": "a3b1c92d3f4e5a6b7c8d9e0f12345678",
+      "span_id": "1000000000000006"
+    },
+    {
+      "id": 102,
+      "packet_id": "pkt-2",
+      "event_id": "evt-2",
+      "action": "CREATE_PROJECT",
+      "entity_type": "project",
+      "entity_id": "BIO130001",
+      "summary": null,
+      "created_at": "2026-06-03T14:21:32.500Z",
+      "trace_id": "a3b1c92d3f4e5a6b7c8d9e0f12345678",
+      "span_id": "1000000000000003"
+    }
+  ]
+}

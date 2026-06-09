@@ -42,13 +42,11 @@ function formatOutline(outline: ComponentOutline): string {
   return lines.join("\n");
 }
 
-function formatReporter(ctx: FeedbackContext, githubLogin?: string): string {
-  const emailLink = `[${ctx.reporterEmail}](mailto:${ctx.reporterEmail})`;
-  if (githubLogin) {
-    const handleLink = `[@${githubLogin}](https://github.com/${githubLogin})`;
-    return `${handleLink} (${emailLink})`;
-  }
-  return emailLink;
+function formatReporter(_ctx: FeedbackContext, githubLogin?: string): string {
+  // Repo is public — never leak the reporter's email in the issue body.
+  // Their GitHub handle is already public information; that's enough.
+  if (githubLogin) return `[@${githubLogin}](https://github.com/${githubLogin})`;
+  return "anonymous";
 }
 
 function formatContextTable(ctx: FeedbackContext, githubLogin?: string): string {

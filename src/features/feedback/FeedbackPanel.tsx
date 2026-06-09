@@ -101,6 +101,11 @@ export default function FeedbackPanel() {
     if (restoredDraft) consumeRestoredDraft();
   }, [restoredDraft, consumeRestoredDraft]);
 
+  // If the panel mounted because we returned from the lazy GitHub OAuth
+  // (restoredDraft was set), auto-submit as soon as the session + the seeded
+  // state are both ready. Avoids forcing a second Submit click after auth.
+  const autoSubmitArmedRef = useRef<boolean>(!!restoredDraft);
+
   const screenshotActive = !!capturedImageUrl && !screenshotDropped;
   const screenshotFailed = !capturedImageUrl && !!captureError;
   const trimmedComment = comment.trim();
@@ -260,6 +265,21 @@ export default function FeedbackPanel() {
       setSubmitting(false);
     }
   };
+
+  const onSubmitRef = useRef(onSubmit);
+  useEffect(() => {
+    onSubmitRef.current = onSubmit;
+  });
+
+  useEffect(() => {
+    if (!autoSubmitArmedRef.current) return;
+    if (!canSubmit) return;
+    const hasGithubSession =
+      session?.provider === "github" && typeof session?.accessToken === "string";
+    if (!hasGithubSession) return;
+    autoSubmitArmedRef.current = false;
+    void onSubmitRef.current();
+  }, [canSubmit, session?.provider, session?.accessToken]);
 
   const handleCommentKey = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Escape") {

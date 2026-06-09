@@ -73,6 +73,8 @@ export function AllocationsList({ rows, isLoading, error, onRetry }: Allocations
     {
       key: "name",
       header: "Allocation",
+      sortable: true,
+      sortValue: (row) => row.allocation.name,
       cell: (row) => (
         <Link
           href={`/allocations/${row.allocation.id}`}
@@ -85,6 +87,8 @@ export function AllocationsList({ rows, isLoading, error, onRetry }: Allocations
     {
       key: "project",
       header: "Project",
+      sortable: true,
+      sortValue: (row) => row.allocation.project_id,
       cell: (row) => (
         <span className="text-sm text-muted-foreground">{row.allocation.project_id}</span>
       ),
@@ -92,6 +96,8 @@ export function AllocationsList({ rows, isLoading, error, onRetry }: Allocations
     {
       key: "resources",
       header: "Resources",
+      sortable: true,
+      sortValue: (row) => row.resourceSummary,
       cell: (row) => (
         <span className="text-sm text-muted-foreground" title={row.resourceSummary}>
           {row.resourceSummary}
@@ -101,6 +107,8 @@ export function AllocationsList({ rows, isLoading, error, onRetry }: Allocations
     {
       key: "usage",
       header: "Used / Allocated SUs",
+      sortable: true,
+      sortValue: (row) => row.used,
       cell: (row) => {
         const max = row.allocation.initial_su_amount;
         return (
@@ -117,11 +125,15 @@ export function AllocationsList({ rows, isLoading, error, onRetry }: Allocations
       key: "members",
       header: "Members",
       align: "right",
+      sortable: true,
+      sortValue: (row) => row.members,
       cell: (row) => <span className="tabular-nums">{row.members}</span>,
     },
     {
       key: "endDate",
       header: "End date",
+      sortable: true,
+      sortValue: (row) => new Date(row.allocation.end_time),
       cell: (row) => (
         <span className="text-sm text-muted-foreground">{formatDate(row.allocation.end_time)}</span>
       ),
@@ -129,6 +141,8 @@ export function AllocationsList({ rows, isLoading, error, onRetry }: Allocations
     {
       key: "status",
       header: "Status",
+      sortable: true,
+      sortValue: (row) => row.allocation.status,
       cell: (row) => (
         <StatusBadge
           variant={statusBadgeVariantFromAllocationStatus(row.allocation.status)}

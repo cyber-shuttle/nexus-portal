@@ -1,0 +1,46 @@
+{
+  "trace": {
+    "trace_id": "c5d3eb4f516a7b8c9d0e1f2345678901",
+    "root_name": "http.POST /users",
+    "source": "http",
+    "status": 0,
+    "started_at": "2026-06-03T14:15:30.000Z",
+    "ended_at": "2026-06-03T14:15:30.042Z",
+    "span_count": 3,
+    "root_event": null
+  },
+  "spans": [
+    {
+      "span_id": "2000000000000001",
+      "name": "http.POST /users",
+      "kind": 1,
+      "status": 0,
+      "start_time": "2026-06-03T14:15:30.000Z",
+      "end_time": "2026-06-03T14:15:30.042Z",
+      "attributes": {
+        "http.method": "POST",
+        "http.route": "/users",
+        "http.status_code": 201,
+        "source": "http"
+      }
+    },
+    {
+      "span_id": "2000000000000002",
+      "parent_span_id": "2000000000000001",
+      "name": "store.users.insert",
+      "kind": 2,
+      "status": 0,
+      "start_time": "2026-06-03T14:15:30.005Z",
+      "end_time": "2026-06-03T14:15:30.035Z"
+    },
+    {
+      "span_id": "2000000000000003",
+      "parent_span_id": "2000000000000002",
+      "name": "db.exec:INSERT users",
+      "kind": 2,
+      "status": 0,
+      "start_time": "2026-06-03T14:15:30.008Z",
+      "end_time": "2026-06-03T14:15:30.030Z"
+    }
+  ]
+}

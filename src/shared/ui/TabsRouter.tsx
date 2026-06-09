@@ -1,8 +1,11 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import {
+  replaceShallowSearchParams,
+  useShallowSearchParams,
+} from "@/shared/hooks/useShallowSearchParams";
 import { Tabs as TabsPrimitive } from "@base-ui/react/tabs";
-import { useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
 
 export type TabsRouterTab = {
@@ -16,6 +19,10 @@ export type TabsRouterProps = {
   defaultValue: string;
   searchParam?: string;
   className?: string;
+  // Per-panel class override. Use to make a specific tab fill remaining
+  // height (`min-h-0 flex-1 flex flex-col`) instead of the default natural
+  // height — needed for tabs with their own internal scroll container.
+  panelClassName?: string | Record<string, string | undefined>;
   /**
    * Action node rendered on the right of the tab strip, sharing the same
    * bottom border. When set as a record keyed by tab value, the right-slot
@@ -29,10 +36,10 @@ export function TabsRouter({
   defaultValue,
   searchParam = "tab",
   className,
+  panelClassName,
   rightSlot,
 }: TabsRouterProps) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useShallowSearchParams();
   const activeRaw = searchParams.get(searchParam);
   const active = tabs.some((t) => t.value === activeRaw) ? (activeRaw as string) : defaultValue;
 
@@ -41,8 +48,7 @@ export function TabsRouter({
     const params = new URLSearchParams(searchParams.toString());
     if (value === defaultValue) params.delete(searchParam);
     else params.set(searchParam, value);
-    const next = params.toString();
-    router.replace(next ? `?${next}` : "?", { scroll: false });
+    replaceShallowSearchParams(params);
   };
 
   // Plain ReactNode (React elements include `$$typeof`) vs the per-tab record
@@ -82,11 +88,21 @@ export function TabsRouter({
         </TabsPrimitive.List>
         {resolvedRightSlot ? <div className="pb-3">{resolvedRightSlot}</div> : null}
       </div>
-      {tabs.map((tab) => (
-        <TabsPrimitive.Panel key={tab.value} value={tab.value} className="pt-6">
-          {tab.content}
-        </TabsPrimitive.Panel>
-      ))}
+      {tabs.map((tab) => {
+        const perPanel =
+          panelClassName && typeof panelClassName === "object"
+            ? panelClassName[tab.value]
+            : panelClassName;
+        return (
+          <TabsPrimitive.Panel
+            key={tab.value}
+            value={tab.value}
+            className={cn("pt-6", perPanel)}
+          >
+            {tab.content}
+          </TabsPrimitive.Panel>
+        );
+      })}
     </TabsPrimitive.Root>
   );
 }

@@ -52,6 +52,10 @@
   --nexus-amber-800: #92400e;
   --nexus-amber-900: #78350f;
 
+  --nexus-purple-50: #f5f3ff;
+  --nexus-purple-500: #8b5cf6;
+  --nexus-purple-700: #6d28d9;
+
   --nexus-white: #ffffff;
 
   --nexus-primary: var(--nexus-blue-500);
@@ -66,6 +70,34 @@
   --brand: var(--nexus-blue-500);
   --brand-foreground: #ffffff;
   --brand-tint: var(--nexus-blue-50);
+
+  /* Semantic tone tokens — paired bg/fg used by pills, chips, banners. */
+  --banner-error-bg: var(--nexus-red-50);
+  --banner-error-border: var(--nexus-red-100);
+  --banner-error-fg: var(--nexus-red-700);
+  --banner-error-icon: var(--nexus-red-600);
+
+  --tone-ok-bg: var(--nexus-green-50);
+  --tone-ok-fg: var(--nexus-green-700);
+  --tone-error-bg: var(--nexus-red-50);
+  --tone-error-fg: var(--nexus-red-700);
+  --tone-warn-bg: var(--nexus-amber-50);
+  --tone-warn-fg: var(--nexus-amber-700);
+  --tone-info-bg: var(--nexus-blue-50);
+  --tone-info-fg: var(--nexus-blue-700);
+  --tone-accent-bg: var(--nexus-purple-50);
+  --tone-accent-fg: var(--nexus-purple-700);
+
+  --syntax-key: var(--nexus-purple-700);
+  --syntax-str: var(--nexus-green-700);
+  --syntax-bool: var(--nexus-amber-700);
+  --syntax-num: var(--nexus-blue-700);
+
+  --drawer-scrim: rgba(15, 23, 42, 0.32);
+
+  --muted-2: #f8fafc;
+  --border-strong: #d6dce4;
+  --shadow-drawer: -12px 0 40px rgba(15, 23, 42, 0.14), -2px 0 8px rgba(15, 23, 42, 0.06);
 
   --background: #ffffff;
   --foreground: var(--nexus-gray-900);
@@ -145,5 +177,27 @@
 
   --brand: var(--nexus-blue-400);
   --brand-foreground: #ffffff;
-  --brand-tint: rgba(35, 97, 184, 0.15);
+  --brand-tint: rgba(77, 134, 201, 0.22);
+
+  --muted-2: var(--nexus-gray-700);
+  --border-strong: var(--nexus-gray-600);
+  --shadow-drawer: -12px 0 40px rgba(0, 0, 0, 0.55), -2px 0 8px rgba(0, 0, 0, 0.4);
+
+  --banner-error-bg: rgba(220, 38, 38, 0.12);
+  --banner-error-border: rgba(220, 38, 38, 0.32);
+  --banner-error-fg: var(--nexus-red-300);
+  --banner-error-icon: var(--nexus-red-400);
+
+  --tone-ok-bg: rgba(34, 197, 94, 0.16);     --tone-ok-fg: var(--nexus-green-300);
+  --tone-error-bg: rgba(239, 68, 68, 0.16);  --tone-error-fg: var(--nexus-red-300);
+  --tone-warn-bg: rgba(245, 158, 11, 0.18);  --tone-warn-fg: var(--nexus-amber-200);
+  --tone-info-bg: rgba(77, 134, 201, 0.22);  --tone-info-fg: var(--nexus-blue-300);
+  --tone-accent-bg: rgba(139, 92, 246, 0.2); --tone-accent-fg: #c4b5fd;
+
+  --syntax-key: #c4b5fd;
+  --syntax-str: var(--nexus-green-300);
+  --syntax-bool: var(--nexus-amber-200);
+  --syntax-num: var(--nexus-blue-300);
+
+  --drawer-scrim: rgba(0, 0, 0, 0.6);
 }

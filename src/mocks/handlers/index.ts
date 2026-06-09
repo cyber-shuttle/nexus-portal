@@ -16,6 +16,7 @@ import { proposalHandlers } from "./proposals";
 import { resourceHandlers } from "./resources";
 import { signerHandlers } from "./signer";
 import { toolsHandlers } from "./tools";
+import { tracesHandlers } from "./traces";
 import { userHandlers } from "./users";
 
 export const handlers: HttpHandler[] = [
@@ -35,6 +36,7 @@ export const handlers: HttpHandler[] = [
   ...signerHandlers,
   ...clientHandlers,
   ...amieHandlers,
+  ...tracesHandlers,
   ...jobsHandlers,
   ...analyticsViewsHandlers,
   ...feedbackGithubHandlers,

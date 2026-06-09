@@ -1,0 +1,34 @@
+{
+  "trace": {
+    "trace_id": "e7f50d617382b7c8d9e0f1234567abef",
+    "root_name": "slurm.sync_associations",
+    "source": "slurm",
+    "status": 3,
+    "started_at": "2026-06-02T09:00:00.000Z",
+    "span_count": 2
+  },
+  "spans": [
+    {
+      "span_id": "3000000000000001",
+      "name": "slurm.sync_associations",
+      "kind": 1,
+      "status": 3,
+      "start_time": "2026-06-02T09:00:00.000Z",
+      "attributes": {
+        "slurm.cluster_id": "cluster-1"
+      }
+    },
+    {
+      "span_id": "3000000000000002",
+      "parent_span_id": "3000000000000001",
+      "name": "slurm.upsert_association",
+      "kind": 0,
+      "status": 3,
+      "start_time": "2026-06-02T09:00:00.010Z",
+      "attributes": {
+        "slurm.allocation_id": "alloc-1",
+        "slurm.user_id": "usr-1"
+      }
+    }
+  ]
+}
