@@ -11,7 +11,6 @@ import {
   LineChart,
   ListChecks,
   Server,
-  Settings,
   ShieldCheck,
   Users,
   Wrench,
@@ -108,5 +107,4 @@ export const portalNav: NavItem[] = [
     group: "admin",
     ability: { action: "manage", subject: "Adjustment" },
   },
-  { href: "/settings", label: "Settings", icon: Settings, group: "allocations" },
 ];

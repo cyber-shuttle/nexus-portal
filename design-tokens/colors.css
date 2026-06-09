@@ -91,7 +91,9 @@
   --input: var(--nexus-gray-200);
   --ring: var(--nexus-blue-500);
 
-  --sidebar: #ffffff;
+  --sidebar: var(--nexus-gray-50);
+  --sidebar-active: #ffffff;
+  --sidebar-hover: var(--nexus-gray-200);
   --sidebar-foreground: var(--nexus-gray-900);
   --sidebar-primary: var(--nexus-blue-500);
   --sidebar-primary-foreground: var(--nexus-white);
@@ -130,7 +132,9 @@
   --input: var(--nexus-gray-700);
   --ring: var(--nexus-blue-400);
 
-  --sidebar: var(--nexus-gray-900);
+  --sidebar: var(--nexus-gray-800);
+  --sidebar-active: var(--nexus-gray-900);
+  --sidebar-hover: var(--nexus-gray-700);
   --sidebar-foreground: var(--nexus-gray-50);
   --sidebar-primary: var(--nexus-blue-400);
   --sidebar-primary-foreground: var(--nexus-gray-900);
