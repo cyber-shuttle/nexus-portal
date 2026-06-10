@@ -9,6 +9,7 @@ import { buttonVariants } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import Link from "next/link";
+import { ChevronDown } from "lucide-react";
 import * as React from "react";
 import { PROPOSAL_STATUSES, type Proposal, type ProposalStatus } from "../types";
 
@@ -127,19 +128,22 @@ export function ProposalsList({ rows, isLoading, error, canCreate, onRetry }: Pr
       <div className="grid gap-3 rounded-lg border border-border bg-card p-4 md:grid-cols-4">
         <div className="space-y-1.5">
           <Label htmlFor="prop-status">Status</Label>
-          <select
-            id="prop-status"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.currentTarget.value as ProposalStatus | "ALL")}
-            className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-          >
-            <option value="ALL">All</option>
-            {PROPOSAL_STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
+          <div className="relative">
+            <select
+              id="prop-status"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.currentTarget.value as ProposalStatus | "ALL")}
+              className="w-full appearance-none rounded-md border border-input bg-transparent pl-3 pr-8 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+            >
+              <option value="ALL">All</option>
+              {PROPOSAL_STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2 opacity-50" />
+          </div>
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="prop-search">Project / title</Label>

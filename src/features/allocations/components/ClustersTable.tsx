@@ -7,7 +7,7 @@ import { ErrorState } from "@/shared/ui/ErrorState";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { TableSkeleton } from "@/shared/ui/Loading";
-import { Server } from "lucide-react";
+import { ChevronDown, Server } from "lucide-react";
 import * as React from "react";
 import type { Cluster, ClusterStatus } from "../schemas";
 
@@ -177,34 +177,40 @@ export function ClustersTable({
         </div>
         <div className="flex flex-col gap-1">
           <Label htmlFor="cluster-status">Status</Label>
-          <select
-            id="cluster-status"
-            className="rounded-md border bg-background px-3 py-1.5 text-sm"
-            value={statusFilter}
-            onChange={(e) => onStatusChange(e.currentTarget.value as "" | ClusterStatus)}
-          >
-            {STATUS_OPTIONS.map((opt) => (
-              <option key={opt.value || "all"} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+          <div className="relative">
+            <select
+              id="cluster-status"
+              className="appearance-none rounded-md border bg-background pl-3 pr-8 py-1.5 text-sm"
+              value={statusFilter}
+              onChange={(e) => onStatusChange(e.currentTarget.value as "" | ClusterStatus)}
+            >
+              {STATUS_OPTIONS.map((opt) => (
+                <option key={opt.value || "all"} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2 opacity-50" />
+          </div>
         </div>
         <div className="flex flex-col gap-1">
           <Label htmlFor="cluster-type">Type</Label>
-          <select
-            id="cluster-type"
-            className="rounded-md border bg-background px-3 py-1.5 text-sm"
-            value={typeFilter}
-            onChange={(e) => onTypeChange(e.currentTarget.value)}
-          >
-            <option value="">All types</option>
-            {types.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
+          <div className="relative">
+            <select
+              id="cluster-type"
+              className="appearance-none rounded-md border bg-background pl-3 pr-8 py-1.5 text-sm"
+              value={typeFilter}
+              onChange={(e) => onTypeChange(e.currentTarget.value)}
+            >
+              <option value="">All types</option>
+              {types.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2 opacity-50" />
+          </div>
         </div>
       </form>
 

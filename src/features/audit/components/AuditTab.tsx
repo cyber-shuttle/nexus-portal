@@ -5,7 +5,7 @@ import { EmptyState } from "@/shared/ui/EmptyState";
 import { ErrorState } from "@/shared/ui/ErrorState";
 import { CenteredSpinner } from "@/shared/ui/Loading";
 import type { AuditEvent } from "@shared/api/audit-orchestrator";
-import { ClipboardListIcon, PencilIcon, TriangleAlertIcon, UsersIcon } from "lucide-react";
+import { ChevronDown, ClipboardListIcon, PencilIcon, TriangleAlertIcon, UsersIcon } from "lucide-react";
 import * as React from "react";
 
 type RangeOption = "all" | "7d" | "30d" | "90d";
@@ -123,17 +123,20 @@ export function AuditTab({ events, isLoading, error, onRetry }: AuditTabProps) {
           aria-label="Filter audit log by actor"
           className="rounded-md border bg-background px-3 py-1.5 text-sm"
         />
-        <select
-          value={range}
-          onChange={(e) => setRange(e.target.value as RangeOption)}
-          aria-label="Filter audit log by date range"
-          className="rounded-md border bg-background px-3 py-1.5 text-sm"
-        >
-          <option value="all">All time</option>
-          <option value="7d">Last 7 days</option>
-          <option value="30d">Last 30 days</option>
-          <option value="90d">Last 90 days</option>
-        </select>
+        <div className="relative">
+          <select
+            value={range}
+            onChange={(e) => setRange(e.target.value as RangeOption)}
+            aria-label="Filter audit log by date range"
+            className="appearance-none rounded-md border bg-background pl-3 pr-8 py-1.5 text-sm"
+          >
+            <option value="all">All time</option>
+            <option value="7d">Last 7 days</option>
+            <option value="30d">Last 30 days</option>
+            <option value="90d">Last 90 days</option>
+          </select>
+          <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2 opacity-50" />
+        </div>
       </div>
 
       {filtered.length === 0 ? (
