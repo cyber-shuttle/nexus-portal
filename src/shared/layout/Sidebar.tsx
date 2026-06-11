@@ -15,15 +15,20 @@ export function Sidebar() {
   const navRef = React.useRef<HTMLElement>(null);
   const thumbRef = React.useRef<HTMLDivElement>(null);
   const timerRef = React.useRef<ReturnType<typeof setTimeout>>(undefined);
-  const [visible2, setVisible2] = React.useState(false);
+  const [scrolling, setScrolling] = React.useState(false);
   const [hovering, setHovering] = React.useState(false);
+  const [isScrollable, setIsScrollable] = React.useState(false);
 
   const updateThumb = React.useCallback(() => {
     const nav = navRef.current;
     const thumb = thumbRef.current;
     if (!nav || !thumb) return;
     const ratio = nav.clientHeight / nav.scrollHeight;
-    if (ratio >= 1) { setVisible2(false); return; }
+    if (ratio >= 1) {
+      setIsScrollable(false);
+      return;
+    }
+    setIsScrollable(true);
     const thumbHeight = Math.max(ratio * nav.clientHeight, 32);
     const maxScroll = nav.scrollHeight - nav.clientHeight;
     const thumbTop = maxScroll > 0 ? (nav.scrollTop / maxScroll) * (nav.clientHeight - thumbHeight) : 0;
@@ -37,12 +42,14 @@ export function Sidebar() {
     updateThumb();
     function onScroll() {
       updateThumb();
-      setVisible2(true);
+      setScrolling(true);
       clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(() => setVisible2(false), 800);
+      timerRef.current = setTimeout(() => setScrolling(false), 800);
     }
     el.addEventListener("scroll", onScroll, { passive: true });
-    return () => { el.removeEventListener("scroll", onScroll); clearTimeout(timerRef.current); };
+    const ro = new ResizeObserver(updateThumb);
+    ro.observe(el);
+    return () => { el.removeEventListener("scroll", onScroll); clearTimeout(timerRef.current); ro.disconnect(); };
   }, [updateThumb]);
 
   const visible = portalNav.filter((item) => {
@@ -55,7 +62,7 @@ export function Sidebar() {
     items: visible.filter((item) => item.group === group),
   })).filter((g) => g.items.length > 0);
 
-  const showThumb = visible2 || hovering;
+  const showThumb = isScrollable && (scrolling || hovering);
 
   return (
     <aside className="flex w-[240px] shrink-0 flex-col overflow-hidden border-r border-border bg-sidebar text-sidebar-foreground">
