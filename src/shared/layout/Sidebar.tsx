@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { useAbility } from "@/shared/casl/AbilityProvider";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import * as React from "react";
 import { NAV_GROUP_LABELS, type NavGroup, type NavItem, portalNav } from "./navConfig";
 
 const GROUP_ORDER: NavGroup[] = ["allocations", "admin"];
@@ -11,6 +12,20 @@ const GROUP_ORDER: NavGroup[] = ["allocations", "admin"];
 export function Sidebar() {
   const pathname = usePathname();
   const ability = useAbility();
+  const navRef = React.useRef<HTMLElement>(null);
+
+  React.useEffect(() => {
+    const el = navRef.current;
+    if (!el) return;
+    let timer: ReturnType<typeof setTimeout>;
+    function onScroll() {
+      el!.classList.add("is-scrolling");
+      clearTimeout(timer);
+      timer = setTimeout(() => el!.classList.remove("is-scrolling"), 800);
+    }
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => { el.removeEventListener("scroll", onScroll); clearTimeout(timer); };
+  }, []);
 
   const visible = portalNav.filter((item) => {
     if (!item.ability) return true;
@@ -33,7 +48,7 @@ export function Sidebar() {
         </Link>
       </div>
 
-      <nav className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+      <nav ref={navRef} className="sidebar-scroll flex min-h-0 flex-1 flex-col">
         {groups.map(({ group, items }, idx) => (
           <div key={group} className={cn("flex flex-col", idx > 0 && "mt-4")}>
             <div className="px-6 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
