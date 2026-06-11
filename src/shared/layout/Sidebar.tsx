@@ -23,7 +23,7 @@ export function Sidebar() {
   })).filter((g) => g.items.length > 0);
 
   return (
-    <aside className="flex w-[240px] shrink-0 flex-col border-r border-border bg-sidebar text-sidebar-foreground">
+    <aside className="flex w-[240px] shrink-0 flex-col overflow-hidden border-r border-border bg-sidebar text-sidebar-foreground">
       <div className="px-6 pt-8 pb-6">
         <Link
           href="/home"
@@ -33,7 +33,7 @@ export function Sidebar() {
         </Link>
       </div>
 
-      <nav className="flex flex-col">
+      <nav className="flex min-h-0 flex-1 flex-col overflow-y-auto">
         {groups.map(({ group, items }, idx) => (
           <div key={group} className={cn("flex flex-col", idx > 0 && "mt-4")}>
             <div className="px-6 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
