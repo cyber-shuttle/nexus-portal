@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import { SideDrawer } from "@/shared/ui/SideDrawer";
 import {
   Table,
@@ -11,11 +12,15 @@ import {
 } from "@/shared/ui/table";
 import { ChevronRight } from "lucide-react";
 import * as React from "react";
-import { UserManagementNav } from "../UserManagementNav";
 
 type Permission = {
   key: string;
   label: string;
+};
+
+type RWPermission = {
+  read: boolean;
+  write: boolean;
 };
 
 type UserPermission = {
@@ -23,9 +28,9 @@ type UserPermission = {
   name: string;
   email: string;
   role: string;
-  canManageAllocations: boolean;
-  canViewReports: boolean;
-  canManageUsers: boolean;
+  canManageAllocations: RWPermission;
+  canViewReports: RWPermission;
+  canManageUsers: RWPermission;
   extra: Permission[];
   isMe?: boolean;
 };
@@ -36,9 +41,9 @@ const USERS: UserPermission[] = [
     name: "Nipuna Bandara",
     email: "nipuna@folia.com",
     role: "Admin",
-    canManageAllocations: true,
-    canViewReports: true,
-    canManageUsers: true,
+    canManageAllocations: { read: true, write: true },
+    canViewReports: { read: true, write: true },
+    canManageUsers: { read: true, write: true },
     isMe: true,
     extra: [
       { key: "manage_clients", label: "Manage Clients" },
@@ -54,9 +59,9 @@ const USERS: UserPermission[] = [
     name: "Rachel Gao",
     email: "rgao@access-ci.org",
     role: "PI",
-    canManageAllocations: true,
-    canViewReports: true,
-    canManageUsers: false,
+    canManageAllocations: { read: true, write: true },
+    canViewReports: { read: true, write: false },
+    canManageUsers: { read: false, write: false },
     extra: [
       { key: "create_proposals", label: "Create Proposals" },
       { key: "manage_membership", label: "Manage Membership" },
@@ -69,9 +74,9 @@ const USERS: UserPermission[] = [
     name: "James Okonkwo",
     email: "jokonkwo@university.edu",
     role: "Researcher",
-    canManageAllocations: false,
-    canViewReports: true,
-    canManageUsers: false,
+    canManageAllocations: { read: false, write: false },
+    canViewReports: { read: true, write: false },
+    canManageUsers: { read: false, write: false },
     extra: [
       { key: "view_analytics", label: "View Analytics (Self)" },
       { key: "create_change_requests", label: "Create Change Requests" },
@@ -82,9 +87,9 @@ const USERS: UserPermission[] = [
     name: "Priya Sharma",
     email: "psharma@hpc-lab.org",
     role: "Allocation Manager",
-    canManageAllocations: true,
-    canViewReports: true,
-    canManageUsers: false,
+    canManageAllocations: { read: true, write: true },
+    canViewReports: { read: true, write: false },
+    canManageUsers: { read: false, write: false },
     extra: [
       { key: "approve_change_requests", label: "Approve Change Requests" },
       { key: "manage_membership", label: "Manage Membership" },
@@ -96,28 +101,41 @@ const USERS: UserPermission[] = [
     name: "Daniel Wu",
     email: "dwu@nexus-hpc.io",
     role: "Researcher",
-    canManageAllocations: false,
-    canViewReports: false,
-    canManageUsers: false,
+    canManageAllocations: { read: false, write: false },
+    canViewReports: { read: false, write: false },
+    canManageUsers: { read: false, write: false },
     extra: [
       { key: "create_change_requests", label: "Create Change Requests" },
     ],
   },
 ];
 
-function PermissionCheck({ value }: { value: boolean }) {
-  return value ? (
-    <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[color:var(--nexus-green-50)] text-[color:var(--nexus-green-700)]">
-      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
-        <path d="M2 5l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </span>
-  ) : (
-    <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[color:var(--nexus-gray-100)] text-[color:var(--nexus-gray-400)]">
-      <svg width="8" height="2" viewBox="0 0 8 2" fill="none" aria-hidden="true">
-        <path d="M1 1h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
-    </span>
+function PermissionRW({ read, write }: RWPermission) {
+  return (
+    <div className="flex items-center justify-center gap-1">
+      <span
+        title="Read"
+        className={cn(
+          "inline-flex h-5 w-5 items-center justify-center rounded text-[10px] font-semibold",
+          read
+            ? "bg-[color:var(--nexus-blue-50)] text-[color:var(--nexus-blue-700)]"
+            : "bg-[color:var(--nexus-gray-100)] text-[color:var(--nexus-gray-400)]",
+        )}
+      >
+        R
+      </span>
+      <span
+        title="Write"
+        className={cn(
+          "inline-flex h-5 w-5 items-center justify-center rounded text-[10px] font-semibold",
+          write
+            ? "bg-[color:var(--nexus-green-50)] text-[color:var(--nexus-green-700)]"
+            : "bg-[color:var(--nexus-gray-100)] text-[color:var(--nexus-gray-400)]",
+        )}
+      >
+        W
+      </span>
+    </div>
   );
 }
 
@@ -169,7 +187,7 @@ function PermissionsDrawer({
               ].map((p) => (
                 <li key={p.label} className="flex items-center justify-between text-sm">
                   <span className="text-foreground">{p.label}</span>
-                  <PermissionCheck value={p.value} />
+                  <PermissionRW read={p.value.read} write={p.value.write} />
                 </li>
               ))}
             </ul>
@@ -212,15 +230,6 @@ export default function UserPermissionsPage() {
 
   return (
     <div className="space-y-4">
-      <header className="space-y-1">
-        <h1 className="font-display text-[28px] font-bold leading-tight">User Management</h1>
-        <p className="text-sm text-muted-foreground">
-          Manage user identities, access permissions, and roles across the portal. Control who can
-          access resources, configure role assignments, and audit identity records.
-        </p>
-      </header>
-      <UserManagementNav />
-
       <div className="rounded-xl border border-border overflow-hidden">
         <Table>
           <TableHeader>
@@ -246,9 +255,9 @@ export default function UserPermissionsPage() {
                 </div>
               </TableCell>
               <TableCell><RoleBadge role={me.role} /></TableCell>
-              <TableCell className="text-center"><PermissionCheck value={me.canManageAllocations} /></TableCell>
-              <TableCell className="text-center"><PermissionCheck value={me.canViewReports} /></TableCell>
-              <TableCell className="text-center"><PermissionCheck value={me.canManageUsers} /></TableCell>
+              <TableCell className="text-center"><PermissionRW {...me.canManageAllocations} /></TableCell>
+              <TableCell className="text-center"><PermissionRW {...me.canViewReports} /></TableCell>
+              <TableCell className="text-center"><PermissionRW {...me.canManageUsers} /></TableCell>
               <TableCell className="pr-4 text-right">
                 <div className="flex items-center justify-end gap-1 text-xs text-[color:var(--nexus-blue-600)]">
                   <span>You</span>
@@ -271,9 +280,9 @@ export default function UserPermissionsPage() {
                   </div>
                 </TableCell>
                 <TableCell><RoleBadge role={user.role} /></TableCell>
-                <TableCell className="text-center"><PermissionCheck value={user.canManageAllocations} /></TableCell>
-                <TableCell className="text-center"><PermissionCheck value={user.canViewReports} /></TableCell>
-                <TableCell className="text-center"><PermissionCheck value={user.canManageUsers} /></TableCell>
+                <TableCell className="text-center"><PermissionRW {...user.canManageAllocations} /></TableCell>
+                <TableCell className="text-center"><PermissionRW {...user.canViewReports} /></TableCell>
+                <TableCell className="text-center"><PermissionRW {...user.canManageUsers} /></TableCell>
                 <TableCell className="pr-4 text-right">
                   <ChevronRight className="ml-auto h-3.5 w-3.5 text-muted-foreground" />
                 </TableCell>

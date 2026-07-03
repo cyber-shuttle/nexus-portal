@@ -6,8 +6,8 @@ import { usePathname } from "next/navigation";
 
 const TABS = [
   { href: "/admin/users/identities", label: "User Identities" },
-  { href: "/admin/users/permissions", label: "Permissions" },
-  { href: "/admin/users/roles", label: "Roles" },
+  { href: "/admin/users/permissions", label: "User Permissions" },
+  { href: "/admin/users/roles", label: "Role Permissions" },
 ] as const;
 
 export function UserManagementNav() {
