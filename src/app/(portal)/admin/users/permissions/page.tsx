@@ -1,168 +1,26 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { SideDrawer } from "@/shared/ui/SideDrawer";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/shared/ui/table";
-import { ChevronRight } from "lucide-react";
+import { Button } from "@/shared/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/ui/table";
+import { ChevronRight, Plus } from "lucide-react";
 import * as React from "react";
-
-type Permission = {
-  key: string;
-  label: string;
-};
-
-type RWPermission = {
-  read: boolean;
-  write: boolean;
-};
-
-type UserPermission = {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  canManageAllocations: RWPermission;
-  canViewReports: RWPermission;
-  canManageUsers: RWPermission;
-  extra: Permission[];
-  isMe?: boolean;
-};
-
-const USERS: UserPermission[] = [
-  {
-    id: "me",
-    name: "Nipuna Bandara",
-    email: "nipuna@folia.com",
-    role: "Admin",
-    canManageAllocations: { read: true, write: true },
-    canViewReports: { read: true, write: true },
-    canManageUsers: { read: true, write: true },
-    isMe: true,
-    extra: [
-      { key: "manage_clients", label: "Manage Clients" },
-      { key: "manage_resources", label: "Manage Resources" },
-      { key: "manage_rates", label: "Manage Rates" },
-      { key: "retry_traces", label: "Retry Traces" },
-      { key: "view_traces", label: "View Traces" },
-      { key: "manage_adjustments", label: "Manage Adjustments" },
-    ],
-  },
-  {
-    id: "u1",
-    name: "Rachel Gao",
-    email: "rgao@access-ci.org",
-    role: "PI",
-    canManageAllocations: { read: true, write: true },
-    canViewReports: { read: true, write: false },
-    canManageUsers: { read: false, write: false },
-    extra: [
-      { key: "create_proposals", label: "Create Proposals" },
-      { key: "manage_membership", label: "Manage Membership" },
-      { key: "approve_change_requests", label: "Approve Change Requests" },
-      { key: "view_analytics", label: "View Analytics (PI)" },
-    ],
-  },
-  {
-    id: "u2",
-    name: "James Okonkwo",
-    email: "jokonkwo@university.edu",
-    role: "Researcher",
-    canManageAllocations: { read: false, write: false },
-    canViewReports: { read: true, write: false },
-    canManageUsers: { read: false, write: false },
-    extra: [
-      { key: "view_analytics", label: "View Analytics (Self)" },
-      { key: "create_change_requests", label: "Create Change Requests" },
-    ],
-  },
-  {
-    id: "u3",
-    name: "Priya Sharma",
-    email: "psharma@hpc-lab.org",
-    role: "Allocation Manager",
-    canManageAllocations: { read: true, write: true },
-    canViewReports: { read: true, write: false },
-    canManageUsers: { read: false, write: false },
-    extra: [
-      { key: "approve_change_requests", label: "Approve Change Requests" },
-      { key: "manage_membership", label: "Manage Membership" },
-      { key: "view_analytics", label: "View Analytics (Self)" },
-    ],
-  },
-  {
-    id: "u4",
-    name: "Daniel Wu",
-    email: "dwu@nexus-hpc.io",
-    role: "Researcher",
-    canManageAllocations: { read: false, write: false },
-    canViewReports: { read: false, write: false },
-    canManageUsers: { read: false, write: false },
-    extra: [
-      { key: "create_change_requests", label: "Create Change Requests" },
-    ],
-  },
-];
-
-function PermissionRW({ read, write }: RWPermission) {
-  return (
-    <div className="flex items-center justify-center gap-1">
-      <span
-        title="Read"
-        className={cn(
-          "inline-flex h-5 w-5 items-center justify-center rounded text-[10px] font-semibold",
-          read
-            ? "bg-[color:var(--nexus-blue-50)] text-[color:var(--nexus-blue-700)]"
-            : "bg-[color:var(--nexus-gray-100)] text-[color:var(--nexus-gray-400)]",
-        )}
-      >
-        R
-      </span>
-      <span
-        title="Write"
-        className={cn(
-          "inline-flex h-5 w-5 items-center justify-center rounded text-[10px] font-semibold",
-          write
-            ? "bg-[color:var(--nexus-green-50)] text-[color:var(--nexus-green-700)]"
-            : "bg-[color:var(--nexus-gray-100)] text-[color:var(--nexus-gray-400)]",
-        )}
-      >
-        W
-      </span>
-    </div>
-  );
-}
-
-function RoleBadge({ role }: { role: string }) {
-  const styles: Record<string, string> = {
-    Admin: "bg-[color:var(--nexus-blue-50)] text-[color:var(--nexus-blue-700)]",
-    PI: "bg-[color:var(--nexus-purple-50)] text-[color:var(--nexus-purple-700)]",
-    "Allocation Manager": "bg-[color:var(--nexus-amber-50)] text-[color:var(--nexus-amber-800)]",
-    Researcher: "bg-[color:var(--nexus-gray-100)] text-[color:var(--nexus-gray-600)]",
-  };
-  return (
-    <span className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium ${styles[role] ?? styles.Researcher}`}>
-      {role}
-    </span>
-  );
-}
+import { AddPermissionDialog } from "../AddPermissionDialog";
+import { PermissionChip, PermissionRW, RoleBadge } from "../PermissionBadges";
+import { USERS, type UserPermissionRecord } from "../permissions-data";
 
 function PermissionsDrawer({
   user,
   open,
   onOpenChange,
   modal,
+  onAddPermission,
 }: {
-  user: UserPermission | null;
+  user: UserPermissionRecord | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   modal?: boolean;
+  onAddPermission: (userId: string) => void;
 }) {
   return (
     <SideDrawer
@@ -196,24 +54,25 @@ function PermissionsDrawer({
           <div className="border-t border-border" />
 
           <section>
-            <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Additional permissions
-            </h3>
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Additional permissions
+              </h3>
+              {!user.isMe && (
+                <Button variant="outline" size="xs" onClick={() => onAddPermission(user.id)}>
+                  <Plus data-icon="inline-start" />
+                  Add
+                </Button>
+              )}
+            </div>
             {user.extra.length === 0 ? (
               <p className="text-sm text-muted-foreground">No additional permissions.</p>
             ) : (
-              <ul className="space-y-2">
+              <div className="flex flex-wrap gap-2">
                 {user.extra.map((p) => (
-                  <li key={p.key} className="flex items-center gap-2 text-sm">
-                    <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[color:var(--nexus-green-50)] text-[color:var(--nexus-green-700)]">
-                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
-                        <path d="M2 5l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </span>
-                    <span className="text-foreground">{p.label}</span>
-                  </li>
+                  <PermissionChip key={p.key} label={p.label} />
                 ))}
-              </ul>
+              </div>
             )}
           </section>
         </div>
@@ -223,10 +82,13 @@ function PermissionsDrawer({
 }
 
 export default function UserPermissionsPage() {
-  const [selected, setSelected] = React.useState<UserPermission | null>(null);
+  const [users, setUsers] = React.useState(USERS);
+  const [selectedId, setSelectedId] = React.useState<string | null>(null);
+  const [addPermissionForId, setAddPermissionForId] = React.useState<string | null>(null);
 
-  const me = USERS.find((u) => u.isMe)!;
-  const others = USERS.filter((u) => !u.isMe);
+  const me = users.find((u) => u.isMe)!;
+  const others = users.filter((u) => !u.isMe);
+  const selected = users.find((u) => u.id === selectedId) ?? null;
 
   return (
     <div className="space-y-4">
@@ -246,7 +108,7 @@ export default function UserPermissionsPage() {
             {/* Own user row */}
             <TableRow
               className="cursor-pointer bg-[color:var(--nexus-blue-50)]/40 hover:bg-[color:var(--nexus-blue-50)]/60"
-              onClick={() => setSelected(me)}
+              onClick={() => setSelectedId(me.id)}
             >
               <TableCell className="pl-4">
                 <div className="flex flex-col">
@@ -254,10 +116,18 @@ export default function UserPermissionsPage() {
                   <span className="text-xs text-muted-foreground">{me.email}</span>
                 </div>
               </TableCell>
-              <TableCell><RoleBadge role={me.role} /></TableCell>
-              <TableCell className="text-center"><PermissionRW {...me.canManageAllocations} /></TableCell>
-              <TableCell className="text-center"><PermissionRW {...me.canViewReports} /></TableCell>
-              <TableCell className="text-center"><PermissionRW {...me.canManageUsers} /></TableCell>
+              <TableCell>
+                <RoleBadge role={me.role} />
+              </TableCell>
+              <TableCell className="text-center">
+                <PermissionRW {...me.canManageAllocations} />
+              </TableCell>
+              <TableCell className="text-center">
+                <PermissionRW {...me.canViewReports} />
+              </TableCell>
+              <TableCell className="text-center">
+                <PermissionRW {...me.canManageUsers} />
+              </TableCell>
               <TableCell className="pr-4 text-right">
                 <div className="flex items-center justify-end gap-1 text-xs text-[color:var(--nexus-blue-600)]">
                   <span>You</span>
@@ -271,7 +141,7 @@ export default function UserPermissionsPage() {
               <TableRow
                 key={user.id}
                 className="cursor-pointer"
-                onClick={() => setSelected(user)}
+                onClick={() => setSelectedId(user.id)}
               >
                 <TableCell className="pl-4">
                   <div className="flex flex-col">
@@ -279,10 +149,18 @@ export default function UserPermissionsPage() {
                     <span className="text-xs text-muted-foreground">{user.email}</span>
                   </div>
                 </TableCell>
-                <TableCell><RoleBadge role={user.role} /></TableCell>
-                <TableCell className="text-center"><PermissionRW {...user.canManageAllocations} /></TableCell>
-                <TableCell className="text-center"><PermissionRW {...user.canViewReports} /></TableCell>
-                <TableCell className="text-center"><PermissionRW {...user.canManageUsers} /></TableCell>
+                <TableCell>
+                  <RoleBadge role={user.role} />
+                </TableCell>
+                <TableCell className="text-center">
+                  <PermissionRW {...user.canManageAllocations} />
+                </TableCell>
+                <TableCell className="text-center">
+                  <PermissionRW {...user.canViewReports} />
+                </TableCell>
+                <TableCell className="text-center">
+                  <PermissionRW {...user.canManageUsers} />
+                </TableCell>
                 <TableCell className="pr-4 text-right">
                   <ChevronRight className="ml-auto h-3.5 w-3.5 text-muted-foreground" />
                 </TableCell>
@@ -295,8 +173,26 @@ export default function UserPermissionsPage() {
       <PermissionsDrawer
         user={selected}
         open={selected !== null}
-        onOpenChange={(open) => { if (!open) setSelected(null); }}
+        onOpenChange={(open) => {
+          if (!open) setSelectedId(null);
+        }}
         modal={false}
+        onAddPermission={(userId) => setAddPermissionForId(userId)}
+      />
+
+      <AddPermissionDialog
+        open={addPermissionForId !== null}
+        onOpenChange={(open) => {
+          if (!open) setAddPermissionForId(null);
+        }}
+        subjectLabel={users.find((u) => u.id === addPermissionForId)?.name ?? "this user"}
+        onAdd={(permission) => {
+          setUsers((prev) =>
+            prev.map((u) =>
+              u.id === addPermissionForId ? { ...u, extra: [...u.extra, permission] } : u,
+            ),
+          );
+        }}
       />
     </div>
   );
