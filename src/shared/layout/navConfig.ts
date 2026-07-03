@@ -13,6 +13,7 @@ import {
   ListChecks,
   Server,
   ShieldCheck,
+  UserCog,
   Users,
   Wrench,
 } from "lucide-react";
@@ -73,6 +74,13 @@ export const portalNav: NavItem[] = [
     group: "allocations",
   },
   { href: "/clients", label: "Clients", icon: Users, group: "allocations" },
+  {
+    href: "/admin/users",
+    label: "User Management",
+    icon: UserCog,
+    group: "admin",
+    ability: { action: "manage", subject: "User" },
+  },
   {
     href: "/admin/amie/packets",
     label: "AMIE Console",
