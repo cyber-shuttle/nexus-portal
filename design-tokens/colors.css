@@ -29,16 +29,57 @@
   --nexus-green-700: #15803d;
   --nexus-green-800: #166534;
 
-  --nexus-gray-50: #f4f5f7;
-  --nexus-gray-100: #f1f1f1;
-  --nexus-gray-200: #e5e7eb;
-  --nexus-gray-300: #d4d4d4;
-  --nexus-gray-400: #9aa1ae;
-  --nexus-gray-500: #6b7280;
-  --nexus-gray-600: #4b5563;
-  --nexus-gray-700: #404040;
-  --nexus-gray-800: #262626;
-  --nexus-gray-900: #111111;
+  --nexus-gray-50: #f9f9f9;
+  --nexus-gray-100: #f2f2f2;
+  --nexus-gray-200: #ebebeb;
+  --nexus-gray-300: #d9d9d9;
+  --nexus-gray-400: #bdbdbd;
+  --nexus-gray-500: #9e9e9e;
+  --nexus-gray-600: #757575;
+  --nexus-gray-700: #424242;
+  --nexus-gray-800: #212121;
+  --nexus-gray-900: #121212;
+
+  --nexus-slate-50: #f8fafc;
+  --nexus-slate-100: #f1f5f9;
+  --nexus-slate-200: #e2e8f0;
+  --nexus-slate-300: #cbd5e1;
+  --nexus-slate-400: #94a3b8;
+  --nexus-slate-500: #64748b;
+  --nexus-slate-600: #475569;
+  --nexus-slate-700: #334155;
+  --nexus-slate-800: #1e293b;
+  --nexus-slate-900: #0f172a;
+
+  --nexus-orange-50: #fff7ed;
+  --nexus-orange-100: #ffedd5;
+  --nexus-orange-200: #fed7aa;
+  --nexus-orange-300: #fdba74;
+  --nexus-orange-400: #fb923c;
+  --nexus-orange-500: #f97316;
+  --nexus-orange-600: #ea580c;
+  --nexus-orange-700: #c2410c;
+  --nexus-orange-800: #9a3412;
+
+  --nexus-teal-50: #f0fdfa;
+  --nexus-teal-100: #ccfbf1;
+  --nexus-teal-200: #99f6e4;
+  --nexus-teal-300: #5eead4;
+  --nexus-teal-400: #2dd4bf;
+  --nexus-teal-500: #14b8a6;
+  --nexus-teal-600: #0d9488;
+  --nexus-teal-700: #0f766e;
+  --nexus-teal-800: #115e59;
+
+  --nexus-indigo-50: #eef2ff;
+  --nexus-indigo-100: #e0e7ff;
+  --nexus-indigo-200: #c7d2fe;
+  --nexus-indigo-300: #a5b4fc;
+  --nexus-indigo-400: #818cf8;
+  --nexus-indigo-500: #6366f1;
+  --nexus-indigo-600: #4f46e5;
+  --nexus-indigo-700: #4338ca;
+  --nexus-indigo-800: #3730a3;
 
   --nexus-amber-50: #fef3c7;
   --nexus-amber-100: #fde68a;
@@ -112,8 +153,6 @@
   --secondary: var(--nexus-gray-100);
   --secondary-foreground: var(--nexus-gray-900);
   --muted: var(--nexus-gray-100);
-  /* Pinned to gray-600 (#4b5563) — gray-500 (#6b7280) on bg-muted (#f1f1f1) is
-     4.28:1 and fails WCAG AA. gray-600 clears 4.5:1 by a healthy margin. */
   --muted-foreground: var(--nexus-gray-600);
   --accent: var(--nexus-blue-50);
   --accent-foreground: var(--nexus-blue-700);
@@ -123,9 +162,10 @@
   --input: var(--nexus-gray-200);
   --ring: var(--nexus-blue-500);
 
-  --sidebar: var(--nexus-gray-50);
+  --sidebar: var(--nexus-gray-100);
   --sidebar-active: #ffffff;
   --sidebar-hover: var(--nexus-gray-200);
+  --sidebar-item-fg: var(--nexus-gray-700);
   --sidebar-foreground: var(--nexus-gray-900);
   --sidebar-primary: var(--nexus-blue-500);
   --sidebar-primary-foreground: var(--nexus-white);
@@ -167,6 +207,7 @@
   --sidebar: var(--nexus-gray-800);
   --sidebar-active: var(--nexus-gray-900);
   --sidebar-hover: var(--nexus-gray-700);
+  --sidebar-item-fg: var(--nexus-gray-400);
   --sidebar-foreground: var(--nexus-gray-50);
   --sidebar-primary: var(--nexus-blue-400);
   --sidebar-primary-foreground: var(--nexus-gray-900);
