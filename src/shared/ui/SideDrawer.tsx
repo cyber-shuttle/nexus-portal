@@ -22,6 +22,7 @@ export type SideDrawerProps = {
   description?: React.ReactNode;
   children: React.ReactNode;
   width?: SideDrawerWidth;
+  modal?: boolean;
 };
 
 export function SideDrawer({
@@ -31,14 +32,18 @@ export function SideDrawer({
   description,
   children,
   width = "md",
+  modal = true,
 }: SideDrawerProps) {
   return (
-    <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
+    <DialogPrimitive.Root open={open} onOpenChange={onOpenChange} modal={modal}>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Backdrop className="fixed inset-0 z-50 bg-black/30 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0" />
+        {modal && (
+          <DialogPrimitive.Backdrop className="fixed inset-0 z-50 bg-black/30 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0" />
+        )}
         <DialogPrimitive.Popup
           className={cn(
-            "fixed inset-y-0 right-0 z-50 flex w-full flex-col bg-popover text-popover-foreground shadow-xl outline-none",
+            "fixed inset-y-0 right-0 z-50 flex w-full flex-col bg-popover text-popover-foreground outline-none",
+            modal ? "shadow-xl" : "shadow-[var(--shadow-drawer)] border-l border-border",
             "data-open:animate-in data-open:slide-in-from-right-12 data-closed:animate-out data-closed:slide-out-to-right-12",
             widthClass[width],
           )}
