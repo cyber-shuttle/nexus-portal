@@ -5,6 +5,7 @@ import { useAbility } from "@/shared/casl/AbilityProvider";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NAV_GROUP_LABELS, type NavGroup, type NavItem, portalNav } from "./navConfig";
+import { NeedHelpCard } from "./NeedHelpCard";
 
 const GROUP_ORDER: NavGroup[] = ["allocations", "admin"];
 
@@ -46,7 +47,9 @@ export function Sidebar() {
         ))}
       </nav>
 
-
+      <div className="mt-auto">
+        <NeedHelpCard />
+      </div>
     </aside>
   );
 }
