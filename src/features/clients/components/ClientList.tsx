@@ -8,6 +8,7 @@ import { StatusBadge, type StatusBadgeVariant } from "@/shared/ui/StatusBadge";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
+import { ChevronDown } from "lucide-react";
 import * as React from "react";
 import { CLIENT_STATUSES, type Client, type ClientStatus } from "../types";
 
@@ -130,19 +131,22 @@ export function ClientList({
       <div className="grid gap-3 rounded-lg border border-border bg-card p-4 md:grid-cols-4">
         <div className="space-y-1.5">
           <Label htmlFor="client-status">Status</Label>
-          <select
-            id="client-status"
-            value={statusFilter}
-            onChange={(e) => onStatusChange(e.currentTarget.value as ClientStatus | "all")}
-            className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-          >
-            <option value="all">All</option>
-            {CLIENT_STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {s.toUpperCase()}
-              </option>
-            ))}
-          </select>
+          <div className="relative">
+            <select
+              id="client-status"
+              value={statusFilter}
+              onChange={(e) => onStatusChange(e.currentTarget.value as ClientStatus | "all")}
+              className="w-full appearance-none rounded-md border border-input bg-transparent pl-3 pr-8 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+            >
+              <option value="all">All</option>
+              {CLIENT_STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {s.toUpperCase()}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2 opacity-50" />
+          </div>
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="client-allocation">Allocation ID</Label>

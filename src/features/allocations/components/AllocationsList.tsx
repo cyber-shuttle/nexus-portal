@@ -186,7 +186,7 @@ export function AllocationsList({ rows, isLoading, error, onRetry }: Allocations
           value={projectQuery}
           onChange={(e) => setProjectQuery(e.target.value)}
           aria-label="Filter by project id"
-          className="sm:w-72"
+          className="sm:w-72 h-9 rounded-md"
         />
       </div>
 

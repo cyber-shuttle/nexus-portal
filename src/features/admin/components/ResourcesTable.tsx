@@ -8,7 +8,7 @@ import { StatusBadge } from "@/shared/ui/StatusBadge";
 import { UsageBar } from "@/shared/ui/UsageBar";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
-import { ShieldCheck } from "lucide-react";
+import { ChevronDown, ShieldCheck } from "lucide-react";
 import * as React from "react";
 import type { AdminResourceRow } from "../schemas";
 
@@ -130,32 +130,38 @@ export function ResourcesTable({
       >
         <div className="flex flex-col gap-1">
           <Label htmlFor="res-cluster">Cluster</Label>
-          <select
-            id="res-cluster"
-            className="rounded-md border bg-background px-3 py-1.5 text-sm"
-            value={clusterFilter}
-            onChange={(e) => onClusterChange(e.currentTarget.value)}
-          >
-            <option value="">All clusters</option>
-            {clusters.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+          <div className="relative">
+            <select
+              id="res-cluster"
+              className="appearance-none rounded-md border bg-background pl-3 pr-8 py-1.5 text-sm"
+              value={clusterFilter}
+              onChange={(e) => onClusterChange(e.currentTarget.value)}
+            >
+              <option value="">All clusters</option>
+              {clusters.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2 opacity-50" />
+          </div>
         </div>
         <div className="flex flex-col gap-1">
           <Label htmlFor="res-status">Status</Label>
-          <select
-            id="res-status"
-            className="rounded-md border bg-background px-3 py-1.5 text-sm"
-            value={statusFilter}
-            onChange={(e) => onStatusChange(e.currentTarget.value)}
-          >
-            <option value="">All</option>
-            <option value="ACTIVE">ACTIVE</option>
-            <option value="INACTIVE">INACTIVE</option>
-          </select>
+          <div className="relative">
+            <select
+              id="res-status"
+              className="appearance-none rounded-md border bg-background pl-3 pr-8 py-1.5 text-sm"
+              value={statusFilter}
+              onChange={(e) => onStatusChange(e.currentTarget.value)}
+            >
+              <option value="">All</option>
+              <option value="ACTIVE">ACTIVE</option>
+              <option value="INACTIVE">INACTIVE</option>
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2 opacity-50" />
+          </div>
         </div>
         <div className="flex flex-col gap-1">
           <Label htmlFor="res-q">Search</Label>

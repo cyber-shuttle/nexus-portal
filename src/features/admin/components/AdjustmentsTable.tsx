@@ -5,7 +5,7 @@ import { EmptyState } from "@/shared/ui/EmptyState";
 import { ErrorState } from "@/shared/ui/ErrorState";
 import { TableSkeleton } from "@/shared/ui/Loading";
 import { StatusBadge } from "@/shared/ui/StatusBadge";
-import { Coins } from "lucide-react";
+import { ChevronDown, Coins } from "lucide-react";
 import * as React from "react";
 import type { Adjustment, AdjustmentType } from "../schemas";
 
@@ -82,16 +82,19 @@ export function AdjustmentsTable({
       <div className="flex items-end gap-3 rounded-md border bg-card p-4">
         <label className="flex flex-col gap-1 text-xs">
           <span className="text-muted-foreground">Type</span>
-          <select
-            value={typeFilter}
-            onChange={(e) => onTypeChange(e.currentTarget.value as AdjustmentType | "all")}
-            className="rounded-md border bg-background px-3 py-1.5 text-sm"
-          >
-            <option value="all">All</option>
-            <option value="CREDIT">CREDIT</option>
-            <option value="DEBIT">DEBIT</option>
-            <option value="EXPIRE">EXPIRE</option>
-          </select>
+          <div className="relative">
+            <select
+              value={typeFilter}
+              onChange={(e) => onTypeChange(e.currentTarget.value as AdjustmentType | "all")}
+              className="appearance-none rounded-md border bg-background pl-3 pr-8 py-1.5 text-sm"
+            >
+              <option value="all">All</option>
+              <option value="CREDIT">CREDIT</option>
+              <option value="DEBIT">DEBIT</option>
+              <option value="EXPIRE">EXPIRE</option>
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2 opacity-50" />
+          </div>
         </label>
       </div>
       {error ? (

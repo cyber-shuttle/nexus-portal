@@ -20,6 +20,7 @@ import { UsageBar } from "@/shared/ui/UsageBar";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/ui/tooltip";
+import { ChevronDown } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
 import type { Project, ProjectStatus } from "../schemas";
@@ -179,7 +180,6 @@ export function ProjectsList({
     {
       key: "allocations",
       header: "# Allocations",
-      align: "right",
       sortable: true,
       sortValue: (row) => row.allocationsCount,
       cell: (row) => <span className="tabular-nums">{row.allocationsCount}</span>,
@@ -187,7 +187,6 @@ export function ProjectsList({
     {
       key: "total",
       header: "Total SUs",
-      align: "right",
       sortable: true,
       sortValue: (row) => row.totalSu,
       cell: (row) => <span className="tabular-nums">{formatSU(row.totalSu)}</span>,
@@ -245,7 +244,7 @@ export function ProjectsList({
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
             aria-label="Search projects"
-            className="sm:w-64"
+            className="sm:w-64 h-9 rounded-md"
           />
           <Input
             type="search"
@@ -253,32 +252,38 @@ export function ProjectsList({
             value={piFilter}
             onChange={(e) => onPiFilterChange(e.target.value)}
             aria-label="Filter by PI"
-            className="sm:w-56"
+            className="sm:w-56 h-9 rounded-md"
           />
-          <select
-            value={statusFilter}
-            onChange={(e) => onStatusFilterChange(e.target.value as ProjectStatus | "all")}
-            aria-label="Filter by status"
-            className="h-9 rounded-md border bg-background px-3 text-sm"
-          >
-            <option value="all">All statuses</option>
-            <option value="ACTIVE">Active</option>
-            <option value="INACTIVE">Inactive</option>
-            <option value="DELETED">Deleted</option>
-          </select>
-          <select
-            value={orgFilter}
-            onChange={(e) => onOrgFilterChange(e.target.value)}
-            aria-label="Filter by org"
-            className="h-9 rounded-md border bg-background px-3 text-sm"
-          >
-            <option value="">All orgs</option>
-            {orgOptions.map((org) => (
-              <option key={org} value={org}>
-                {org}
-              </option>
-            ))}
-          </select>
+          <div className="relative">
+            <select
+              value={statusFilter}
+              onChange={(e) => onStatusFilterChange(e.target.value as ProjectStatus | "all")}
+              aria-label="Filter by status"
+              className="h-9 appearance-none rounded-md border bg-background pl-3 pr-8 text-sm"
+            >
+              <option value="all">All statuses</option>
+              <option value="ACTIVE">Active</option>
+              <option value="INACTIVE">Inactive</option>
+              <option value="DELETED">Deleted</option>
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2 opacity-50" />
+          </div>
+          <div className="relative">
+            <select
+              value={orgFilter}
+              onChange={(e) => onOrgFilterChange(e.target.value)}
+              aria-label="Filter by org"
+              className="h-9 appearance-none rounded-md border bg-background pl-3 pr-8 text-sm"
+            >
+              <option value="">All orgs</option>
+              {orgOptions.map((org) => (
+                <option key={org} value={org}>
+                  {org}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2 opacity-50" />
+          </div>
         </div>
       </div>
 
