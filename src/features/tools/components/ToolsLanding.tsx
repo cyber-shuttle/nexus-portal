@@ -44,10 +44,10 @@ const TOOLS: ToolCard[] = [
   {
     id: "usage-report",
     title: "Usage report",
-    description: "Export consumption per project, allocation, and user.",
-    href: "/tools/usage-report",
+    description: "Consumption across your projects, allocations, and users.",
+    href: "/analytics",
     icon: BarChart3Icon,
-    status: "phase7",
+    status: "active",
   },
   {
     id: "runtime-status",
